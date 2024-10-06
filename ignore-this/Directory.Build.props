@@ -1,0 +1,29 @@
+<Project>
+    <PropertyGroup>
+        <PackageTags>test</PackageTags>
+        <Authors>Duende Software</Authors>
+        <Company>Duende Software</Company>
+        <Copyright>Duende Software</Copyright>
+        <Product>Duende Ignore This</Product>
+
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+
+        <PackageIcon>icon.png</PackageIcon>
+        <PackageProjectUrl>https://github.com/DuendeSoftware/Duende.AccessTokenManagement</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/DuendeSoftware/Duende.AccessTokenManagement/releases</PackageReleaseNotes>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <DebugType>embedded</DebugType>
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">True</ContinuousIntegrationBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../../icon.png" Pack="true" Visible="false" PackagePath="" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <MinVerAutoIncrement>minor</MinVerAutoIncrement>
+        <MinVerTagPrefix>it-</MinVerTagPrefix>
+    </PropertyGroup>
+</Project>

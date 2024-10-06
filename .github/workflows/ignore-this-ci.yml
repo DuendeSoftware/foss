@@ -1,4 +1,4 @@
-name: access-token-management\ci
+name: ignore-this\ci
 
 permissions:
   contents: read
@@ -11,12 +11,12 @@ on:
     branches:
     - main
     paths:
-    - .github/workflows/access-token-management-ci.yml
-    - access-token-management/*
+    - .github/workflows/ignore-this-ci.yml
+    - ignore-this/*
   pull_request:
     paths:
-    - .github/workflows/access-token-management-ci.yml
-    - access-token-management/*
+    - .github/workflows/ignore-this-ci.yml
+    - ignore-this/*
 
 env:
   DOTNET_NOLOGO: true
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: access-token-management
+        working-directory: ignore-this
         shell: pwsh
     
     steps:
@@ -50,7 +50,7 @@ jobs:
       if: success() || failure()    # run this step even if previous step failed
       with:
         name: Test results
-        path: access-token-management/test/AccessTokenManagement.Tests/TestResults/Test.trx
+        path: ignore-this/test/IgnoreThis.Tests/TestResults/Test.trx
         reporter: dotnet-trx
         fail-on-error: true
         fail-on-empty: true
@@ -73,7 +73,6 @@ jobs:
       run: dotnet nuget push artifacts\*.nupkg -s https://www.myget.org/F/duende_identityserver/api/v2/package -k ${{ secrets.MYGET }} --skip-duplicate
 
     - name: Push NuGet package to GitHub Packages
-      if: (github.ref == 'refs/heads/main')
       run: dotnet nuget push artifacts\*.nupkg --source https://nuget.pkg.github.com/DuendeSoftware/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -83,7 +82,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: (github.ref == 'refs/heads/main')
       with:
-        path: access-token-management/artifacts/*.nupkg
+        path: ignore-this/artifacts/*.nupkg
         compression-level: 0
         overwrite: true
         retention-days: 15
