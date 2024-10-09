@@ -10,8 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <TrimmerRootAssembly Include="IdentityModel" />
-    <ProjectReference Include="..\..\src\IdentityModel.csproj" /> 
+    <ProjectReference Include="..\..\src\IdentityModel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Duende.IdentityModel" />
   </ItemGroup>
 
 </Project>
