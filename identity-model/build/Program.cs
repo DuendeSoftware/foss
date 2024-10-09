@@ -20,7 +20,6 @@ namespace build
             public const string Build = "build";
             public const string Test = "test";
             public const string Pack = "pack";
-            public const string SignBinary = "sign-binary";
             public const string SignPackage = "sign-package";
             public const string TrimmableAnalysis = "trimmable-analysis";
         }
@@ -57,7 +56,7 @@ namespace build
 
             Target(Targets.Pack, DependsOn(Targets.Build, Targets.CleanPackOutput), () =>
             {
-                Run("dotnet", $"pack ./src/IdentityModel.csproj -c Release -o {Directory.CreateDirectory(packOutput).FullName} --no-build --nologo");
+                Run("dotnet", $"pack src/IdentityModel.csproj -c Release -o {Directory.CreateDirectory(packOutput).FullName} --no-build --nologo");
             });
 
             Target(Targets.SignPackage, DependsOn(Targets.Pack, Targets.RestoreTools), () =>
