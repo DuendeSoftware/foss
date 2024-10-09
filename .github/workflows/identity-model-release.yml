@@ -1,0 +1,102 @@
+name: identity-model\release
+
+on:
+  workflow_dispatch:
+   inputs:
+      version:
+        type: string
+        description: "Version in format X.Y.Z or X.Y.Z-preview.N"
+        required: true
+        default: '0.0.0'
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  tag:
+    name: Tag and Pack
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    defaults:
+      run:
+        working-directory: identity-model
+        shell: pwsh
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+
+    - name: Tag
+      run: |
+        git config --global user.email "noreply@duendesoftware.com"
+        git config --global user.name "Duende Software"
+        git tag -a idm-${{ github.event.inputs.version }} -m "Release v${{ github.event.inputs.version }}"
+        git push origin idm-${{ github.event.inputs.version }}
+
+    - name: Pack
+      run: ./build.ps1 pack
+
+    # Need to add Sectigo CodeSiging CA certificates to the trust store to prevent the following error:
+    # NU3018: PartialChain: unable to get local issuer certificate
+    - name: Install Sectigo CodeSiging CA certificates
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ca-certificates
+        sudo cp build/SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
+        sudo update-ca-certificates
+
+    - name: Sign
+      env:
+        SignClientSecret: ${{ secrets.SignClientSecret }}
+      run: ./build.ps1 sign
+
+    - name: Push packages to MyGet
+      run: dotnet nuget push artifacts\*.nupkg -s https://www.myget.org/F/duende_identityserver/api/v2/package -k ${{ secrets.MYGET }}
+
+    - name: Push packages to GitHub
+      run: dotnet nuget push artifacts\*.nupkg --source https://nuget.pkg.github.com/DuendeSoftware/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: identity-model/artifacts/*.nupkg
+        name: identity-model-artifacts
+        compression-level: 0
+        overwrite: true
+        retention-days: 15
+
+  publish:
+    name: Publish to NuGet
+    runs-on: ubuntu-latest
+    environment: nuget.org
+    needs: tag
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: identity-model-artifacts
+        path: artifacts
+
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+
+    - name: List files
+      shell: bash
+      run: tree
+
+    - name: Push to nuget.org
+      run: dotnet nuget push artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }} --skip-duplicate
