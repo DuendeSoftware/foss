@@ -13,7 +13,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">True</ContinuousIntegrationBuild>
+    <MinVerAutoIncrement>patch</MinVerAutoIncrement>
+    <MinVerTagPrefix>idm-</MinVerTagPrefix>
     <!-- Enable Trimming Warnings to allow consumers to publish as trimmed -->
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
@@ -54,9 +56,4 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
-  <Target Name="SetAssemblyVersion" AfterTargets="MinVer">
-    <PropertyGroup>
-      <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).0</AssemblyVersion>
-    </PropertyGroup>
-  </Target>
 </Project>
