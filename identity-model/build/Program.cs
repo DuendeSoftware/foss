@@ -43,7 +43,11 @@ namespace build
 
             Target(Targets.Test, DependsOn(Targets.Build), () =>
             {
-                Run("dotnet", "test -c Release --no-build --nologo");
+                Run("dotnet",
+                    $"test test/IdentityModel.Tests -c Release --nologo "
+                    + $"--blame-hang "
+                    + $"--blame-hang-timeout=120sec "
+                    + $"--logger \"console;verbosity=normal\" --logger \"trx;LogFileName=Test.trx\"");
             });
 
             Target(Targets.CleanPackOutput, () =>
