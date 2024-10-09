@@ -11,7 +11,7 @@
         <TargetFrameworks>net8.0</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-        <TargetFrameworks>net462;net472;$(TargetFrameworks)</TargetFrameworks>
+        <TargetFrameworks>net481;$(TargetFrameworks)</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
