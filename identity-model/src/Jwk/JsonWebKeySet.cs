@@ -29,7 +29,7 @@ public class JsonWebKeySet
     {
         if (string.IsNullOrWhiteSpace(json)) throw new ArgumentNullException(nameof(json));
 
-        var jwebKeys = JsonSerializer.Deserialize<JsonWebKeySet>(json, global::IdentityModel.Jwk.JwkSourceGenerationContext.Default.JsonWebKeySet);
+        var jwebKeys = JsonSerializer.Deserialize<JsonWebKeySet>(json, JwkSourceGenerationContext.Default.JsonWebKeySet);
         if (jwebKeys == null) throw new InvalidOperationException("invalid JSON web keys");
         
         Keys = jwebKeys.Keys;

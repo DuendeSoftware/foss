@@ -36,7 +36,7 @@ public class JsonWebKey
     {
         if (string.IsNullOrWhiteSpace(json)) throw new ArgumentNullException(nameof(json));
 
-        var key = JsonSerializer.Deserialize<JsonWebKey>(json, global::IdentityModel.Jwk.JwkSourceGenerationContext.Default.JsonWebKey);
+        var key = JsonSerializer.Deserialize<JsonWebKey>(json, JwkSourceGenerationContext.Default.JsonWebKey);
         if (key == null) throw new InvalidOperationException("malformed key");
 
         Copy(key);

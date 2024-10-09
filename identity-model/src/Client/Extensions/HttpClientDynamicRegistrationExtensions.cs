@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Duende.IdentityModel.Client.Messages;
 using Duende.IdentityModel.Internal;
-using ClientMessagesSourceGenerationContext = IdentityModel.Client.ClientMessagesSourceGenerationContext;
 
 namespace Duende.IdentityModel.Client.Extensions;
 
