@@ -72,7 +72,7 @@ namespace build
 
             Target("default", DependsOn(Targets.Test, Targets.Pack, Targets.TrimmableAnalysis));
 
-            Target("sign", DependsOn(Targets.Test, Targets.SignPackage, Targets.TrimmableAnalysis));
+            Target("sign", DependsOn(Targets.RestoreTools), SignNuGet);
 
             await RunTargetsAndExitAsync(args, ex => ex is SimpleExec.ExitCodeException || ex.Message.EndsWith(envVarMissing));
         }
