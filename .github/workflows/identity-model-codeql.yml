@@ -1,0 +1,44 @@
+name: identity-model\codeql
+
+on:
+  push:
+    branches: 
+    - main
+    paths:
+    - .github/workflows/identity-model-codeql.yml
+    - identity-model/*
+  pull_request:
+    paths:
+    - .github/workflows/identity-model-codeql.yml
+    - identity-model/*
+  schedule:
+    - cron: '38 15 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    defaults:
+      run:
+        working-directory: identity-model
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses:  github/codeql-action/init@v3
+      with:
+        languages: csharp
+        
+    - name: Auto build
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
