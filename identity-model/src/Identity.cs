@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using IdentityModel.Internal;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using Duende.IdentityModel.Internal;
 
-namespace IdentityModel;
+namespace Duende.IdentityModel;
 
 /// <summary>
 /// Helpers to create ClaimsIdentity

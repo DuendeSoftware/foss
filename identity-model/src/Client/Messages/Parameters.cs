@@ -3,14 +3,14 @@
 
 using System;
 using System.Collections.Generic;
-#if NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Linq;
 using System.Reflection;
-using IdentityModel.Internal;
+using Duende.IdentityModel.Internal;
+#if NET6_0_OR_GREATER
+#endif
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models a list of request parameters

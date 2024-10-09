@@ -3,7 +3,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace IdentityModel.Jwk;
+namespace Duende.IdentityModel.Jwk;
 
 [JsonSourceGenerationOptions(
     WriteIndented = false,

@@ -1,17 +1,18 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using IdentityModel.Internal;
-using IdentityModel.Jwk;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Extensions;
+using Duende.IdentityModel.Internal;
+using Duende.IdentityModel.Jwk;
 
 #pragma warning disable 1591
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models the response from an OpenID Connect discovery endpoint

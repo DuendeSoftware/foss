@@ -1,13 +1,14 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using IdentityModel.Internal;
 using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Messages;
+using Duende.IdentityModel.Internal;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Extensions;
 
 /// <summary>
 /// HttpClient extentions for OIDC discovery

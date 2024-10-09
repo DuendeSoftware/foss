@@ -5,8 +5,10 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Extensions;
+using Duende.IdentityModel.Client.Messages;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client;
 
 /// <summary>
 /// Client library for the OAuth 2 introspection endpoint

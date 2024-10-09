@@ -1,15 +1,16 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using IdentityModel.Internal;
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Extensions;
+using Duende.IdentityModel.Internal;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// A protocol response

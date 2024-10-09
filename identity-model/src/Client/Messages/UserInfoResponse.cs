@@ -5,13 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Extensions;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models an OpenID Connect userinfo response
 /// </summary>
-/// <seealso cref="IdentityModel.Client.ProtocolResponse" />
+/// <seealso cref="ProtocolResponse" />
 public class UserInfoResponse : ProtocolResponse
 {
     /// <summary>

@@ -8,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 
 #pragma warning disable 1591
 
-namespace IdentityModel;
+namespace Duende.IdentityModel.X509Certificates;
 
 [EditorBrowsable(EditorBrowsableState.Never)]
 public class X509CertificatesFinder

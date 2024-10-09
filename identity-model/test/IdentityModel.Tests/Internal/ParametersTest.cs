@@ -1,9 +1,9 @@
-﻿using FluentAssertions;
-using System;
-using IdentityModel.Client;
+﻿using System;
+using Duende.IdentityModel.Client.Messages;
+using FluentAssertions;
 using Xunit;
 
-namespace IdentityModel.UnitTests
+namespace Duende.IdentityModel.Internal
 {
     public class ParametersTest
     {

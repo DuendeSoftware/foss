@@ -2,15 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using Duende.IdentityModel.Client;
+using Duende.IdentityModel.Client.Extensions;
+using Duende.IdentityModel.Client.Messages;
 using FluentAssertions;
-using IdentityModel.Client;
 using Microsoft.AspNetCore.WebUtilities;
 using Xunit;
 
-namespace IdentityModel.UnitTests
+namespace Duende.IdentityModel
 {
     public class RequestUrlTests
     {

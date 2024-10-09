@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IdentityModel.Jwk;
+namespace Duende.IdentityModel.Jwk;
 
 /// <summary>
 /// Contains a collection of <see cref="JsonWebKey"/> that can be populated from a json string.
@@ -29,7 +29,7 @@ public class JsonWebKeySet
     {
         if (string.IsNullOrWhiteSpace(json)) throw new ArgumentNullException(nameof(json));
 
-        var jwebKeys = JsonSerializer.Deserialize<JsonWebKeySet>(json, JwkSourceGenerationContext.Default.JsonWebKeySet);
+        var jwebKeys = JsonSerializer.Deserialize<JsonWebKeySet>(json, global::IdentityModel.Jwk.JwkSourceGenerationContext.Default.JsonWebKeySet);
         if (jwebKeys == null) throw new InvalidOperationException("invalid JSON web keys");
         
         Keys = jwebKeys.Keys;

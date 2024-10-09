@@ -4,7 +4,7 @@
 using System;
 
 #pragma warning disable 1591
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client;
 
 public struct AuthorityValidationResult
 {

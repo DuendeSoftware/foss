@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models the parameters that can be pushed in a Pushed Authorization Request.

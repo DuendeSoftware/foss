@@ -5,7 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 
 #pragma warning disable 1591
 
-namespace IdentityModel;
+namespace Duende.IdentityModel.X509Certificates;
 
 public static class X509
 {

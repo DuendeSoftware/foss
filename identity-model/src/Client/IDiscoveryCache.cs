@@ -3,8 +3,9 @@
 
 using System;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Messages;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client;
 
 /// <summary>
 /// Interface for discovery cache

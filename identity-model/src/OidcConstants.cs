@@ -3,7 +3,7 @@
 
 #pragma warning disable 1591
 
-namespace IdentityModel;
+namespace Duende.IdentityModel;
 
 public static class OidcConstants
 {

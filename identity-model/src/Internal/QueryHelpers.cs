@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Encodings.Web;
 
-namespace IdentityModel.Internal;
+namespace Duende.IdentityModel.Internal;
 
 internal static class QueryHelpers
 {

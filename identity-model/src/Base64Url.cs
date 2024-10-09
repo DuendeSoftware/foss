@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IdentityModel;
+namespace Duende.IdentityModel;
 
 /// <summary>
 /// Base64Url encoder/decoder

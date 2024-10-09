@@ -3,9 +3,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
-namespace IdentityModel.Internal;
+namespace Duende.IdentityModel.Internal;
 
 internal static class InternalStringExtensions
 {

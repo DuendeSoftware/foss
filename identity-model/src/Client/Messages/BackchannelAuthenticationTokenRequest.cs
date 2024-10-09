@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Request for token using urn:openid:params:grant-type:ciba grant type

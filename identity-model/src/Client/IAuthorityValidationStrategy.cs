@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client;
 
 /// <summary>
 /// Authority validation strategy.

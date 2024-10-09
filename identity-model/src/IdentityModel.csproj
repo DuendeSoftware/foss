@@ -3,8 +3,8 @@
     <Authors>Duende Software</Authors>
     <Description>OpenID Connect &amp; OAuth 2.0 client library</Description>
     <PackageId>Duende.IdentityModel</PackageId>
-    <RootNamespace>$(PackageId}</RootNamespace>
-    <AssemblyName>$(PackageId}</AssemblyName>
+    <RootNamespace>Duende.IdentityModel</RootNamespace>
+    <AssemblyName>Duende.IdentityModel</AssemblyName>
     <PackageTags>OAuth2;OAuth 2.0;OpenID Connect;Security;Identity;IdentityServer</PackageTags>
     <PackageIcon>icon.jpg</PackageIcon>
     <PackageProjectUrl>https://github.com/IdentityModel/IdentityModel</PackageProjectUrl>
@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <None Include="../icon.jpg" Pack="true" Visible="false" PackagePath="" />
-    <None Include="../README.md" Pack="true" PackagePath=""/>
+    <None Include="../README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <!--Strong Naming-->
@@ -43,7 +43,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="minver" Version="5.0.0" PrivateAssets="All" />
+    <PackageReference Include="minver" Version="6.0.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
@@ -51,7 +51,7 @@
   
   <!-- System.Text.Json is automatically included in net6.0, so we don't take an explicit dependency on it in the net6.0 build. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <Target Name="SetAssemblyVersion" AfterTargets="MinVer">

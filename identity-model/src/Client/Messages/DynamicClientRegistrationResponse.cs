@@ -1,14 +1,16 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.IdentityModel.Client.Extensions;
+
 #pragma warning disable 1591
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models an OpenID Connect dynamic client registration response
 /// </summary>
-/// <seealso cref="IdentityModel.Client.ProtocolResponse" />
+/// <seealso cref="ProtocolResponse" />
 public class DynamicClientRegistrationResponse : ProtocolResponse
 {
     public string? ErrorDescription         => Json?.TryGetString("error_description");

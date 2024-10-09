@@ -3,9 +3,9 @@
 
 using System.Net.Http;
 using System.Net.Http.Headers;
-using static IdentityModel.OidcConstants;
+using static Duende.IdentityModel.OidcConstants;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Extensions;
 
 /// <summary>
 /// Extensions for HttpRequestMessage

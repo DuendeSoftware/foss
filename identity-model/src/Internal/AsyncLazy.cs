@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace IdentityModel.Internal;
+namespace Duende.IdentityModel.Internal;
 
 internal class AsyncLazy<T> : Lazy<Task<T>>
 {

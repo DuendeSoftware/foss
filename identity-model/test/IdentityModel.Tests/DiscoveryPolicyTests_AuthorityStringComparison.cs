@@ -5,11 +5,13 @@ using System;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client;
+using Duende.IdentityModel.Client.Extensions;
+using Duende.IdentityModel.Client.Messages;
 using FluentAssertions;
-using IdentityModel.Client;
 using Xunit;
 
-namespace IdentityModel.UnitTests
+namespace Duende.IdentityModel
 {
     public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTestsBase
     {

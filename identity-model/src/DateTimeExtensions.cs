@@ -3,7 +3,7 @@
 
 using System;
 
-namespace IdentityModel;
+namespace Duende.IdentityModel;
 
 /// <summary>
 /// Extensions for converting epoch/unix time to DateTime and DateTimeOffset

@@ -1,12 +1,13 @@
-﻿using FluentAssertions;
-using IdentityModel.Client;
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client;
+using Duende.IdentityModel.Infrastructure;
+using FluentAssertions;
 using Xunit;
 
-namespace IdentityModel.UnitTests
+namespace Duende.IdentityModel
 {
     public class DiscoveryCacheTests
     {

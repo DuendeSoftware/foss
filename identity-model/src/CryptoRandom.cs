@@ -4,7 +4,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace IdentityModel;
+namespace Duende.IdentityModel;
 
 /// <summary>
 /// A class that mimics the standard Random class in the .NET Framework - but uses a random number generator internally.

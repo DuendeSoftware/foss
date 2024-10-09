@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
+using Duende.IdentityModel.Infrastructure;
 
-namespace IdentityModel.UnitTests
+namespace Duende.IdentityModel
 {
     public abstract class DiscoveryPolicyTestsBase
     {

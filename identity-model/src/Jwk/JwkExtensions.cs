@@ -4,7 +4,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace IdentityModel.Jwk;
+namespace Duende.IdentityModel.Jwk;
 
 /// <summary>
 /// Extensions for JsonWebKey
@@ -18,7 +18,7 @@ public static class JsonWebKeyExtensions
     /// <returns></returns>
     public static string ToJwkString(this JsonWebKey key)
     {
-        var json = JsonSerializer.Serialize(key, JwkSourceGenerationContext.Default.JsonWebKey);
+        var json = JsonSerializer.Serialize(key, global::IdentityModel.Jwk.JwkSourceGenerationContext.Default.JsonWebKey);
         return Base64Url.Encode(Encoding.UTF8.GetBytes(json));
     }
 }

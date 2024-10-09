@@ -4,7 +4,7 @@
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 
-namespace IdentityModel;
+namespace Duende.IdentityModel;
 
 /// <summary>
 /// Helper class to create ClaimsPrincipal

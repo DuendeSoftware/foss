@@ -2,14 +2,14 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Threading.Tasks;
-using IdentityModel.Jwk;
+using Duende.IdentityModel.Jwk;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models a response from a JWK endpoint
 /// </summary>
-/// <seealso cref="IdentityModel.Client.ProtocolResponse" />
+/// <seealso cref="ProtocolResponse" />
 public class JsonWebKeySetResponse : ProtocolResponse
 {
     /// <summary>

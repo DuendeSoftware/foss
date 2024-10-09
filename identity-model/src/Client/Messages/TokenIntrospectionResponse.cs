@@ -7,13 +7,14 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Duende.IdentityModel.Client.Extensions;
 
-namespace IdentityModel.Client;
+namespace Duende.IdentityModel.Client.Messages;
 
 /// <summary>
 /// Models an OAuth 2.0 introspection response
 /// </summary>
-/// <seealso cref="IdentityModel.Client.ProtocolResponse" />
+/// <seealso cref="ProtocolResponse" />
 public class TokenIntrospectionResponse : ProtocolResponse
 {
     /// <summary>
