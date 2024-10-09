@@ -9,6 +9,7 @@
         <AssemblyName>$(PackageId)</AssemblyName>
         <RootNamespace>$(PackageId)</RootNamespace>
         <Description>Automatic access token management for OAuth client credential flows</Description>
+        <MinVerTagPrefix>idm-</MinVerTagPrefix>
     </PropertyGroup>
         
     <ItemGroup>
