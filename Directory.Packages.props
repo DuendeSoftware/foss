@@ -9,14 +9,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0'">
-    <FrameworkVersion>6.0.1</FrameworkVersion>
+    <FrameworkVersion>8.0.7</FrameworkVersion>
     <ExtensionsVersion>6.0.0</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
     <IdentityServerVersion>6.0.6</IdentityServerVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
-    <FrameworkVersion>8.0.1</FrameworkVersion>
+    <FrameworkVersion>8.0.7</FrameworkVersion>
     <ExtensionsVersion>8.0.0</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
     <IdentityServerVersion>7.0.6</IdentityServerVersion>
@@ -45,7 +45,7 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0"/>
     <PackageVersion Include="MinVer" Version="6.0.0" />
     <PackageVersion Include="RichardSzalay.MockHttp" Version="7.0.0" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.2" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.3" />
     <PackageVersion Include="Shouldly" Version="4.2.1" />
     <PackageVersion Include="SimpleExec" Version="12.0.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="$(WilsonVersion)" />
