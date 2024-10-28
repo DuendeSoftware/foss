@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0'">
-    <FrameworkVersion>6.0.1</FrameworkVersion>
-    <ExtensionsVersion>6.0.0</ExtensionsVersion>
+    <FrameworkVersion>8.0.1</FrameworkVersion>
+    <ExtensionsVersion>8.0.0</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
-    <IdentityServerVersion>6.0.6</IdentityServerVersion>
+    <IdentityServerVersion>7.0.6</IdentityServerVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
@@ -29,7 +29,7 @@
     <PackageVersion Include="Duende.IdentityServer" Version="$(IdentityServerVersion)" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="IdentityModel" Version="7.0.0" />
-    <PackageVersion Include="MartinCostello.Logging.XUnit" Version="0.3.0" />
+    <PackageVersion Include="MartinCostello.Logging.XUnit" Version="0.4.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="$(FrameworkVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(FrameworkVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="$(FrameworkVersion)" />
