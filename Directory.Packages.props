@@ -4,20 +4,20 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
-    <ExtensionsVersion>8.0.0</ExtensionsVersion>
+    <ExtensionsVersion>8.0.2</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0'">
     <FrameworkVersion>6.0.1</FrameworkVersion>
-    <ExtensionsVersion>6.0.0</ExtensionsVersion>
+    <ExtensionsVersion>8.0.2</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
     <IdentityServerVersion>6.0.6</IdentityServerVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
     <FrameworkVersion>8.0.1</FrameworkVersion>
-    <ExtensionsVersion>8.0.0</ExtensionsVersion>
+    <ExtensionsVersion>8.0.2</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
     <IdentityServerVersion>7.0.6</IdentityServerVersion>
   </PropertyGroup>
