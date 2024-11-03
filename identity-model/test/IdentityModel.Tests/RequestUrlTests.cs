@@ -9,7 +9,6 @@ namespace Duende.IdentityModel
 {
     public class RequestUrlTests
     {
-
         private const string ClientId = "client";
         private const string ResponseType = "code";
         private const string Authority = "http://server/authorize";

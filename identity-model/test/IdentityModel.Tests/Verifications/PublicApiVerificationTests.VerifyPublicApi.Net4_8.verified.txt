@@ -1,0 +1,1400 @@
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/DuendeSoftware/foss.git")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETStandard,Version=v2.0", FrameworkDisplayName=".NET Standard 2.0")]
+namespace Duende.IdentityModel
+{
+    public static class Base64Url
+    {
+        public static byte[] Decode(string arg) { }
+        public static string Encode(byte[] arg) { }
+    }
+    public class ClaimComparer : System.Collections.Generic.EqualityComparer<System.Security.Claims.Claim>
+    {
+        public ClaimComparer() { }
+        public ClaimComparer(Duende.IdentityModel.ClaimComparer.Options options) { }
+        public override bool Equals(System.Security.Claims.Claim? x, System.Security.Claims.Claim? y) { }
+        public override int GetHashCode(System.Security.Claims.Claim claim) { }
+        public class Options
+        {
+            public Options() { }
+            public bool IgnoreIssuer { get; set; }
+            public bool IgnoreValueCase { get; set; }
+        }
+    }
+    public class CryptoRandom : System.Random
+    {
+        public CryptoRandom() { }
+        public CryptoRandom(int ignoredSeed) { }
+        public override int Next() { }
+        public override int Next(int maxValue) { }
+        public override int Next(int minValue, int maxValue) { }
+        public override void NextBytes(byte[] buffer) { }
+        public override double NextDouble() { }
+        public static byte[] CreateRandomKey(int length) { }
+        public static string CreateUniqueId(int length = 32, Duende.IdentityModel.CryptoRandom.OutputFormat format = 0) { }
+        public enum OutputFormat
+        {
+            Base64Url = 0,
+            Base64 = 1,
+            Hex = 2,
+        }
+    }
+    public static class DateTimeExtensions
+    {
+        public static System.DateTime ToDateTimeFromEpoch(this long date) { }
+        public static long ToEpochTime(this System.DateTime dateTime) { }
+    }
+    public static class Identity
+    {
+        public static System.Security.Claims.ClaimsIdentity Anonymous { get; }
+        public static System.Security.Claims.ClaimsIdentity Create(string authenticationType, params System.Security.Claims.Claim[] claims) { }
+        public static System.Security.Claims.ClaimsIdentity CreateFromCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2 certificate, string authenticationType = "X.509", bool includeAllClaims = false) { }
+    }
+    public static class JwtClaimTypes
+    {
+        public const string AccessTokenHash = "at_hash";
+        public const string Actor = "act";
+        public const string Address = "address";
+        public const string Algorithm = "alg";
+        public const string Audience = "aud";
+        public const string AuthenticationContextClassReference = "acr";
+        public const string AuthenticationMethod = "amr";
+        public const string AuthenticationTime = "auth_time";
+        public const string AuthorizationCodeHash = "c_hash";
+        public const string AuthorizedParty = "azp";
+        public const string BirthDate = "birthdate";
+        public const string ClientId = "client_id";
+        public const string Confirmation = "cnf";
+        public const string DPoPAccessTokenHash = "ath";
+        public const string DPoPHttpMethod = "htm";
+        public const string DPoPHttpUrl = "htu";
+        public const string Email = "email";
+        public const string EmailVerified = "email_verified";
+        public const string Events = "events";
+        public const string Expiration = "exp";
+        public const string FamilyName = "family_name";
+        public const string Gender = "gender";
+        public const string GivenName = "given_name";
+        public const string Id = "id";
+        public const string IdentityProvider = "idp";
+        public const string IssuedAt = "iat";
+        public const string Issuer = "iss";
+        public const string JsonWebKey = "jwk";
+        public const string JwtId = "jti";
+        public const string Locale = "locale";
+        public const string MayAct = "may_act";
+        public const string MiddleName = "middle_name";
+        public const string Name = "name";
+        public const string NickName = "nickname";
+        public const string Nonce = "nonce";
+        public const string NotBefore = "nbf";
+        public const string PhoneNumber = "phone_number";
+        public const string PhoneNumberVerified = "phone_number_verified";
+        public const string Picture = "picture";
+        public const string PreferredUserName = "preferred_username";
+        public const string Profile = "profile";
+        public const string ReferenceTokenId = "reference_token_id";
+        public const string Role = "role";
+        public const string Roles = "roles";
+        public const string Scope = "scope";
+        public const string SessionId = "sid";
+        public const string StateHash = "s_hash";
+        public const string Subject = "sub";
+        public const string TokenType = "typ";
+        public const string UpdatedAt = "updated_at";
+        public const string WebSite = "website";
+        public const string ZoneInfo = "zoneinfo";
+        public static class ConfirmationMethods
+        {
+            public const string JsonWebKey = "jwk";
+            public const string JwkThumbprint = "jkt";
+            public const string X509ThumbprintSha256 = "x5t#S256";
+        }
+        public static class JwtTypes
+        {
+            public const string AccessToken = "at+jwt";
+            public const string AuthorizationRequest = "oauth-authz-req+jwt";
+            public const string DPoPProofToken = "dpop+jwt";
+        }
+    }
+    public static class OidcConstants
+    {
+        public static class Algorithms
+        {
+            public const string None = "none";
+            public static class Asymmetric
+            {
+                public const string ES256 = "ES256";
+                public const string ES384 = "ES384";
+                public const string ES512 = "ES512";
+                public const string PS256 = "PS256";
+                public const string PS384 = "PS384";
+                public const string PS512 = "PS512";
+                public const string RS256 = "RS256";
+                public const string RS384 = "RS384";
+                public const string RS512 = "RS512";
+            }
+            public static class Symmetric
+            {
+                public const string HS256 = "HS256";
+                public const string HS384 = "HS384";
+                public const string HS512 = "HS512";
+            }
+        }
+        public static class AuthenticationMethods
+        {
+            public const string ConfirmationBySms = "sms";
+            public const string ConfirmationByTelephone = "tel";
+            public const string FacialRecognition = "face";
+            public const string FingerprintBiometric = "fpt";
+            public const string Geolocation = "geo";
+            public const string IrisScanBiometric = "iris";
+            public const string KnowledgeBasedAuthentication = "kba";
+            public const string MultiFactorAuthentication = "mfa";
+            public const string MultipleChannelAuthentication = "mca";
+            public const string OneTimePassword = "otp";
+            public const string Password = "pwd";
+            public const string PersonalIdentificationOrPattern = "pin";
+            public const string ProofOfPossessionHardwareSecuredKey = "hwk";
+            public const string ProofOfPossessionKey = "pop";
+            public const string ProofOfPossessionSoftwareSecuredKey = "swk";
+            public const string RetinaScanBiometric = "retina";
+            public const string RiskBasedAuthentication = "rba";
+            public const string SmartCard = "sc";
+            public const string UserPresenceTest = "user";
+            public const string VoiceBiometric = "vbm";
+            public const string WindowsIntegratedAuthentication = "wia";
+        }
+        public static class AuthenticationSchemes
+        {
+            public const string AuthorizationHeaderBearer = "Bearer";
+            public const string AuthorizationHeaderDPoP = "DPoP";
+            public const string AuthorizationHeaderPop = "PoP";
+            public const string FormPostBearer = "access_token";
+            public const string FormPostPop = "pop_access_token";
+            public const string QueryStringBearer = "access_token";
+            public const string QueryStringPop = "pop_access_token";
+        }
+        public static class AuthorizeErrors
+        {
+            public const string AccessDenied = "access_denied";
+            public const string AccountSelectionRequired = "account_selection_required";
+            public const string ConsentRequired = "consent_required";
+            public const string InteractionRequired = "interaction_required";
+            public const string InvalidRequest = "invalid_request";
+            public const string InvalidRequestObject = "invalid_request_object";
+            public const string InvalidRequestUri = "invalid_request_uri";
+            public const string InvalidScope = "invalid_scope";
+            public const string InvalidTarget = "invalid_target";
+            public const string LoginRequired = "login_required";
+            public const string RegistrationNotSupported = "registration_not_supported";
+            public const string RequestNotSupported = "request_not_supported";
+            public const string RequestUriNotSupported = "request_uri_not_supported";
+            public const string ServerError = "server_error";
+            public const string TemporarilyUnavailable = "temporarily_unavailable";
+            public const string UnauthorizedClient = "unauthorized_client";
+            public const string UnmetAuthenticationRequirements = "unmet_authentication_requirements";
+            public const string UnsupportedResponseType = "unsupported_response_type";
+        }
+        public static class AuthorizeRequest
+        {
+            public const string AcrValues = "acr_values";
+            public const string ClientId = "client_id";
+            public const string CodeChallenge = "code_challenge";
+            public const string CodeChallengeMethod = "code_challenge_method";
+            public const string DPoPKeyThumbprint = "dpop_jkt";
+            public const string Display = "display";
+            public const string IdTokenHint = "id_token_hint";
+            public const string LoginHint = "login_hint";
+            public const string MaxAge = "max_age";
+            public const string Nonce = "nonce";
+            public const string Prompt = "prompt";
+            public const string RedirectUri = "redirect_uri";
+            public const string Request = "request";
+            public const string RequestUri = "request_uri";
+            public const string Resource = "resource";
+            public const string ResponseMode = "response_mode";
+            public const string ResponseType = "response_type";
+            public const string Scope = "scope";
+            public const string State = "state";
+            public const string UiLocales = "ui_locales";
+        }
+        public static class AuthorizeResponse
+        {
+            public const string AccessToken = "access_token";
+            public const string Code = "code";
+            public const string Error = "error";
+            public const string ErrorDescription = "error_description";
+            public const string ExpiresIn = "expires_in";
+            public const string IdentityToken = "id_token";
+            public const string Issuer = "iss";
+            public const string RefreshToken = "refresh_token";
+            public const string Scope = "scope";
+            public const string SessionState = "session_state";
+            public const string State = "state";
+            public const string TokenType = "token_type";
+        }
+        public static class BackChannelLogoutRequest
+        {
+            public const string LogoutToken = "logout_token";
+        }
+        public static class BackchannelAuthenticationRequest
+        {
+            public const string AcrValues = "acr_values";
+            public const string BindingMessage = "binding_message";
+            public const string ClientNotificationToken = "client_notification_token";
+            public const string DPoPKeyThumbprint = "dpop_jkt";
+            public const string IdTokenHint = "id_token_hint";
+            public const string LoginHint = "login_hint";
+            public const string LoginHintToken = "login_hint_token";
+            public const string Request = "request";
+            public const string RequestedExpiry = "requested_expiry";
+            public const string Resource = "resource";
+            public const string Scope = "scope";
+            public const string UserCode = "user_code";
+        }
+        public static class BackchannelAuthenticationRequestErrors
+        {
+            public const string AccessDenied = "access_denied";
+            public const string ExpiredLoginHintToken = "expired_login_hint_token";
+            public const string InvalidBindingMessage = "invalid_binding_message";
+            public const string InvalidClient = "invalid_client";
+            public const string InvalidRequest = "invalid_request";
+            public const string InvalidRequestObject = "invalid_request_object";
+            public const string InvalidScope = "invalid_scope";
+            public const string InvalidTarget = "invalid_target";
+            public const string InvalidUserCode = "invalid_user_code";
+            public const string MissingUserCode = "missing_user_code";
+            public const string UnauthorizedClient = "unauthorized_client";
+            public const string UnknownUserId = "unknown_user_id";
+        }
+        public static class BackchannelAuthenticationResponse
+        {
+            public const string AuthenticationRequestId = "auth_req_id";
+            public const string ExpiresIn = "expires_in";
+            public const string Interval = "interval";
+        }
+        public static class BackchannelTokenDeliveryModes
+        {
+            public const string Ping = "ping";
+            public const string Poll = "poll";
+            public const string Push = "push";
+        }
+        public static class ClientAssertionTypes
+        {
+            public const string JwtBearer = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+            public const string SamlBearer = "urn:ietf:params:oauth:client-assertion-type:saml2-bearer";
+        }
+        public static class ClientMetadata
+        {
+            public const string AlwaysUseDPoPBoundAccessTokens = "dpop_bound_access_tokens";
+            public const string ApplicationType = "application_type";
+            public const string BackchannelLogoutSessionRequired = "backchannel_logout_session_required";
+            public const string BackchannelLogoutUri = "backchannel_logout_uri";
+            public const string ClientName = "client_name";
+            public const string ClientUri = "client_uri";
+            public const string Contacts = "contacts";
+            public const string DefaultAcrValues = "default_acr_values";
+            public const string DefaultMaxAge = "default_max_age";
+            public const string FrontChannelLogoutSessionRequired = "frontchannel_logout_session_required";
+            public const string FrontChannelLogoutUri = "frontchannel_logout_uri";
+            public const string GrantTypes = "grant_types";
+            public const string IdentityTokenEncryptedResponseAlgorithm = "id_token_encrypted_response_alg";
+            public const string IdentityTokenEncryptedResponseEncryption = "id_token_encrypted_response_enc";
+            public const string IdentityTokenSignedResponseAlgorithm = "id_token_signed_response_alg";
+            public const string InitiateLoginUri = "initiate_login_uri";
+            public const string Jwks = "jwks";
+            public const string JwksUri = "jwks_uri";
+            public const string LogoUri = "logo_uri";
+            public const string PolicyUri = "policy_uri";
+            public const string PostLogoutRedirectUris = "post_logout_redirect_uris";
+            public const string RedirectUris = "redirect_uris";
+            public const string RequestObjectEncryptionAlgorithm = "request_object_encryption_alg";
+            public const string RequestObjectEncryptionEncryption = "request_object_encryption_enc";
+            public const string RequestObjectSigningAlgorithm = "request_object_signing_alg";
+            public const string RequestUris = "request_uris";
+            public const string RequireAuthenticationTime = "require_auth_time";
+            public const string RequireSignedRequestObject = "require_signed_request_object";
+            public const string ResponseTypes = "response_types";
+            public const string Scope = "scope";
+            public const string SectorIdentifierUri = "sector_identifier_uri";
+            public const string SoftwareId = "software_id";
+            public const string SoftwareStatement = "software_statement";
+            public const string SoftwareVersion = "software_version";
+            public const string SubjectType = "subject_type";
+            public const string TokenEndpointAuthenticationMethod = "token_endpoint_auth_method";
+            public const string TokenEndpointAuthenticationSigningAlgorithm = "token_endpoint_auth_signing_alg";
+            public const string TosUri = "tos_uri";
+            public const string UserInfoEncryptedResponseAlgorithm = "userinfo_encrypted_response_alg";
+            public const string UserinfoEncryptedResponseEncryption = "userinfo_encrypted_response_enc";
+            public const string UserinfoSignedResponseAlgorithm = "userinfo_signed_response_alg";
+        }
+        public static class CodeChallengeMethods
+        {
+            public const string Plain = "plain";
+            public const string Sha256 = "S256";
+        }
+        public static class DeviceAuthorizationResponse
+        {
+            public const string DeviceCode = "device_code";
+            public const string ExpiresIn = "expires_in";
+            public const string Interval = "interval";
+            public const string UserCode = "user_code";
+            public const string VerificationUri = "verification_uri";
+            public const string VerificationUriComplete = "verification_uri_complete";
+        }
+        public static class Discovery
+        {
+            public const string AcrValuesSupported = "acr_values_supported";
+            public const string AuthorizationEndpoint = "authorization_endpoint";
+            public const string AuthorizationResponseIssParameterSupported = "authorization_response_iss_parameter_supported";
+            public const string BackChannelLogoutSessionSupported = "backchannel_logout_session_supported";
+            public const string BackChannelLogoutSupported = "backchannel_logout_supported";
+            public const string BackchannelAuthenticationEndpoint = "backchannel_authentication_endpoint";
+            public const string BackchannelAuthenticationRequestSigningAlgValuesSupported = "backchannel_authentication_request_signing_alg_values_supported";
+            public const string BackchannelTokenDeliveryModesSupported = "backchannel_token_delivery_modes_supported";
+            public const string BackchannelUserCodeParameterSupported = "backchannel_user_code_parameter_supported";
+            public const string CheckSessionIframe = "check_session_iframe";
+            public const string ClaimTypesSupported = "claim_types_supported";
+            public const string ClaimsLocalesSupported = "claims_locales_supported";
+            public const string ClaimsParameterSupported = "claims_parameter_supported";
+            public const string ClaimsSupported = "claims_supported";
+            public const string CodeChallengeMethodsSupported = "code_challenge_methods_supported";
+            public const string DPoPSigningAlgorithmsSupported = "dpop_signing_alg_values_supported";
+            public const string DeviceAuthorizationEndpoint = "device_authorization_endpoint";
+            public const string DiscoveryEndpoint = ".well-known/openid-configuration";
+            public const string DisplayValuesSupported = "display_values_supported";
+            public const string EndSessionEndpoint = "end_session_endpoint";
+            public const string FrontChannelLogoutSessionSupported = "frontchannel_logout_session_supported";
+            public const string FrontChannelLogoutSupported = "frontchannel_logout_supported";
+            public const string GrantTypesSupported = "grant_types_supported";
+            public const string IdTokenEncryptionAlgorithmsSupported = "id_token_encryption_alg_values_supported";
+            public const string IdTokenEncryptionEncValuesSupported = "id_token_encryption_enc_values_supported";
+            public const string IdTokenSigningAlgorithmsSupported = "id_token_signing_alg_values_supported";
+            public const string IntrospectionEndpoint = "introspection_endpoint";
+            public const string Issuer = "issuer";
+            public const string JwksUri = "jwks_uri";
+            public const string MtlsEndpointAliases = "mtls_endpoint_aliases";
+            public const string OpPolicyUri = "op_policy_uri";
+            public const string OpTosUri = "op_tos_uri";
+            public const string PromptValuesSupported = "prompt_values_supported";
+            public const string PushedAuthorizationRequestEndpoint = "pushed_authorization_request_endpoint";
+            public const string RegistrationEndpoint = "registration_endpoint";
+            public const string RequestObjectEncryptionAlgorithmsSupported = "request_object_encryption_alg_values_supported";
+            public const string RequestObjectEncryptionEncValuesSupported = "request_object_encryption_enc_values_supported";
+            public const string RequestObjectSigningAlgorithmsSupported = "request_object_signing_alg_values_supported";
+            public const string RequestParameterSupported = "request_parameter_supported";
+            public const string RequestUriParameterSupported = "request_uri_parameter_supported";
+            public const string RequirePushedAuthorizationRequests = "require_pushed_authorization_requests";
+            public const string RequireRequestUriRegistration = "require_request_uri_registration";
+            public const string ResponseModesSupported = "response_modes_supported";
+            public const string ResponseTypesSupported = "response_types_supported";
+            public const string RevocationEndpoint = "revocation_endpoint";
+            public const string ScopesSupported = "scopes_supported";
+            public const string ServiceDocumentation = "service_documentation";
+            public const string SubjectTypesSupported = "subject_types_supported";
+            public const string TlsClientCertificateBoundAccessTokens = "tls_client_certificate_bound_access_tokens";
+            public const string TokenEndpoint = "token_endpoint";
+            public const string TokenEndpointAuthSigningAlgorithmsSupported = "token_endpoint_auth_signing_alg_values_supported";
+            public const string TokenEndpointAuthenticationMethodsSupported = "token_endpoint_auth_methods_supported";
+            public const string UILocalesSupported = "ui_locales_supported";
+            public const string UserInfoEncryptionAlgorithmsSupported = "userinfo_encryption_alg_values_supported";
+            public const string UserInfoEncryptionEncValuesSupported = "userinfo_encryption_enc_values_supported";
+            public const string UserInfoEndpoint = "userinfo_endpoint";
+            public const string UserInfoSigningAlgorithmsSupported = "userinfo_signing_alg_values_supported";
+        }
+        public static class DisplayModes
+        {
+            public const string Page = "page";
+            public const string Popup = "popup";
+            public const string Touch = "touch";
+            public const string Wap = "wap";
+        }
+        public static class EndSessionRequest
+        {
+            public const string IdTokenHint = "id_token_hint";
+            public const string Issuer = "iss";
+            public const string PostLogoutRedirectUri = "post_logout_redirect_uri";
+            public const string Sid = "sid";
+            public const string State = "state";
+            public const string UiLocales = "ui_locales";
+        }
+        public static class EndpointAuthenticationMethods
+        {
+            public const string BasicAuthentication = "client_secret_basic";
+            public const string PostBody = "client_secret_post";
+            public const string PrivateKeyJwt = "private_key_jwt";
+            public const string SelfSignedTlsClientAuth = "self_signed_tls_client_auth";
+            public const string TlsClientAuth = "tls_client_auth";
+        }
+        public static class Events
+        {
+            public const string BackChannelLogout = "http://schemas.openid.net/event/backchannel-logout";
+        }
+        public static class GrantTypes
+        {
+            public const string AuthorizationCode = "authorization_code";
+            public const string Ciba = "urn:openid:params:grant-type:ciba";
+            public const string ClientCredentials = "client_credentials";
+            public const string DeviceCode = "urn:ietf:params:oauth:grant-type:device_code";
+            public const string Implicit = "implicit";
+            public const string JwtBearer = "urn:ietf:params:oauth:grant-type:jwt-bearer";
+            public const string Password = "password";
+            public const string RefreshToken = "refresh_token";
+            public const string Saml2Bearer = "urn:ietf:params:oauth:grant-type:saml2-bearer";
+            public const string TokenExchange = "urn:ietf:params:oauth:grant-type:token-exchange";
+        }
+        public static class HttpHeaders
+        {
+            public const string DPoP = "DPoP";
+            public const string DPoPNonce = "DPoP-Nonce";
+        }
+        public static class PromptModes
+        {
+            public const string Consent = "consent";
+            public const string Create = "create";
+            public const string Login = "login";
+            public const string None = "none";
+            public const string SelectAccount = "select_account";
+        }
+        public static class ProtectedResourceErrors
+        {
+            public const string ExpiredToken = "expired_token";
+            public const string InsufficientScope = "insufficient_scope";
+            public const string InvalidRequest = "invalid_request";
+            public const string InvalidToken = "invalid_token";
+        }
+        public static class PushedAuthorizationRequestResponse
+        {
+            public const string ExpiresIn = "expires_in";
+            public const string RequestUri = "request_uri";
+        }
+        public static class RegistrationResponse
+        {
+            public const string ClientId = "client_id";
+            public const string ClientIdIssuedAt = "client_id_issued_at";
+            public const string ClientSecret = "client_secret";
+            public const string ClientSecretExpiresAt = "client_secret_expires_at";
+            public const string Error = "error";
+            public const string ErrorDescription = "error_description";
+            public const string RegistrationAccessToken = "registration_access_token";
+            public const string RegistrationClientUri = "registration_client_uri";
+            public const string SoftwareStatement = "software_statement";
+        }
+        public static class ResponseModes
+        {
+            public const string FormPost = "form_post";
+            public const string Fragment = "fragment";
+            public const string Query = "query";
+        }
+        public static class ResponseTypes
+        {
+            public const string Code = "code";
+            public const string CodeIdToken = "code id_token";
+            public const string CodeIdTokenToken = "code id_token token";
+            public const string CodeToken = "code token";
+            public const string IdToken = "id_token";
+            public const string IdTokenToken = "id_token token";
+            public const string Token = "token";
+        }
+        public static class StandardScopes
+        {
+            public const string Address = "address";
+            public const string Email = "email";
+            public const string OfflineAccess = "offline_access";
+            public const string OpenId = "openid";
+            public const string Phone = "phone";
+            public const string Profile = "profile";
+        }
+        public static class TokenErrors
+        {
+            public const string AccessDenied = "access_denied";
+            public const string AuthorizationPending = "authorization_pending";
+            public const string ExpiredToken = "expired_token";
+            public const string InvalidClient = "invalid_client";
+            public const string InvalidDPoPProof = "invalid_dpop_proof";
+            public const string InvalidGrant = "invalid_grant";
+            public const string InvalidRequest = "invalid_request";
+            public const string InvalidScope = "invalid_scope";
+            public const string InvalidTarget = "invalid_target";
+            public const string SlowDown = "slow_down";
+            public const string UnauthorizedClient = "unauthorized_client";
+            public const string UnsupportedGrantType = "unsupported_grant_type";
+            public const string UnsupportedResponseType = "unsupported_response_type";
+            public const string UseDPoPNonce = "use_dpop_nonce";
+        }
+        public static class TokenIntrospectionRequest
+        {
+            public const string Token = "token";
+            public const string TokenTypeHint = "token_type_hint";
+        }
+        public static class TokenRequest
+        {
+            public const string ActorToken = "actor_token";
+            public const string ActorTokenType = "actor_token_type";
+            public const string Algorithm = "alg";
+            public const string Assertion = "assertion";
+            public const string Audience = "audience";
+            public const string AuthenticationRequestId = "auth_req_id";
+            public const string ClientAssertion = "client_assertion";
+            public const string ClientAssertionType = "client_assertion_type";
+            public const string ClientId = "client_id";
+            public const string ClientSecret = "client_secret";
+            public const string Code = "code";
+            public const string CodeVerifier = "code_verifier";
+            public const string DeviceCode = "device_code";
+            public const string GrantType = "grant_type";
+            public const string Key = "key";
+            public const string Password = "password";
+            public const string RedirectUri = "redirect_uri";
+            public const string RefreshToken = "refresh_token";
+            public const string RequestedTokenType = "requested_token_type";
+            public const string Resource = "resource";
+            public const string Scope = "scope";
+            public const string SubjectToken = "subject_token";
+            public const string SubjectTokenType = "subject_token_type";
+            public const string TokenType = "token_type";
+            public const string UserName = "username";
+        }
+        public static class TokenRequestTypes
+        {
+            public const string Bearer = "bearer";
+            public const string Pop = "pop";
+        }
+        public static class TokenResponse
+        {
+            public const string AccessToken = "access_token";
+            public const string BearerTokenType = "Bearer";
+            public const string DPoPTokenType = "DPoP";
+            public const string Error = "error";
+            public const string ErrorDescription = "error_description";
+            public const string ExpiresIn = "expires_in";
+            public const string IdentityToken = "id_token";
+            public const string IssuedTokenType = "issued_token_type";
+            public const string RefreshToken = "refresh_token";
+            public const string Scope = "scope";
+            public const string TokenType = "token_type";
+        }
+        public static class TokenTypeIdentifiers
+        {
+            public const string AccessToken = "urn:ietf:params:oauth:token-type:access_token";
+            public const string IdentityToken = "urn:ietf:params:oauth:token-type:id_token";
+            public const string Jwt = "urn:ietf:params:oauth:token-type:jwt";
+            public const string RefreshToken = "urn:ietf:params:oauth:token-type:refresh_token";
+            public const string Saml11 = "urn:ietf:params:oauth:token-type:saml1";
+            public const string Saml2 = "urn:ietf:params:oauth:token-type:saml2";
+        }
+        public static class TokenTypes
+        {
+            public const string AccessToken = "access_token";
+            public const string IdentityToken = "id_token";
+            public const string RefreshToken = "refresh_token";
+        }
+    }
+    public static class Principal
+    {
+        public static System.Security.Claims.ClaimsPrincipal Anonymous { get; }
+        public static System.Security.Claims.ClaimsPrincipal Create(string authenticationType, params System.Security.Claims.Claim[] claims) { }
+        public static System.Security.Claims.ClaimsPrincipal CreateFromCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2 certificate, string authenticationType = "X.509", bool includeAllClaims = false) { }
+    }
+    public static class StringExtensions
+    {
+        public static string ToSha256(this string input) { }
+        public static string ToSha512(this string input) { }
+    }
+    public static class TimeConstantComparer
+    {
+        public static bool IsEqual(string s1, string s2) { }
+    }
+    public static class X509
+    {
+        public static Duende.IdentityModel.X509CertificatesLocation CurrentUser { get; }
+        public static Duende.IdentityModel.X509CertificatesLocation LocalMachine { get; }
+    }
+    public class X509CertificatesFinder
+    {
+        public X509CertificatesFinder(System.Security.Cryptography.X509Certificates.StoreLocation location, System.Security.Cryptography.X509Certificates.StoreName name, System.Security.Cryptography.X509Certificates.X509FindType findType) { }
+        public System.Collections.Generic.IEnumerable<System.Security.Cryptography.X509Certificates.X509Certificate2> Find(object findValue, bool validOnly = true) { }
+    }
+    public class X509CertificatesLocation
+    {
+        public X509CertificatesLocation(System.Security.Cryptography.X509Certificates.StoreLocation location) { }
+        public Duende.IdentityModel.X509CertificatesName AddressBook { get; }
+        public Duende.IdentityModel.X509CertificatesName CertificateAuthority { get; }
+        public Duende.IdentityModel.X509CertificatesName My { get; }
+        public Duende.IdentityModel.X509CertificatesName TrustedPeople { get; }
+        public Duende.IdentityModel.X509CertificatesName TrustedPublisher { get; }
+    }
+    public class X509CertificatesName
+    {
+        public X509CertificatesName(System.Security.Cryptography.X509Certificates.StoreLocation location, System.Security.Cryptography.X509Certificates.StoreName name) { }
+        public Duende.IdentityModel.X509CertificatesFinder IssuerName { get; }
+        public Duende.IdentityModel.X509CertificatesFinder SerialNumber { get; }
+        public Duende.IdentityModel.X509CertificatesFinder SubjectDistinguishedName { get; }
+        public Duende.IdentityModel.X509CertificatesFinder Thumbprint { get; }
+    }
+}
+namespace Duende.IdentityModel.Client
+{
+    public sealed class AuthorityUrlValidationStrategy : Duende.IdentityModel.Client.IAuthorityValidationStrategy
+    {
+        public AuthorityUrlValidationStrategy() { }
+        public Duende.IdentityModel.Client.AuthorityValidationResult IsEndpointValid(string endpoint, System.Collections.Generic.IEnumerable<string> allowedAuthorities) { }
+        public Duende.IdentityModel.Client.AuthorityValidationResult IsIssuerNameValid(string issuerName, string expectedAuthority) { }
+    }
+    public struct AuthorityValidationResult
+    {
+        public static readonly Duende.IdentityModel.Client.AuthorityValidationResult SuccessResult;
+        public string ErrorMessage { get; }
+        public bool Success { get; }
+        public override string ToString() { }
+        public static Duende.IdentityModel.Client.AuthorityValidationResult CreateError(string message) { }
+    }
+    public class AuthorizationCodeTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public AuthorizationCodeTokenRequest() { }
+        public string Code { get; set; }
+        public string? CodeVerifier { get; set; }
+        public string RedirectUri { get; set; }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+    }
+    public static class AuthorizationHeaderExtensions
+    {
+        public static void SetBasicAuthentication(this System.Net.Http.HttpClient client, string userName, string password) { }
+        public static void SetBasicAuthentication(this System.Net.Http.HttpRequestMessage request, string userName, string password) { }
+        public static void SetBasicAuthenticationOAuth(this System.Net.Http.HttpClient client, string userName, string password) { }
+        public static void SetBasicAuthenticationOAuth(this System.Net.Http.HttpRequestMessage request, string userName, string password) { }
+        public static void SetBearerToken(this System.Net.Http.HttpClient client, string token) { }
+        public static void SetBearerToken(this System.Net.Http.HttpRequestMessage request, string token) { }
+        public static void SetDPoPToken(this System.Net.Http.HttpRequestMessage request, string accessToken, string proofToken) { }
+        public static void SetToken(this System.Net.Http.HttpClient client, string scheme, string token) { }
+        public static void SetToken(this System.Net.Http.HttpRequestMessage request, string scheme, string token) { }
+    }
+    public class AuthorizeResponse
+    {
+        public AuthorizeResponse(string raw) { }
+        public string? AccessToken { get; }
+        public string? Code { get; }
+        public string? Error { get; }
+        public string? ErrorDescription { get; }
+        public int ExpiresIn { get; }
+        public string? IdentityToken { get; }
+        public bool IsError { get; }
+        public string? Issuer { get; }
+        public string Raw { get; }
+        public string? Scope { get; }
+        public string? SessionState { get; }
+        public string? State { get; }
+        public string? TokenType { get; }
+        public System.Collections.Generic.Dictionary<string, string> Values { get; }
+        public string? TryGet(string type) { }
+    }
+    public class BackchannelAuthenticationRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public BackchannelAuthenticationRequest() { }
+        public string? AcrValues { get; set; }
+        public string? BindingMessage { get; set; }
+        public string? ClientNotificationToken { get; set; }
+        public string? IdTokenHint { get; set; }
+        public string? LoginHint { get; set; }
+        public string? LoginHintToken { get; set; }
+        public string? RequestObject { get; set; }
+        public int? RequestedExpiry { get; set; }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+        public string Scope { get; set; }
+        public string? UserCode { get; set; }
+    }
+    public class BackchannelAuthenticationResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public BackchannelAuthenticationResponse() { }
+        public string? AuthenticationRequestId { get; }
+        public int ExpiresIn { get; }
+        public int? Interval { get; }
+    }
+    public class BackchannelAuthenticationTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public BackchannelAuthenticationTokenRequest() { }
+        public string AuthenticationRequestId { get; set; }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+    }
+    public enum BasicAuthenticationHeaderStyle
+    {
+        Rfc6749 = 0,
+        Rfc2617 = 1,
+    }
+    public class BasicAuthenticationHeaderValue : System.Net.Http.Headers.AuthenticationHeaderValue
+    {
+        public BasicAuthenticationHeaderValue(string userName, string password) { }
+        public static string EncodeCredential(string userName, string password) { }
+    }
+    public class BasicAuthenticationOAuthHeaderValue : System.Net.Http.Headers.AuthenticationHeaderValue
+    {
+        public BasicAuthenticationOAuthHeaderValue(string userName, string password) { }
+        public static string EncodeCredential(string userName, string password) { }
+    }
+    public class ClientAssertion
+    {
+        public ClientAssertion() { }
+        public string Type { get; set; }
+        public string Value { get; set; }
+    }
+    public enum ClientCredentialStyle
+    {
+        AuthorizationHeader = 0,
+        PostBody = 1,
+    }
+    public class ClientCredentialsTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public ClientCredentialsTokenRequest() { }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+        public string? Scope { get; set; }
+    }
+    public abstract class ClientOptions
+    {
+        protected ClientOptions() { }
+        public string Address { get; set; }
+        public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
+        public Duende.IdentityModel.Client.ClientAssertion? ClientAssertion { get; set; }
+        public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
+        public string ClientId { get; set; }
+        public string? ClientSecret { get; set; }
+        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
+    }
+    public class DeviceAuthorizationRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public DeviceAuthorizationRequest() { }
+        public string? Scope { get; set; }
+    }
+    public class DeviceAuthorizationResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public DeviceAuthorizationResponse() { }
+        public string? DeviceCode { get; }
+        public string? ErrorDescription { get; }
+        public int? ExpiresIn { get; }
+        public int Interval { get; }
+        public string? UserCode { get; }
+        public string? VerificationUri { get; }
+        public string? VerificationUriComplete { get; }
+    }
+    public class DeviceTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public DeviceTokenRequest() { }
+        public string DeviceCode { get; set; }
+    }
+    public class DiscoveryCache : Duende.IdentityModel.Client.IDiscoveryCache
+    {
+        public DiscoveryCache(string authority, Duende.IdentityModel.Client.DiscoveryPolicy? policy = null) { }
+        public DiscoveryCache(string authority, System.Func<System.Net.Http.HttpMessageInvoker> httpClientFunc, Duende.IdentityModel.Client.DiscoveryPolicy? policy = null) { }
+        public System.TimeSpan CacheDuration { get; set; }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.DiscoveryDocumentResponse> GetAsync() { }
+        public void Refresh() { }
+    }
+    public class DiscoveryDocumentRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public DiscoveryDocumentRequest() { }
+        public Duende.IdentityModel.Client.DiscoveryPolicy Policy { get; set; }
+    }
+    public class DiscoveryDocumentResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public DiscoveryDocumentResponse() { }
+        public string? AuthorizeEndpoint { get; }
+        public string? BackchannelAuthenticationEndpoint { get; }
+        public System.Collections.Generic.IEnumerable<string> BackchannelTokenDeliveryModesSupported { get; }
+        public bool? BackchannelUserCodeParameterSupported { get; }
+        public string? CheckSessionIframe { get; }
+        public System.Collections.Generic.IEnumerable<string> ClaimsSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> CodeChallengeMethodsSupported { get; }
+        public string? DeviceAuthorizationEndpoint { get; }
+        public string? EndSessionEndpoint { get; }
+        public bool? FrontChannelLogoutSessionSupported { get; }
+        public bool? FrontChannelLogoutSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> GrantTypesSupported { get; }
+        public string? IntrospectionEndpoint { get; }
+        public string? Issuer { get; }
+        public string? JwksUri { get; }
+        public Duende.IdentityModel.Jwk.JsonWebKeySet? KeySet { get; set; }
+        public Duende.IdentityModel.Client.MtlsEndpointAliases? MtlsEndpointAliases { get; }
+        public Duende.IdentityModel.Client.DiscoveryPolicy Policy { get; set; }
+        public string? PushedAuthorizationRequestEndpoint { get; }
+        public string? RegistrationEndpoint { get; }
+        public bool? RequirePushedAuthorizationRequests { get; }
+        public System.Collections.Generic.IEnumerable<string> ResponseModesSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> ResponseTypesSupported { get; }
+        public string? RevocationEndpoint { get; }
+        public System.Collections.Generic.IEnumerable<string> ScopesSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> SubjectTypesSupported { get; }
+        public string? TokenEndpoint { get; }
+        public System.Collections.Generic.IEnumerable<string> TokenEndpointAuthenticationMethodsSupported { get; }
+        public string? UserInfoEndpoint { get; }
+        protected override System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
+        public bool? TryGetBoolean(string name) { }
+        public string? TryGetString(string name) { }
+        public System.Collections.Generic.IEnumerable<string> TryGetStringArray(string name) { }
+        public System.Text.Json.JsonElement? TryGetValue(string name) { }
+        public string ValidateEndpoints(System.Text.Json.JsonElement? json, Duende.IdentityModel.Client.DiscoveryPolicy policy) { }
+        public bool ValidateIssuerName(string issuer, string authority) { }
+        public bool ValidateIssuerName(string issuer, string authority, System.StringComparison nameComparison) { }
+    }
+    public class DiscoveryEndpoint
+    {
+        public DiscoveryEndpoint(string authority, string url) { }
+        public string Authority { get; }
+        public string Url { get; }
+        public static bool IsSecureScheme(System.Uri url, Duende.IdentityModel.Client.DiscoveryPolicy policy) { }
+        public static bool IsValidScheme(System.Uri url) { }
+        public static Duende.IdentityModel.Client.DiscoveryEndpoint ParseUrl(string input, string? path = null) { }
+    }
+    public class DiscoveryPolicy
+    {
+        public System.Collections.Generic.ICollection<string> LoopbackAddresses;
+        public DiscoveryPolicy() { }
+        public System.Collections.Generic.ICollection<string> AdditionalEndpointBaseAddresses { get; set; }
+        public bool AllowHttpOnLoopback { get; set; }
+        public string Authority { get; set; }
+        public Duende.IdentityModel.Client.IAuthorityValidationStrategy AuthorityValidationStrategy { get; set; }
+        public string? DiscoveryDocumentPath { get; set; }
+        public System.Collections.Generic.ICollection<string> EndpointValidationExcludeList { get; set; }
+        public bool RequireHttps { get; set; }
+        public bool RequireKeySet { get; set; }
+        public bool ValidateEndpoints { get; set; }
+        public bool ValidateIssuerName { get; set; }
+    }
+    public class DynamicClientRegistrationDocument
+    {
+        public DynamicClientRegistrationDocument() { }
+        [System.Text.Json.Serialization.JsonPropertyName("application_type")]
+        public string? ApplicationType { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("backchannel_logout_uri")]
+        public string? BackChannelLogoutUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("backchannel_logout_session_required")]
+        public bool? BackchannelLogoutSessionRequired { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("client_name")]
+        public string? ClientName { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("client_uri")]
+        public System.Uri? ClientUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("contacts")]
+        public System.Collections.Generic.ICollection<string> Contacts { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("default_acr_values")]
+        public System.Collections.Generic.ICollection<string> DefaultAcrValues { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("default_max_age")]
+        public int? DefaultMaxAge { get; set; }
+        [System.Text.Json.Serialization.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, System.Text.Json.JsonElement>? Extensions { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("frontchannel_logout_session_required")]
+        public bool? FrontChannelLogoutSessionRequired { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("frontchannel_logout_uri")]
+        public string? FrontChannelLogoutUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("grant_types")]
+        public System.Collections.Generic.ICollection<string> GrantTypes { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("id_token_encrypted_response_alg")]
+        public string? IdentityTokenEncryptedResponseAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("id_token_encrypted_response_enc")]
+        public string? IdentityTokenEncryptedResponseEncryption { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("id_token_signed_response_alg")]
+        public string? IdentityTokenSignedResponseAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("initiate_login_uri")]
+        public System.Uri? InitiateLoginUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("jwks")]
+        public Duende.IdentityModel.Jwk.JsonWebKeySet? Jwks { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("jwks_uri")]
+        public System.Uri? JwksUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("logo_uri")]
+        public System.Uri? LogoUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("policy_uri")]
+        public System.Uri? PolicyUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("post_logout_redirect_uris")]
+        public System.Collections.Generic.ICollection<System.Uri> PostLogoutRedirectUris { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("redirect_uris")]
+        public System.Collections.Generic.ICollection<System.Uri> RedirectUris { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("request_object_encryption_alg")]
+        public string? RequestObjectEncryptionAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("request_object_encryption_enc")]
+        public string? RequestObjectEncryptionEncryption { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("request_object_signing_alg")]
+        public string? RequestObjectSigningAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("request_uris")]
+        public System.Collections.Generic.ICollection<System.Uri> RequestUris { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("require_auth_time")]
+        public bool? RequireAuthenticationTime { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("require_signed_request_object")]
+        public bool? RequireSignedRequestObject { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("response_types")]
+        public System.Collections.Generic.ICollection<string> ResponseTypes { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("scope")]
+        public string? Scope { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("sector_identifier_uri")]
+        public System.Uri? SectorIdentifierUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("software_id")]
+        public string? SoftwareId { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("software_statement")]
+        public string? SoftwareStatement { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("software_version")]
+        public string? SoftwareVersion { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("subject_type")]
+        public string? SubjectType { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("token_endpoint_auth_method")]
+        public string? TokenEndpointAuthenticationMethod { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("token_endpoint_auth_signing_alg")]
+        public string? TokenEndpointAuthenticationSigningAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("tos_uri")]
+        public System.Uri? TosUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("userinfo_encrypted_response_alg")]
+        public string? UserInfoEncryptedResponseAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("userinfo_encrypted_response_enc")]
+        public string? UserinfoEncryptedResponseEncryption { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("userinfo_signed_response_alg")]
+        public string? UserinfoSignedResponseAlgorithm { get; set; }
+        public bool ShouldSerializeContacts() { }
+        public bool ShouldSerializeDefaultAcrValues() { }
+        public bool ShouldSerializeGrantTypes() { }
+        public bool ShouldSerializeRequestUris() { }
+        public bool ShouldSerializeResponseTypes() { }
+    }
+    public class DynamicClientRegistrationRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public DynamicClientRegistrationRequest() { }
+        public Duende.IdentityModel.Client.DynamicClientRegistrationDocument Document { get; set; }
+        public string? Token { get; set; }
+    }
+    public class DynamicClientRegistrationResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public DynamicClientRegistrationResponse() { }
+        public string? ClientId { get; }
+        public long? ClientIdIssuedAt { get; }
+        public string? ClientSecret { get; }
+        public long? ClientSecretExpiresAt { get; }
+        public string? ErrorDescription { get; }
+        public string? RegistrationAccessToken { get; }
+        public string? RegistrationClientUri { get; }
+        public string? SoftwareStatement { get; }
+    }
+    public static class HttpClientBackchannelAuthenticationExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.BackchannelAuthenticationResponse> RequestBackchannelAuthenticationAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.BackchannelAuthenticationRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientDeviceFlowExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.DeviceAuthorizationResponse> RequestDeviceAuthorizationAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.DeviceAuthorizationRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientDiscoveryExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.DiscoveryDocumentResponse> GetDiscoveryDocumentAsync(this System.Net.Http.HttpClient client, string? address = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.DiscoveryDocumentResponse> GetDiscoveryDocumentAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.DiscoveryDocumentRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientDynamicRegistrationExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.DynamicClientRegistrationResponse> RegisterClientAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.DynamicClientRegistrationRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientJsonWebKeySetExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.JsonWebKeySetResponse> GetJsonWebKeySetAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.JsonWebKeySetRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.JsonWebKeySetResponse> GetJsonWebKeySetAsync(this System.Net.Http.HttpMessageInvoker client, string? address = null, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientPushedAuthorizationExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.PushedAuthorizationResponse> PushAuthorizationAsync(this System.Net.Http.HttpClient client, Duende.IdentityModel.Client.PushedAuthorizationRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientTokenIntrospectionExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenIntrospectionResponse> IntrospectTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.TokenIntrospectionRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientTokenRequestExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestAuthorizationCodeTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.AuthorizationCodeTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestBackchannelAuthenticationTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.BackchannelAuthenticationTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestClientCredentialsTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.ClientCredentialsTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestDeviceTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.DeviceTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestPasswordTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.PasswordTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestRefreshTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.RefreshTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.TokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestTokenExchangeTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.TokenExchangeTokenRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestTokenRawAsync(this System.Net.Http.HttpMessageInvoker client, string address, Duende.IdentityModel.Client.Parameters parameters, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientTokenRevocationExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenRevocationResponse> RevokeTokenAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.TokenRevocationRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class HttpClientUserInfoExtensions
+    {
+        public static System.Threading.Tasks.Task<Duende.IdentityModel.Client.UserInfoResponse> GetUserInfoAsync(this System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.UserInfoRequest request, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public interface IAuthorityValidationStrategy
+    {
+        Duende.IdentityModel.Client.AuthorityValidationResult IsEndpointValid(string endpoint, System.Collections.Generic.IEnumerable<string> expectedAuthority);
+        Duende.IdentityModel.Client.AuthorityValidationResult IsIssuerNameValid(string issuerName, string expectedAuthority);
+    }
+    public interface IDiscoveryCache
+    {
+        System.TimeSpan CacheDuration { get; set; }
+        System.Threading.Tasks.Task<Duende.IdentityModel.Client.DiscoveryDocumentResponse> GetAsync();
+        void Refresh();
+    }
+    public class IntrospectionClient
+    {
+        public IntrospectionClient(System.Func<System.Net.Http.HttpMessageInvoker> client, Duende.IdentityModel.Client.IntrospectionClientOptions options) { }
+        public IntrospectionClient(System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.IntrospectionClientOptions options) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenIntrospectionResponse> Introspect(string token, string? tokenTypeHint = null, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public class IntrospectionClientOptions : Duende.IdentityModel.Client.ClientOptions
+    {
+        public IntrospectionClientOptions() { }
+    }
+    public static class JsonElementExtensions
+    {
+        public static System.Collections.Generic.IEnumerable<System.Security.Claims.Claim> ToClaims(this System.Text.Json.JsonElement json, string? issuer = null, params string[] excludeKeys) { }
+        public static bool? TryGetBoolean(this System.Text.Json.JsonElement json, string name) { }
+        public static int? TryGetInt(this System.Text.Json.JsonElement json, string name) { }
+        public static string? TryGetString(this System.Text.Json.JsonElement json, string name) { }
+        public static System.Collections.Generic.IEnumerable<string> TryGetStringArray(this System.Text.Json.JsonElement json, string name) { }
+        public static System.Text.Json.JsonElement TryGetValue(this System.Text.Json.JsonElement json, string name) { }
+    }
+    public class JsonWebKeySetRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public JsonWebKeySetRequest() { }
+    }
+    public class JsonWebKeySetResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public JsonWebKeySetResponse() { }
+        public Duende.IdentityModel.Jwk.JsonWebKeySet? KeySet { get; set; }
+        protected override System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
+    }
+    public class MtlsEndpointAliases
+    {
+        public MtlsEndpointAliases(System.Text.Json.JsonElement? json) { }
+        public string? DeviceAuthorizationEndpoint { get; }
+        public string? IntrospectionEndpoint { get; }
+        public System.Text.Json.JsonElement? Json { get; }
+        public string? RevocationEndpoint { get; }
+        public string? TokenEndpoint { get; }
+    }
+    public enum ParameterReplaceBehavior
+    {
+        None = 0,
+        Single = 1,
+        All = 2,
+    }
+    public class Parameters : System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>
+    {
+        public Parameters() { }
+        public Parameters(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, string>> values) { }
+        public System.Collections.Generic.IEnumerable<string> this[string index] { get; }
+        public void Add(string key, string value, Duende.IdentityModel.Client.ParameterReplaceBehavior parameterReplace = 0) { }
+        public void AddOptional(string key, string? value, bool allowDuplicates = false) { }
+        public void AddRequired(string key, string? value, bool allowDuplicates = false, bool allowEmptyValue = false) { }
+        public bool ContainsKey(string key) { }
+        public System.Collections.Generic.IEnumerable<string> GetValues(string name) { }
+        public Duende.IdentityModel.Client.Parameters Merge(Duende.IdentityModel.Client.Parameters? additionalValues = null) { }
+        public static Duende.IdentityModel.Client.Parameters? FromObject(object values) { }
+    }
+    public class PasswordTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public PasswordTokenRequest() { }
+        public string? Password { get; set; }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+        public string? Scope { get; set; }
+        public string UserName { get; set; }
+    }
+    public class ProtocolRequest : System.Net.Http.HttpRequestMessage
+    {
+        public ProtocolRequest() { }
+        public string? Address { get; set; }
+        public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
+        public Duende.IdentityModel.Client.ClientAssertion ClientAssertion { get; set; }
+        public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
+        public string ClientId { get; set; }
+        public string? ClientSecret { get; set; }
+        public string? DPoPProofToken { get; set; }
+        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
+        public Duende.IdentityModel.Client.ProtocolRequest Clone() { }
+        public T Clone<T>()
+            where T : Duende.IdentityModel.Client.ProtocolRequest, new () { }
+        public void Prepare() { }
+    }
+    public class ProtocolResponse
+    {
+        public ProtocolResponse() { }
+        public string? DPoPNonce { get; set; }
+        public string? Error { get; }
+        protected string? ErrorMessage { get; set; }
+        public Duende.IdentityModel.Client.ResponseErrorType ErrorType { get; set; }
+        public System.Exception? Exception { get; set; }
+        public string? HttpErrorReason { get; }
+        public System.Net.Http.HttpResponseMessage? HttpResponse { get; set; }
+        public System.Net.HttpStatusCode HttpStatusCode { get; }
+        public bool IsError { get; }
+        public System.Text.Json.JsonElement? Json { get; set; }
+        public string? Raw { get; set; }
+        protected virtual System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
+        public string? TryGet(string name) { }
+        public static T FromException<T>(System.Exception ex, string? errorMessage = null)
+            where T : Duende.IdentityModel.Client.ProtocolResponse, new () { }
+        public static System.Threading.Tasks.Task<T> FromHttpResponseAsync<T>(System.Net.Http.HttpResponseMessage httpResponse, object? initializationData = null, bool skipJson = false)
+            where T : Duende.IdentityModel.Client.ProtocolResponse, new () { }
+    }
+    public class PushedAuthorizationRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public PushedAuthorizationRequest() { }
+        public string? AcrValues { get; set; }
+        public string? CodeChallenge { get; set; }
+        public string? CodeChallengeMethod { get; set; }
+        public string? DPoPKeyThumbprint { get; set; }
+        public string? Display { get; set; }
+        public string? IdTokenHint { get; set; }
+        public string? LoginHint { get; set; }
+        public int? MaxAge { get; set; }
+        public string? Nonce { get; set; }
+        public string? Prompt { get; set; }
+        public string? RedirectUri { get; set; }
+        public string? Request { get; set; }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+        public string? ResponseMode { get; set; }
+        public string? ResponseType { get; set; }
+        public string? Scope { get; set; }
+        public string? State { get; set; }
+        public string? UiLocales { get; set; }
+        public Duende.IdentityModel.Client.Parameters MergeInto(Duende.IdentityModel.Client.Parameters targetParameters) { }
+    }
+    public class PushedAuthorizationResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public PushedAuthorizationResponse() { }
+        public int? ExpiresIn { get; }
+        public string? RequestUri { get; }
+    }
+    public class RefreshTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public RefreshTokenRequest() { }
+        public string RefreshToken { get; set; }
+        public System.Collections.Generic.ICollection<string> Resource { get; set; }
+        public string? Scope { get; set; }
+    }
+    public class RequestUrl
+    {
+        public RequestUrl(string baseUrl) { }
+        public string Create(Duende.IdentityModel.Client.Parameters parameters) { }
+    }
+    public static class RequestUrlExtensions
+    {
+        public static string Create(this Duende.IdentityModel.Client.RequestUrl request, Duende.IdentityModel.Client.Parameters parameters) { }
+        public static string CreateAuthorizeUrl(
+                    this Duende.IdentityModel.Client.RequestUrl request,
+                    string clientId,
+                    string? responseType = null,
+                    string? scope = null,
+                    string? redirectUri = null,
+                    string? state = null,
+                    string? nonce = null,
+                    string? loginHint = null,
+                    string? acrValues = null,
+                    string? prompt = null,
+                    string? responseMode = null,
+                    string? codeChallenge = null,
+                    string? codeChallengeMethod = null,
+                    string? display = null,
+                    int? maxAge = default,
+                    string? uiLocales = null,
+                    string? idTokenHint = null,
+                    string? requestUri = null,
+                    Duende.IdentityModel.Client.Parameters? extra = null) { }
+        public static string CreateEndSessionUrl(this Duende.IdentityModel.Client.RequestUrl request, string? idTokenHint = null, string? postLogoutRedirectUri = null, string? state = null, Duende.IdentityModel.Client.Parameters? extra = null) { }
+    }
+    public enum ResponseErrorType
+    {
+        None = 0,
+        Protocol = 1,
+        Http = 2,
+        Exception = 3,
+        PolicyViolation = 4,
+    }
+    public sealed class StringComparisonAuthorityValidationStrategy : Duende.IdentityModel.Client.IAuthorityValidationStrategy
+    {
+        public StringComparisonAuthorityValidationStrategy(System.StringComparison stringComparison = 4) { }
+        public Duende.IdentityModel.Client.AuthorityValidationResult IsEndpointValid(string endpoint, System.Collections.Generic.IEnumerable<string> allowedAuthorities) { }
+        public Duende.IdentityModel.Client.AuthorityValidationResult IsIssuerNameValid(string issuerName, string expectedAuthority) { }
+    }
+    public class TokenClient
+    {
+        public TokenClient(System.Func<System.Net.Http.HttpMessageInvoker> client, Duende.IdentityModel.Client.TokenClientOptions options) { }
+        public TokenClient(System.Net.Http.HttpMessageInvoker client, Duende.IdentityModel.Client.TokenClientOptions options) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestAuthorizationCodeTokenAsync(string code, string redirectUri, string? codeVerifier = null, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestClientCredentialsTokenAsync(string? scope = null, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestDeviceTokenAsync(string deviceCode, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestPasswordTokenAsync(string userName, string? password = null, string? scope = null, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestRefreshTokenAsync(string refreshToken, string? scope = null, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.TokenResponse> RequestTokenAsync(string grantType, Duende.IdentityModel.Client.Parameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public class TokenClientOptions : Duende.IdentityModel.Client.ClientOptions
+    {
+        public TokenClientOptions() { }
+    }
+    public class TokenExchangeTokenRequest : Duende.IdentityModel.Client.TokenRequest
+    {
+        public TokenExchangeTokenRequest() { }
+        public string? ActorToken { get; set; }
+        public string? ActorTokenType { get; set; }
+        public string? Audience { get; set; }
+        public string? RequestedTokenType { get; set; }
+        public string? Resource { get; set; }
+        public string? Scope { get; set; }
+        public string SubjectToken { get; set; }
+        public string SubjectTokenType { get; set; }
+    }
+    public class TokenIntrospectionRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public TokenIntrospectionRequest() { }
+        public string Token { get; set; }
+        public string? TokenTypeHint { get; set; }
+    }
+    public class TokenIntrospectionResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public TokenIntrospectionResponse() { }
+        public System.Collections.Generic.IEnumerable<System.Security.Claims.Claim> Claims { get; set; }
+        public bool IsActive { get; }
+        protected override System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
+    }
+    public class TokenRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public TokenRequest() { }
+        public string GrantType { get; set; }
+    }
+    public class TokenResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public TokenResponse() { }
+        public string? AccessToken { get; }
+        public string? ErrorDescription { get; }
+        public int ExpiresIn { get; }
+        public string? IdentityToken { get; }
+        public string? IssuedTokenType { get; }
+        public string? RefreshToken { get; }
+        public string? Scope { get; }
+        public string? TokenType { get; }
+    }
+    public class TokenRevocationRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public TokenRevocationRequest() { }
+        public string Token { get; set; }
+        public string TokenTypeHint { get; set; }
+    }
+    public class TokenRevocationResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public TokenRevocationResponse() { }
+    }
+    public class UserInfoRequest : Duende.IdentityModel.Client.ProtocolRequest
+    {
+        public UserInfoRequest() { }
+        public string? Token { get; set; }
+    }
+    public class UserInfoResponse : Duende.IdentityModel.Client.ProtocolResponse
+    {
+        public UserInfoResponse() { }
+        public System.Collections.Generic.IEnumerable<System.Security.Claims.Claim> Claims { get; }
+        protected override System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
+    }
+}
+namespace Duende.IdentityModel.Internal
+{
+    public static class TaskHelpers
+    {
+        public static bool CanConfigureAwaitFalse { get; set; }
+        public static bool CanFactoryStartNew { get; set; }
+    }
+}
+namespace Duende.IdentityModel.Jwk
+{
+    public static class JsonWebAlgorithmsKeyTypes
+    {
+        public const string EllipticCurve = "EC";
+        public const string Octet = "oct";
+        public const string RSA = "RSA";
+    }
+    public class JsonWebKey
+    {
+        public JsonWebKey() { }
+        public JsonWebKey(string json) { }
+        [System.Text.Json.Serialization.JsonPropertyName("alg")]
+        public string Alg { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("crv")]
+        public string Crv { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("d")]
+        public string D { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("dp")]
+        public string DP { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("dq")]
+        public string DQ { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("e")]
+        public string E { get; set; }
+        public bool HasPrivateKey { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("k")]
+        public string K { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("key_ops")]
+        public System.Collections.Generic.IList<string> KeyOps { get; set; }
+        public int KeySize { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("kid")]
+        public string Kid { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("kty")]
+        public string Kty { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("n")]
+        public string N { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("oth")]
+        public System.Collections.Generic.IList<string> Oth { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("p")]
+        public string P { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("q")]
+        public string Q { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("qi")]
+        public string QI { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("use")]
+        public string Use { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("x")]
+        public string X { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("x5c")]
+        public System.Collections.Generic.IList<string> X5c { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("x5t")]
+        public string X5t { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("x5t#S256")]
+        public string X5tS256 { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("x5u")]
+        public string X5u { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("y")]
+        public string Y { get; set; }
+    }
+    public static class JsonWebKeyExtensions
+    {
+        public static string ToJwkString(this Duende.IdentityModel.Jwk.JsonWebKey key) { }
+    }
+    public static class JsonWebKeyParameterNames
+    {
+        public const string Alg = "alg";
+        public const string Crv = "crv";
+        public const string D = "d";
+        public const string DP = "dp";
+        public const string DQ = "dq";
+        public const string E = "e";
+        public const string K = "k";
+        public const string KeyOps = "key_ops";
+        public const string Keys = "keys";
+        public const string Kid = "kid";
+        public const string Kty = "kty";
+        public const string N = "n";
+        public const string Oth = "oth";
+        public const string P = "p";
+        public const string Q = "q";
+        public const string QI = "qi";
+        public const string R = "r";
+        public const string T = "t";
+        public const string Use = "use";
+        public const string X = "x";
+        public const string X5c = "x5c";
+        public const string X5t = "x5t";
+        public const string X5tS256 = "x5t#S256";
+        public const string X5u = "x5u";
+        public const string Y = "y";
+    }
+    public class JsonWebKeySet
+    {
+        public JsonWebKeySet() { }
+        public JsonWebKeySet(string json) { }
+        [System.Text.Json.Serialization.JsonPropertyName("keys")]
+        public System.Collections.Generic.List<Duende.IdentityModel.Jwk.JsonWebKey> Keys { get; set; }
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string? RawData { get; set; }
+    }
+}
