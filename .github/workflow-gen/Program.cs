@@ -63,7 +63,7 @@ void GenerateCiWorkflow(Component component)
 
     foreach (var project in component.Projects)
     {
-        job.StepPack(component.Name, project);
+        job.StepPack(project);
     }
 
     job.StepSign();
@@ -115,7 +115,7 @@ void GenerateReleaseWorkflow(Component component)
 
     foreach (var project in component.Projects)
     {
-        tagJob.StepPack(component.Name, project);
+        tagJob.StepPack(project);
     }
 
     tagJob.StepSign();
@@ -157,9 +157,6 @@ void WriteWorkflow(Workflow workflow, string fileName)
     Console.WriteLine($"Wrote workflow to {filePath}");
 }
 
-
-
-
 record Component(string Name, string[] Projects, string[] Tests);
 
 public static class StepExtensions
@@ -185,45 +182,47 @@ public static class StepExtensions
                     $"--logger \"trx;LogFileName={logFileName}\" " +
                     $"--collect:\"XPlat Code Coverage\"";
         job.Step()
-            .Name("Test")
+            .Name($"Test - {testProject}")
             .Run($"dotnet test -c Release {path} {flags}");
 
-        job.Step("test-report")
-            .Name("Test report")
+        job.Step()
+            .Name($"Test report - {testProject}")
             .Uses("dorny/test-reporter@v1")
             .If("success() || failure()")
             .With(
-                ("name", "Test Report"),
+                ("name", $"Test Report - {testProject}"),
                 ("path", $"{componentName}/{path}/TestResults/{logFileName}"),
                 ("reporter", "dotnet-trx"),
                 ("fail-on-error", "true"),
                 ("fail-on-empty", "true"));
     }
 
+    // These intermediate certificates are required for signing and are not installed on the GitHub runners by default.
     public static void StepInstallCACerts(this Job job)
         => job.Step()
-            .Name("Install Sectigo CodeSiging CA certificates")
-            .IfRefMain()
+            .Name("Install Sectigo CodeSiging CA certificates") 
+            .WorkingDirectory(".github/workflows")
+            //.IfRefMain()
             .Run("""
                  sudo apt-get update
                  sudo apt-get install -y ca-certificates
-                 sudo cp build/SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
+                 sudo cp SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
                  sudo update-ca-certificates
                  """);
 
     public static void StepToolRestore(this Job job)
         => job.Step()
             .Name("Tool restore")
-            .IfRefMain()
+            //.IfRefMain()
             .Run("dotnet tool restore");
 
-    public static void StepPack(this Job job, string componentName, string project)
+    public static void StepPack(this Job job, string project)
     {
-        var path = $"{componentName}/src/{project}";
+        var path = $"src/{project}";
         job.Step()
             .Name($"Pack {project}")
-            .IfRefMain()
-            .Run($"dotnet pack -c Release {path} --no-build -o artifacts");
+            //.IfRefMain()
+            .Run($"dotnet pack -c Release {path} -o artifacts");
     }
 
     public static void StepSign(this Job job)
@@ -237,10 +236,10 @@ public static class StepExtensions
                     "--azure-key-vault-certificate CodeSigning";
         job.Step()
             .Name("Sign packages")
-            .IfRefMain()
+            //.IfRefMain()
             .Run($"""
                  for file in artifacts/*.nupkg; do
-                    dotnet NuGetKeyVaultSignTool sign \"$file\" {flags}
+                    dotnet NuGetKeyVaultSignTool sign "$file" {flags}
                  done
                  """);
     }

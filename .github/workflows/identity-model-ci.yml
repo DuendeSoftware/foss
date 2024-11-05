@@ -31,36 +31,32 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-    - name: Test
+    - name: Test - IdentityModel.Tests
       run: dotnet test -c Release test/IdentityModel.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=Tests.trx" --collect:"XPlat Code Coverage"
-    - id: test-report
-      name: Test report
+    - name: Test report - IdentityModel.Tests
       if: success() || failure()
       uses: dorny/test-reporter@v1
       with:
-        name: Test Report
+        name: Test Report - IdentityModel.Tests
         path: identity-model/test/IdentityModel.Tests/TestResults/Tests.trx
         reporter: dotnet-trx
         fail-on-error: true
         fail-on-empty: true
     - name: Install Sectigo CodeSiging CA certificates
-      if: github.ref == 'refs/heads/main'
       run: |-
         sudo apt-get update
         sudo apt-get install -y ca-certificates
-        sudo cp build/SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
+        sudo cp SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
         sudo update-ca-certificates
+      working-directory: .github/workflows
     - name: Tool restore
-      if: github.ref == 'refs/heads/main'
       run: dotnet tool restore
     - name: Pack IdentityModel
-      if: github.ref == 'refs/heads/main'
-      run: dotnet pack -c Release identity-model/src/IdentityModel --no-build -o artifacts
+      run: dotnet pack -c Release src/IdentityModel -o artifacts
     - name: Sign packages
-      if: github.ref == 'refs/heads/main'
       run: |-
         for file in artifacts/*.nupkg; do
-           dotnet NuGetKeyVaultSignTool sign \"$file\" --file-digest sha256 --timestamp-rfc3161 http://timestamp.digicert.com --azure-key-vault-url https://duendecodesigning.vault.azure.net/ --azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 --azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 --azure-key-vault-client-secret ${{ secrets.SignClientSecret }} --azure-key-vault-certificate CodeSigning
+           dotnet NuGetKeyVaultSignTool sign "$file" --file-digest sha256 --timestamp-rfc3161 http://timestamp.digicert.com --azure-key-vault-url https://duendecodesigning.vault.azure.net/ --azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 --azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 --azure-key-vault-client-secret ${{ secrets.SignClientSecret }} --azure-key-vault-certificate CodeSigning
         done
     - name: Push packages to MyGet
       if: github.ref == 'refs/heads/main'

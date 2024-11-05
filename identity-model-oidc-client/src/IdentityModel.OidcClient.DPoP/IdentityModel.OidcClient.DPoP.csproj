@@ -8,10 +8,6 @@
     <Description>DPoP extensions for IdentityModel.OidcClient</Description>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../../icon.jpg" Pack="true" Visible="false" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="IdentityModel" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />

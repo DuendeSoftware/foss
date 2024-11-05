@@ -39,23 +39,20 @@ jobs:
         git tag -a it-${{ github.event.inputs.version }} -m "Release v${{ github.event.inputs.version }}"
         git push origin it-${{ github.event.inputs.version }}
     - name: Install Sectigo CodeSiging CA certificates
-      if: github.ref == 'refs/heads/main'
       run: |-
         sudo apt-get update
         sudo apt-get install -y ca-certificates
-        sudo cp build/SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
+        sudo cp SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
         sudo update-ca-certificates
+      working-directory: .github/workflows
     - name: Pack AccessTokenManagement
-      if: github.ref == 'refs/heads/main'
-      run: dotnet pack -c Release access-token-management/src/AccessTokenManagement --no-build -o artifacts
+      run: dotnet pack -c Release src/AccessTokenManagement -o artifacts
     - name: Pack AccessTokenManagement.OpenIdConnect
-      if: github.ref == 'refs/heads/main'
-      run: dotnet pack -c Release access-token-management/src/AccessTokenManagement.OpenIdConnect --no-build -o artifacts
+      run: dotnet pack -c Release src/AccessTokenManagement.OpenIdConnect -o artifacts
     - name: Sign packages
-      if: github.ref == 'refs/heads/main'
       run: |-
         for file in artifacts/*.nupkg; do
-           dotnet NuGetKeyVaultSignTool sign \"$file\" --file-digest sha256 --timestamp-rfc3161 http://timestamp.digicert.com --azure-key-vault-url https://duendecodesigning.vault.azure.net/ --azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 --azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 --azure-key-vault-client-secret ${{ secrets.SignClientSecret }} --azure-key-vault-certificate CodeSigning
+           dotnet NuGetKeyVaultSignTool sign "$file" --file-digest sha256 --timestamp-rfc3161 http://timestamp.digicert.com --azure-key-vault-url https://duendecodesigning.vault.azure.net/ --azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 --azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 --azure-key-vault-client-secret ${{ secrets.SignClientSecret }} --azure-key-vault-certificate CodeSigning
         done
     - name: Push packages to MyGet
       if: github.ref == 'refs/heads/main'

@@ -4,6 +4,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "access-token-management", "access-token-management", "{40E4A188-F989-487A-9E7A-F0315CE9A9BC}"
+	ProjectSection(SolutionItems) = preProject
+		access-token-management\global.json = access-token-management\global.json
+		access-token-management\README.md = access-token-management\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{ED44137D-195B-4902-B49D-F497370E7B4F}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,6 +20,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{B716B915-1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "identity-model", "identity-model", "{24895E4F-A225-4A79-95EB-20C34D4971ED}"
+	ProjectSection(SolutionItems) = preProject
+		identity-model\global.json = identity-model\global.json
+		identity-model\README.md = identity-model\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1D517331-22CF-4680-B9BA-ABF9230D1887}"
 	ProjectSection(SolutionItems) = preProject
@@ -28,6 +36,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5E2DFAA1-D
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "identity-model-oidc-client", "identity-model-oidc-client", "{2780E0AB-5C82-439D-BD76-15F3D434B25C}"
+	ProjectSection(SolutionItems) = preProject
+		identity-model-oidc-client\README.md = identity-model-oidc-client\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{93313B63-592B-41AA-B122-BE6DED75B198}"
 	ProjectSection(SolutionItems) = preProject
@@ -73,27 +84,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleClientWithBrowserAnd
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManualModeConsoleClient", "identity-model-oidc-client\clients\ManualModeConsoleClient\ManualModeConsoleClient.csproj", "{290417EE-2D2E-40BF-B560-2E7046048070}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{EA1BDDDB-EC06-4DFB-A984-8BFAA0C81640}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "build", "identity-model-oidc-client\build\build.csproj", "{8A66548C-5D1B-46F2-B78D-FE4AE37A9CA6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{D3DB34CB-4D0C-4590-AAA8-36FD1A189CF5}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "build", "identity-model\build\build.csproj", "{2120D4EF-0EF2-4071-888F-D456C6756E92}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{3F8F8EDA-EA4A-402C-81B3-115C513C6A66}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "build", "access-token-management\build\build.csproj", "{1F7902DE-4941-4519-9590-BFDCECD33703}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ignore-this", "ignore-this", "{13BD5E04-9CA2-4C6A-B59C-E74645BE7D7D}"
+	ProjectSection(SolutionItems) = preProject
+		ignore-this\README.md = ignore-this\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0ADF1F03-0E6D-4841-A54E-586E9CA0E8D9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IgnoreThis", "ignore-this\src\IgnoreThis\IgnoreThis.csproj", "{DCC90270-90F2-4AB9-BAD2-B394C30BD654}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{55A6615D-0BAE-434A-BE0F-D52DC44FB088}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "build", "ignore-this\build\build.csproj", "{5BA284B9-96DA-49EE-A105-2B5497E376B0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrimmableAnalysis", "identity-model\src\TrimmableAnalysis\TrimmableAnalysis.csproj", "{EDCC670D-6527-4B5D-B66D-6A80C9B2EBB1}"
 EndProject
@@ -112,6 +110,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{7FE03753-F6F7-48B3-B38B-52EC8C804998}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IgnoreThis.Tests", "ignore-this\test\IgnoreThis.Tests\IgnoreThis.Tests.csproj", "{DB9D419A-39BE-4AF0-8DF5-AC59DB218469}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F3E00123-AE97-4BF4-8868-E078B59691C8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "workflow-gen", ".github\workflow-gen\workflow-gen.csproj", "{79FA307B-8362-448B-8ED3-A8E60700B04C}"
@@ -178,26 +177,10 @@ Global
 		{290417EE-2D2E-40BF-B560-2E7046048070}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{290417EE-2D2E-40BF-B560-2E7046048070}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{290417EE-2D2E-40BF-B560-2E7046048070}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8A66548C-5D1B-46F2-B78D-FE4AE37A9CA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A66548C-5D1B-46F2-B78D-FE4AE37A9CA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8A66548C-5D1B-46F2-B78D-FE4AE37A9CA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8A66548C-5D1B-46F2-B78D-FE4AE37A9CA6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2120D4EF-0EF2-4071-888F-D456C6756E92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2120D4EF-0EF2-4071-888F-D456C6756E92}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2120D4EF-0EF2-4071-888F-D456C6756E92}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2120D4EF-0EF2-4071-888F-D456C6756E92}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1F7902DE-4941-4519-9590-BFDCECD33703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1F7902DE-4941-4519-9590-BFDCECD33703}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1F7902DE-4941-4519-9590-BFDCECD33703}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1F7902DE-4941-4519-9590-BFDCECD33703}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DCC90270-90F2-4AB9-BAD2-B394C30BD654}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DCC90270-90F2-4AB9-BAD2-B394C30BD654}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DCC90270-90F2-4AB9-BAD2-B394C30BD654}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCC90270-90F2-4AB9-BAD2-B394C30BD654}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5BA284B9-96DA-49EE-A105-2B5497E376B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5BA284B9-96DA-49EE-A105-2B5497E376B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5BA284B9-96DA-49EE-A105-2B5497E376B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5BA284B9-96DA-49EE-A105-2B5497E376B0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EDCC670D-6527-4B5D-B66D-6A80C9B2EBB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EDCC670D-6527-4B5D-B66D-6A80C9B2EBB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDCC670D-6527-4B5D-B66D-6A80C9B2EBB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -262,16 +245,8 @@ Global
 		{452BC7B3-5C6D-41C5-AF43-88DCB3BCE214} = {3233FD20-FAAC-4E9D-AF12-855A8CE72CA8}
 		{7C8CF9BF-EC22-4D96-A668-8A8030762AD9} = {3233FD20-FAAC-4E9D-AF12-855A8CE72CA8}
 		{290417EE-2D2E-40BF-B560-2E7046048070} = {3233FD20-FAAC-4E9D-AF12-855A8CE72CA8}
-		{EA1BDDDB-EC06-4DFB-A984-8BFAA0C81640} = {2780E0AB-5C82-439D-BD76-15F3D434B25C}
-		{8A66548C-5D1B-46F2-B78D-FE4AE37A9CA6} = {EA1BDDDB-EC06-4DFB-A984-8BFAA0C81640}
-		{D3DB34CB-4D0C-4590-AAA8-36FD1A189CF5} = {24895E4F-A225-4A79-95EB-20C34D4971ED}
-		{2120D4EF-0EF2-4071-888F-D456C6756E92} = {D3DB34CB-4D0C-4590-AAA8-36FD1A189CF5}
-		{3F8F8EDA-EA4A-402C-81B3-115C513C6A66} = {40E4A188-F989-487A-9E7A-F0315CE9A9BC}
-		{1F7902DE-4941-4519-9590-BFDCECD33703} = {3F8F8EDA-EA4A-402C-81B3-115C513C6A66}
 		{0ADF1F03-0E6D-4841-A54E-586E9CA0E8D9} = {13BD5E04-9CA2-4C6A-B59C-E74645BE7D7D}
 		{DCC90270-90F2-4AB9-BAD2-B394C30BD654} = {0ADF1F03-0E6D-4841-A54E-586E9CA0E8D9}
-		{55A6615D-0BAE-434A-BE0F-D52DC44FB088} = {13BD5E04-9CA2-4C6A-B59C-E74645BE7D7D}
-		{5BA284B9-96DA-49EE-A105-2B5497E376B0} = {55A6615D-0BAE-434A-BE0F-D52DC44FB088}
 		{EDCC670D-6527-4B5D-B66D-6A80C9B2EBB1} = {1D517331-22CF-4680-B9BA-ABF9230D1887}
 		{3F8EDA1D-272B-44A0-852F-D5AE81015FBB} = {93313B63-592B-41AA-B122-BE6DED75B198}
 		{802E34B5-3403-4898-A395-6EF5CB4A1417} = {93313B63-592B-41AA-B122-BE6DED75B198}
