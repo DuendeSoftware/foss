@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8AD8E355-EB58-4318-A56B-87C4E39D09E5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{29E9100F-2F70-4DFD-8DBD-81F45C134914}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetCoreConsoleClient", "src\NetCoreConsoleClient\NetCoreConsoleClient.csproj", "{ABD384A3-51DA-4500-95BE-33CFB8E10EA5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ABD384A3-51DA-4500-95BE-33CFB8E10EA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABD384A3-51DA-4500-95BE-33CFB8E10EA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABD384A3-51DA-4500-95BE-33CFB8E10EA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABD384A3-51DA-4500-95BE-33CFB8E10EA5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{ABD384A3-51DA-4500-95BE-33CFB8E10EA5} = {8AD8E355-EB58-4318-A56B-87C4E39D09E5}
+	EndGlobalSection
+EndGlobal
