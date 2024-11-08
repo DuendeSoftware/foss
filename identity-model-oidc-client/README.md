@@ -1,37 +1,29 @@
-## About Duende.IdentityModel.OidcClient
+## About Duende.IdentityModel.OidcClient.Extensions
 
-This repository contains several libraries for building OpenID Connect (OIDC) native
-clients. The core `Duende.IdentityModel.OidcClient` library is a certified OIDC relying party and
-implements [RFC 8252](https://tools.ietf.org/html/rfc8252/), "OAuth 2.0 for native
-Applications". The [Duende.IdentityModel.OidcClient.IdentityTokenValidator](https://www.nuget.org/packages/Duende.IdentityModel.OidcClient.IdentityTokenValidator)
-provides two sets of extensions that distributed as a separate package in order to prevent certain 
-transitive dependency problems.
+Duende.IdentityModel.OidcClient.Extensions adds features to
+Duende.IdentityModel.OidcClient that are implemented using more dependencies than are
+required in the core Duende.IdentityModel.OidcClient package. Distributing these features
+separately helps prevent certain transitive dependency problems.
 
- - Validation of Id Tokens based on the Microsoft JWT handler.
- - [DPoP](https://datatracker.ietf.org/doc/html/rfc9449) extensions for sender-constraining tokens.
+The features added by this package include:
+ - [DPoP](https://datatracker.ietf.org/doc/html/rfc9449) extensions for
+   sender-constraining tokens.
+ - Validation of Id Tokens implemented using the Microsoft JWT handler. This is usually
+   not necessary, as id token signature validation is optional when using the code flow. 
 
 ## Samples
-OidcClient targets .NET Standard, making it suitable for .NET and .NET
-Framework. It can be used to build OIDC native clients with a variety of .NET UI tools.
-The [clients folder](https://github.com/DuendeSoftware/foss/identity-model/clients/)
-shows how to use it in 
-- .NET MAUI
-- WPF with the system browser
-- WPF with an embedded browser
-- WinForms with an embedded browser
-- Cross Platform Console Applications (relies on kestrel for processing the callback)
-- Windows Console Applications (relies on an HttpListener - a wrapper around the windows HTTP.sys driver)
-- Windows Console Applications using custom uri schemes
+The WPF [sample](https://github.com/DuendeSoftware/foss/tree/main/identity-model-oidc-client/samples/wpf)  
+in the [samples directory](https://github.com/DuendeSoftware/foss/tree/main/identity-model-oidc-client/samples)  
+shows how to use Duende.IdentityModel.OidcClient.Extensions to implement DPoP.
 
 ## Documentation 
 
 More documentation is available
-[here](https://identitymodel.readthedocs.io/en/latest/native/overview.html).
-
+[here](https://docs.duendesoftware.com/foss/identitymodel.oidcclient/).
 
 ## Certification
-OidcClient is a [certified](http://openid.net/certification/) OpenID Connect
-relying party implementation.
+Duende.IdentityModel.OidcClient is a [certified](http://openid.net/certification/) OpenID
+Connect relying party implementation.
 
 ## Feedback
 
