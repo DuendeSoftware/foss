@@ -184,9 +184,11 @@ public static class StepExtensions
     {
         var path        = $"test/{testProject}";
         var logFileName = "Tests.trx";
-        var flags = $"--logger \"console;verbosity=normal\" "      +
+        var flags = "--logger \"console;verbosity=normal\" "       +
                     $"--logger \"trx;LogFileName={logFileName}\" " +
-                    $"--collect:\"XPlat Code Coverage\"";
+                    "--blame-hang "                                +
+                    "--blame-hang-timeout=120sec "                 +
+                    "--collect:\"XPlat Code Coverage\"";
         job.Step()
             .Name($"Test - {testProject}")
             .Run($"dotnet test -c Release {path} {flags}");

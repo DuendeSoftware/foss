@@ -33,7 +33,7 @@ jobs:
       with:
         dotnet-version: 9.0.x
     - name: Test - AccessTokenManagement.Tests
-      run: dotnet test -c Release test/AccessTokenManagement.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=Tests.trx" --collect:"XPlat Code Coverage"
+      run: dotnet test -c Release test/AccessTokenManagement.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=Tests.trx" --blame-hang --blame-hang-timeout=120sec --collect:"XPlat Code Coverage"
     - name: Test report - AccessTokenManagement.Tests
       if: success() || failure()
       uses: dorny/test-reporter@v1

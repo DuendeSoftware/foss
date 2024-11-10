@@ -12,7 +12,7 @@ public class PublicApiVerificationTests
     {
         var apiGeneratorOptions = new ApiGeneratorOptions
         {
-            IncludeAssemblyAttributes = false
+            IncludeAssemblyAttributes = false,
         };
         var publicApi = typeof(JwtClaimTypes).Assembly.GeneratePublicApi(apiGeneratorOptions);
         var settings = new VerifySettings();
