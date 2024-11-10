@@ -172,9 +172,10 @@ public static class StepExtensions
             ("DOTNET_CLI_TELEMETRY_OPTOUT", "true"));
 
     public static void StepSetupDotNet(this Job job)
-    => job.Step()
-        .Name("Setup .NET")
-        .ActionsSetupDotNet("8.0.x", "9.0.x");
+        => job.Step()
+            .Name("Setup .NET")
+            .Uses("actions/setup-dotnet@v4")
+            .With(("dotnet-version", "9.0.x"));
 
     public static Step IfRefMain(this Step step) 
         => step.If("github.ref == 'refs/heads/main'");
