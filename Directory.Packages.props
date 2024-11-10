@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0'">
-    <FrameworkVersion>9.0.1</FrameworkVersion>
+    <FrameworkVersion>9.0.0</FrameworkVersion>
     <ExtensionsVersion>9.0.0</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
     <IdentityServerVersion>7.0.8</IdentityServerVersion>
