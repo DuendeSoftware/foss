@@ -174,7 +174,7 @@ public static class StepExtensions
     public static void StepSetupDotNet(this Job job)
     => job.Step()
         .Name("Setup .NET")
-        .ActionsSetupDotNet("8.0.x");
+        .ActionsSetupDotNet("8.0.x", "9.0.x");
 
     public static Step IfRefMain(this Step step) 
         => step.If("github.ref == 'refs/heads/main'");
@@ -217,7 +217,6 @@ public static class StepExtensions
     public static void StepToolRestore(this Job job)
         => job.Step()
             .Name("Tool restore")
-            //.IfRefMain()
             .Run("dotnet tool restore");
 
     public static void StepPack(this Job job, string project)
