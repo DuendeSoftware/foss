@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0</TargetFrameworks>
     <AssemblyName>Duende.IdentityModel</AssemblyName>
     <RootNamespace>Duende.IdentityModel</RootNamespace>
     <Description>OpenID Connect &amp; OAuth 2.0 client library</Description>
     <PackageId>Duende.IdentityModel</PackageId>
     <PackageTags>OAuth2;OAuth 2.0;OpenID Connect;Security;Identity;IdentityServer</PackageTags>
+    <NoWarng>NU1507</NoWarng>
   </PropertyGroup>
  
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
