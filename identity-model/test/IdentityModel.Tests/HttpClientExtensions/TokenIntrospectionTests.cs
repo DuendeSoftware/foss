@@ -2,12 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Text.Json;
 using Duende.IdentityModel.Client;
 using Duende.IdentityModel.Infrastructure;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 
 namespace Duende.IdentityModel.HttpClientExtensions
 {
@@ -84,6 +84,16 @@ namespace Duende.IdentityModel.HttpClientExtensions
                 new Claim("scope", "api1", ClaimValueTypes.String, "https://idsvr4"),
                 new Claim("scope", "api2", ClaimValueTypes.String, "https://idsvr4"),
             });
+            response.Scopes.Should().BeEquivalentTo("api1", "api2");
+            response.ClientId.Should().Be("client");
+            response.UserName.Should().BeNull();
+            response.IssuedAt.Should().BeNull();
+            response.NotBefore.Should().Be(7.October(2016).At(7, 21, 11).WithOffset(0.Hours()));
+            response.Expiration.Should().Be(7.October(2016).At(8, 21, 11).WithOffset(0.Hours()));
+            response.Subject.Should().Be("1");
+            response.Audiences.Should().BeEquivalentTo("https://idsvr4/resources", "api1");
+            response.Issuer.Should().Be("https://idsvr4");
+            response.JwtId.Should().BeNull();
         }
 
         [Fact]
@@ -121,6 +131,16 @@ namespace Duende.IdentityModel.HttpClientExtensions
                 new Claim("scope", "api1", ClaimValueTypes.String, "LOCAL AUTHORITY"),
                 new Claim("scope", "api2", ClaimValueTypes.String, "LOCAL AUTHORITY"),
             });
+            response.Scopes.Should().BeEquivalentTo("api1", "api2");
+            response.ClientId.Should().Be("client");
+            response.UserName.Should().BeNull();
+            response.IssuedAt.Should().BeNull();
+            response.NotBefore.Should().Be(7.October(2016).At(7, 21, 11).WithOffset(0.Hours()));
+            response.Expiration.Should().Be(7.October(2016).At(8, 21, 11).WithOffset(0.Hours()));
+            response.Subject.Should().Be("1");
+            response.Audiences.Should().BeEquivalentTo("https://idsvr4/resources", "api1");
+            response.Issuer.Should().BeNull();
+            response.JwtId.Should().BeNull();
         }
 
         [Fact]
@@ -161,6 +181,16 @@ namespace Duende.IdentityModel.HttpClientExtensions
                 new Claim("scope", "api1", ClaimValueTypes.String, "https://idsvr4"),
                 new Claim("scope", "api2", ClaimValueTypes.String, "https://idsvr4"),
             });
+            response.Scopes.Should().BeEquivalentTo("api1", "api2");
+            response.ClientId.Should().Be("client");
+            response.UserName.Should().BeNull();
+            response.IssuedAt.Should().BeNull();
+            response.NotBefore.Should().Be(7.October(2016).At(7, 21, 11).WithOffset(0.Hours()));
+            response.Expiration.Should().Be(7.October(2016).At(8, 21, 11).WithOffset(0.Hours()));
+            response.Subject.Should().Be("1");
+            response.Audiences.Should().BeEquivalentTo("https://idsvr4/resources", "api1");
+            response.Issuer.Should().Be("https://idsvr4");
+            response.JwtId.Should().BeNull();
 
             // repeat
             response = await client.IntrospectTokenAsync(request);
@@ -185,6 +215,16 @@ namespace Duende.IdentityModel.HttpClientExtensions
                 new Claim("scope", "api1", ClaimValueTypes.String, "https://idsvr4"),
                 new Claim("scope", "api2", ClaimValueTypes.String, "https://idsvr4"),
             });
+            response.Scopes.Should().BeEquivalentTo("api1", "api2");
+            response.ClientId.Should().Be("client");
+            response.UserName.Should().BeNull();
+            response.IssuedAt.Should().BeNull();
+            response.NotBefore.Should().Be(7.October(2016).At(7, 21, 11).WithOffset(0.Hours()));
+            response.Expiration.Should().Be(7.October(2016).At(8, 21, 11).WithOffset(0.Hours()));
+            response.Subject.Should().Be("1");
+            response.Audiences.Should().BeEquivalentTo("https://idsvr4/resources", "api1");
+            response.Issuer.Should().Be("https://idsvr4");
+            response.JwtId.Should().BeNull();
         }
 
         [Fact]
@@ -292,6 +332,16 @@ namespace Duende.IdentityModel.HttpClientExtensions
                 new Claim("scope", "api1", ClaimValueTypes.String, "https://idsvr4"),
                 new Claim("scope", "api2", ClaimValueTypes.String, "https://idsvr4"),
             });
+            response.Scopes.Should().BeEquivalentTo("api1", "api2");
+            response.ClientId.Should().Be("client");
+            response.UserName.Should().BeNull();
+            response.IssuedAt.Should().BeNull();
+            response.NotBefore.Should().Be(7.October(2016).At(7, 21, 11).WithOffset(0.Hours()));
+            response.Expiration.Should().Be(7.October(2016).At(8, 21, 11).WithOffset(0.Hours()));
+            response.Subject.Should().Be("1");
+            response.Audiences.Should().BeEquivalentTo("https://idsvr4/resources", "api1");
+            response.Issuer.Should().Be("https://idsvr4");
+            response.JwtId.Should().BeNull();
         }
 
         [Fact]
