@@ -1248,8 +1248,19 @@ namespace Duende.IdentityModel.Client
     public class TokenIntrospectionResponse : Duende.IdentityModel.Client.ProtocolResponse
     {
         public TokenIntrospectionResponse() { }
+        public string[] Audiences { get; }
         public System.Collections.Generic.IEnumerable<System.Security.Claims.Claim> Claims { get; set; }
+        public string? ClientId { get; }
+        public System.DateTimeOffset? Expiration { get; }
         public bool IsActive { get; }
+        public System.DateTimeOffset? IssuedAt { get; }
+        public string? Issuer { get; }
+        public string? JwtId { get; }
+        public System.DateTimeOffset? NotBefore { get; }
+        public string[] Scopes { get; }
+        public string? Subject { get; }
+        public string? TokenType { get; }
+        public string? UserName { get; }
         protected override System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
     }
     public class TokenRequest : Duende.IdentityModel.Client.ProtocolRequest
