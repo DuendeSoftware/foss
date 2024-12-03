@@ -9,22 +9,26 @@ Component[] components = [
     new("ignore-this",
         ["IgnoreThis"],
         ["IgnoreThis.Tests"],
-        "it"),
+        "it",
+        ["ubuntu-latest", "windows-latest"]),
 
     new("access-token-management",
         ["AccessTokenManagement", "AccessTokenManagement.OpenIdConnect"],
         ["AccessTokenManagement.Tests"],
-        "atm"),
+        "atm",
+        ["ubuntu-latest"]),
 
     new("identity-model", 
         ["IdentityModel"],
         ["IdentityModel.Tests"],
-        "im"),
+        "im",
+        ["ubuntu-latest", "windows-latest"]),
 
     new("identity-model-oidc-client",
         ["IdentityModel.OidcClient", "IdentityModel.OidcClient.Extensions"],
         ["IdentityModel.OidcClient.Tests"],
-        "imoc")
+        "imoc",
+        ["ubuntu-latest"])
 ];
 
 foreach (var component in components)
@@ -54,49 +58,76 @@ void GenerateCiWorkflow(Component component)
 
     workflow.EnvDefaults();
 
-    var job = workflow
+    var buildJob = workflow
         .Job("build")
         .Name("Build")
-        .RunsOn(GitHubHostedRunners.UbuntuLatest)
-        .Defaults().Run("bash", component.Name)
-        .Job;
+        .Strategy()
+            .Matrix(("os", component.RunsOn))
+            .FailFast(false)
+            .Job
+        .RunsOn("${{ matrix.os }}")
+        .Defaults()
+            .Run("bash", component.Name)
+            .Job;
 
-    job.Permissions(
-        actions: Permission.Read,
-        contents: Permission.Read,
-        checks: Permission.Write, 
-        packages: Permission.Write);
+    buildJob.Permissions(checks: Permission.Write, contents: Permission.Read);
 
-    job.TimeoutMinutes(15);
+    buildJob.TimeoutMinutes(15);
 
-    job.Step()
+    buildJob.Step()
         .ActionsCheckout();
 
-    job.StepSetupDotNet();
+    buildJob.StepSetupDotNet();
 
     foreach (var testProject in component.Tests)
     {
-        job.StepTestAndReport(component.Name, testProject);
+        buildJob.StepTestAndReport(component.Name, testProject, "net8.0");
+        buildJob.StepTestAndReport(component.Name, testProject, "net9.0");
+        if (component.RunsOn.Contains("windows-latest"))
+        {
+            buildJob.StepTestAndReport(component.Name, testProject, "net481");
+        }
     }
 
-    job.StepInstallCACerts();
+    var packJob = workflow.Job("pack")
+        .Name("Pack")
+        .RunsOn(GitHubHostedRunners.UbuntuLatest)
+        .Needs("build")
+        .Defaults()
+            .Run("bash", component.Name)
+            .Job;
 
-    job.StepToolRestore();
+    packJob.Permissions(
+        actions: Permission.Read,
+        contents: Permission.Read,
+        checks: Permission.Write,
+        packages: Permission.Write);
+
+    packJob.TimeoutMinutes(15);
+
+    packJob.Step()
+        .ActionsCheckout();
+
+    packJob.StepSetupDotNet();
+
+    packJob.StepInstallCACerts();
+
+    packJob.StepToolRestore();
 
     foreach (var project in component.Projects)
     {
-        job.StepPack(project);
+        packJob.StepPack(project);
     }
 
-    job.StepSign();
+    packJob.StepSign();
 
-    job.StepPush("MyGet", "https://www.myget.org/F/duende_identityserver/api/v2/package", "MYGET");
+    packJob.StepPush("MyGet", "https://www.myget.org/F/duende_identityserver/api/v2/package", "MYGET");
 
-    job.StepPush("GitHub", "https://nuget.pkg.github.com/DuendeSoftware/index.json", "GITHUB_TOKEN")
+    packJob.StepPush("GitHub", "https://nuget.pkg.github.com/DuendeSoftware/index.json", "GITHUB_TOKEN")
         .Env(("GITHUB_TOKEN", contexts.Secrets.GitHubToken),
             ("NUGET_AUTH_TOKEN", contexts.Secrets.GitHubToken));
 
-    job.StepUploadArtifacts(component.Name);
+    packJob.StepUploadArtifacts(component.Name);
 
     var fileName = $"{component.Name}-ci";
     WriteWorkflow(workflow, fileName);
@@ -120,7 +151,7 @@ void GenerateReleaseWorkflow(Component component)
         .Defaults().Run("bash", component.Name).Job;
 
     tagJob.Step()
-        .ActionsCheckout();
+        .ActionsCheckout("11bd71901bbe5b1630ceea73d27597364c9af683");
 
     tagJob.StepSetupDotNet();
 
@@ -180,7 +211,7 @@ void WriteWorkflow(Workflow workflow, string fileName)
     Console.WriteLine($"Wrote workflow to {filePath}");
 }
 
-record Component(string Name, string[] Projects, string[] Tests, string TagPrefix);
+record Component(string Name, string[] Projects, string[] Tests, string TagPrefix, string[] RunsOn);
 
 public static class StepExtensions
 {
@@ -197,27 +228,40 @@ public static class StepExtensions
     public static Step IfRefMain(this Step step) 
         => step.If("github.ref == 'refs/heads/main'");
 
-    public static void StepTestAndReport(this Job job, string componentName, string testProject)
+    public static Step IfWindows(this Step step)
+        => step.If("matrix.os == 'windows-latest'");
+
+    public static void StepTestAndReport(this Job job, string componentName, string testProject, string framework)
     {
         var path        = $"test/{testProject}";
-        var logFileName = "Tests.trx";
-        var flags = $"--logger \"console;verbosity=normal\" "      +
+        var logFileName = $"tests-{framework}.trx";
+        var flags = $"--configuration Release "                    +
+                    $"--framework {framework} "                    +
+                    $"--logger \"console;verbosity=normal\" "      +
                     $"--logger \"trx;LogFileName={logFileName}\" " +
                     $"--collect:\"XPlat Code Coverage\"";
-        job.Step()
-            .Name($"Test - {testProject}")
-            .Run($"dotnet test -c Release {path} {flags}");
+        var isWindows = framework == "net481";
 
-        job.Step()
-            .Name($"Test report - {testProject}")
+        var testStep = job.Step()
+            .Name($"Test - {testProject}-{framework}")
+            .Run($"dotnet test {path} {flags}");
+
+        var testReportStep = job.Step()
+            .Name($"Test report {testProject}-{framework}")
             .Uses("dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5") // v1.9.1
             .If("success() || failure()")
             .With(
-                ("name", $"Test Report - {testProject}"),
+                ("name", $"Test Report {testProject}-{framework}"),
                 ("path", $"{componentName}/{path}/TestResults/{logFileName}"),
                 ("reporter", "dotnet-trx"),
                 ("fail-on-error", "true"),
                 ("fail-on-empty", "true"));
+
+        if (isWindows)
+        {
+            testStep.IfWindows();
+            testReportStep.IfWindows();
+        }
     }
 
     // These intermediate certificates are required for signing and are not installed on the GitHub runners by default.
