@@ -62,6 +62,7 @@
     }
     public static class DPoPExtensions
     {
+        public static void AddDPoPProofAdditionalPayloadClaims(this System.Net.Http.HttpRequestMessage request, System.Collections.Generic.IDictionary<string, string> customClaims) { }
         public static void ClearDPoPProofToken(this System.Net.Http.HttpRequestMessage request) { }
         public static string? GetDPoPNonce(this System.Net.Http.HttpResponseMessage response) { }
         public static string GetDPoPUrl(this System.Net.Http.HttpRequestMessage request) { }
@@ -88,6 +89,7 @@
     {
         public DPoPProofRequest() { }
         public string? AccessToken { get; set; }
+        public System.Collections.Generic.IReadOnlyDictionary<string, string>? AdditionalPayloadClaims { get; set; }
         public string DPoPJsonWebKey { get; set; }
         public string? DPoPNonce { get; set; }
         public string Method { get; set; }
