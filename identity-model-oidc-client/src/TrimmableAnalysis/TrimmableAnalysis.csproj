@@ -4,16 +4,18 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PublishTrimmed>true</PublishTrimmed>
+    <PublishAot>true</PublishAot>
     <TrimmerSingleWarn>false</TrimmerSingleWarn> 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\OidcClient\OidcClient.csproj" />
-    <ProjectReference Include="..\..\src\OidcClient.IdentityTokenValidator\OidcClient.IdentityTokenValidator.csproj" />
-    <ProjectReference Include="..\..\src\OidcClient.DPoP\OidcClient.DPoP.csproj" />
+      <ProjectReference Include="..\IdentityModel.OidcClient\IdentityModel.OidcClient.csproj" />
+      <TrimmerRootAssembly Include="Duende.IdentityModel.OidcClient" />
+
+      <ProjectReference Include="..\IdentityModel.OidcClient.Extensions\IdentityModel.OidcClient.Extensions.csproj" />
+      <TrimmerRootAssembly Include="Duende.IdentityModel.OidcClient.Extensions" />
    </ItemGroup>
 
 </Project>

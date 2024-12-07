@@ -28,6 +28,12 @@ namespace Duende.IdentityModel.OidcClient.Infrastructure
             WriteIndented = true
         };
 
+
+#if NET7_0_OR_GREATER
+        [UnconditionalSuppressMessage("AOT", 
+            "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", 
+            Justification = "Code using `JsonOptions` is guarded by `RequiresDynamicCodeAttribute`")]
+#endif
         static LogSerializer()
         {
             JsonOptions.Converters.Add(new JsonStringEnumConverter());
@@ -40,6 +46,9 @@ namespace Duende.IdentityModel.OidcClient.Infrastructure
         /// <returns></returns>
 #if NET6_0_OR_GREATER
        [RequiresUnreferencedCode("The log serializer uses reflection in a way that is incompatible with trimming")]
+#endif
+#if NET7_0_OR_GREATER
+        [RequiresDynamicCode("The log serializer uses reflection in a way that is incompatible with trimming")]
 #endif
         public static string Serialize(object logObject)
         {
@@ -59,6 +68,6 @@ namespace Duende.IdentityModel.OidcClient.Infrastructure
             return Enabled ?
                 JsonSerializer.Serialize(logObject, (JsonTypeInfo<T>)SourceGenerationContext.Default.GetTypeInfo(typeof(T))) :
                 "Logging has been disabled";
-		}
+        }
     }
 }

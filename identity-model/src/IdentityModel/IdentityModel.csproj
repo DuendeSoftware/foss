@@ -6,6 +6,8 @@
     <Description>OpenID Connect &amp; OAuth 2.0 client library</Description>
     <PackageId>Duende.IdentityModel</PackageId>
     <PackageTags>OAuth2;OAuth 2.0;OpenID Connect;Security;Identity;IdentityServer</PackageTags>
+    <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">true</IsTrimmable>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">true</IsAotCompatible>
   </PropertyGroup>
  
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
