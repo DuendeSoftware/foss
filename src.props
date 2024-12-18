@@ -30,11 +30,6 @@
     <MinVerBuildMetadata>build.$(BUILD_NUMBER)</MinVerBuildMetadata>
     <MinVerAutoIncrement>patch</MinVerAutoIncrement>
 
-    <!--Strong Naming-->
-    <AssemblyOriginatorKeyFile>../../../key.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
-    <!-- <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>-->
-
     <!--SourceLink-->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -42,6 +37,13 @@
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
 
     <PackageReadmePath>../../README.md</PackageReadmePath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <!--Strong Naming-->
+    <AssemblyOriginatorKeyFile>../../../key.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <PublicSign>true</PublicSign>
   </PropertyGroup>
 
   <ItemGroup>
