@@ -59,10 +59,18 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
     /// Server requires an IUserTokenStore because the default token store
     /// relies on cookies, which are not present when streaming updates over a
     /// blazor circuit. </typeparam>
-    public static IServiceCollection AddBlazorServerAccessTokenManagement<TTokenStore>(this IServiceCollection services)
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="tokenStoreLifetime">The lifetime associated with the <see cref="!:TTokenStore"/> implementation.</param>
+    public static IServiceCollection AddBlazorServerAccessTokenManagement<TTokenStore>(
+        this IServiceCollection services,
+        ServiceLifetime tokenStoreLifetime = ServiceLifetime.Scoped)
         where TTokenStore : class, IUserTokenStore
     {
-        services.AddScoped<IUserTokenStore, TTokenStore>();
+        services.Add(new ServiceDescriptor(
+            typeof(IUserTokenStore), 
+            typeof(TTokenStore), 
+            tokenStoreLifetime));
+
         services.AddScoped<IUserAccessor, BlazorServerUserAccessor>();
         services.AddCircuitServicesAccessor();
         services.AddHttpContextAccessor(); // For SSR

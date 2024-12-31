@@ -53,7 +53,7 @@ public static class HostingExtensions
 
         // adds access token management
         builder.Services.AddOpenIdConnectAccessTokenManagement()
-            .AddBlazorServerAccessTokenManagement<ServerSideTokenStore>();
+            .AddBlazorServerAccessTokenManagement<ServerSideTokenStore>(ServiceLifetime.Singleton);
         
         // register events to customize authentication handlers
         builder.Services.AddTransient<CookieEvents>();
