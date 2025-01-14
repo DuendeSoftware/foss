@@ -35,6 +35,10 @@ public static class JsonElementExtensions
                     claims.Add(new Claim(x.Name, Stringify(item), ClaimValueTypes.String, issuer));
                 }
             }
+            else if (x.Value.ValueKind == JsonValueKind.Object)
+            {
+                claims.Add(new Claim(x.Name, Stringify(x.Value), "JSON", issuer));
+            }
             else
             {
                 claims.Add(new Claim(x.Name, Stringify(x.Value), ClaimValueTypes.String, issuer));
