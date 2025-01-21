@@ -13,45 +13,6 @@ namespace Duende.IdentityModel.Client;
 /// <seealso cref="ProtocolResponse" />
 public class TokenIntrospectionResponse : ProtocolResponse
 {
-    private readonly Lazy<string[]> _scopes;
-    private readonly Lazy<string?> _clientId;
-    private readonly Lazy<string?> _userName;
-    private readonly Lazy<string?> _tokenType;
-    private readonly Lazy<DateTimeOffset?> _expiration;
-    private readonly Lazy<DateTimeOffset?> _issuedAt;
-    private readonly Lazy<DateTimeOffset?> _notBefore;
-    private readonly Lazy<string?> _subject;
-    private readonly Lazy<string[]> _audiences;
-    private readonly Lazy<string?> _issuer;
-    private readonly Lazy<string?> _jwtId;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TokenIntrospectionResponse"/> class.
-    /// </summary>
-    public TokenIntrospectionResponse()
-    {
-        _scopes = new Lazy<string[]>(() => Claims.Where(c => c.Type == JwtClaimTypes.Scope).Select(c => c.Value).ToArray());
-        _clientId = new Lazy<string?>(() => Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.ClientId)?.Value);
-        _userName = new Lazy<string?>(() => Claims.FirstOrDefault(c => c.Type == "username")?.Value);
-        _tokenType = new Lazy<string?>(() => Claims.FirstOrDefault(c => c.Type == "token_type")?.Value);
-        _expiration = new Lazy<DateTimeOffset?>(() => GetTime(JwtClaimTypes.Expiration));
-        _issuedAt = new Lazy<DateTimeOffset?>(() => GetTime(JwtClaimTypes.IssuedAt));
-        _notBefore = new Lazy<DateTimeOffset?>(() => GetTime(JwtClaimTypes.NotBefore));
-        _subject = new Lazy<string?>(() => Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject)?.Value);
-        _audiences = new Lazy<string[]>(() => Claims.Where(c => c.Type == JwtClaimTypes.Audience).Select(c => c.Value).ToArray());
-        _issuer = new Lazy<string?>(() => Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Issuer)?.Value);
-        _jwtId = new Lazy<string?>(() => Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.JwtId)?.Value);
-    }
-
-    private DateTimeOffset? GetTime(string claimType)
-    {
-        var claimValue = Claims.FirstOrDefault(e => e.Type == claimType)?.Value;
-        if (claimValue == null) return null;
-
-        var seconds = long.Parse(claimValue, NumberStyles.AllowLeadingSign, NumberFormatInfo.InvariantInfo);
-        return DateTimeOffset.FromUnixTimeSeconds(seconds);
-    }
-
     /// <summary>
     /// Allows to initialize instance specific data.
     /// </summary>
@@ -95,10 +56,31 @@ public class TokenIntrospectionResponse : ProtocolResponse
             }
             // }
 
+            Scopes = claims.Where(c => c.Type == JwtClaimTypes.Scope).Select(c => c.Value).ToArray();
+            ClientId = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.ClientId)?.Value;
+            UserName = claims.FirstOrDefault(c => c.Type == "username")?.Value;
+            TokenType = claims.FirstOrDefault(c => c.Type == "token_type")?.Value;
+            Expiration = GetTime(claims, JwtClaimTypes.Expiration);
+            IssuedAt = GetTime(claims, JwtClaimTypes.IssuedAt);
+            NotBefore = GetTime(claims, JwtClaimTypes.NotBefore);
+            Subject = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject)?.Value;
+            Audiences = claims.Where(c => c.Type == JwtClaimTypes.Audience).Select(c => c.Value).ToArray();
+            Issuer = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Issuer)?.Value;
+            JwtId = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.JwtId)?.Value;
+
             Claims = claims;
         }
         
         return Task.CompletedTask;
+    }
+
+    private static DateTimeOffset? GetTime(List<Claim> claims, string claimType)
+    {
+        var claimValue = claims.FirstOrDefault(e => e.Type == claimType)?.Value;
+        if (claimValue == null) return null;
+
+        var seconds = long.Parse(claimValue, NumberStyles.AllowLeadingSign, NumberFormatInfo.InvariantInfo);
+        return DateTimeOffset.FromUnixTimeSeconds(seconds);
     }
 
     /// <summary>
@@ -115,7 +97,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The list of scopes associated to the token or an empty array if no <c>scope</c> claim is present.
     /// </value>
-    public string[] Scopes => _scopes.Value;
+    public string[] Scopes { get; private set; } = [];
 
     /// <summary>
     /// Gets the client identifier for the OAuth 2.0 client that requested the token.
@@ -123,7 +105,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The client identifier for the OAuth 2.0 client that requested the token or null if the <c>client_id</c> claim is missing.
     /// </value>
-    public string? ClientId => _clientId.Value;
+    public string? ClientId { get; private set; }
 
     /// <summary>
     /// Gets the human-readable identifier for the resource owner who authorized the token.
@@ -131,7 +113,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The human-readable identifier for the resource owner who authorized the token or null if the <c>username</c> claim is missing.
     /// </value>
-    public string? UserName => _userName.Value;
+    public string? UserName { get; private set; }
 
     /// <summary>
     /// Gets the type of the token as defined in <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-5.1">section 5.1 of OAuth 2.0 (RFC6749)</a>.
@@ -139,7 +121,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The type of the token as defined in <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-5.1">section 5.1 of OAuth 2.0 (RFC6749)</a> or null if the <c>token_type</c> claim is missing.
     /// </value>
-    public string? TokenType => _tokenType.Value;
+    public string? TokenType { get; private set; }
 
     /// <summary>
     /// Gets the time on or after which the token must not be accepted for processing.
@@ -147,7 +129,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The expiration time of the token or null if the <c>exp</c> claim is missing.
     /// </value>
-    public DateTimeOffset? Expiration => _expiration.Value;
+    public DateTimeOffset? Expiration { get; private set; }
 
     /// <summary>
     /// Gets the time when the token was issued.
@@ -155,7 +137,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The issuance time of the token or null if the <c>iat</c> claim is missing.
     /// </value>
-    public DateTimeOffset? IssuedAt => _issuedAt.Value;
+    public DateTimeOffset? IssuedAt { get; private set; }
 
     /// <summary>
     /// Gets the time before which the token must not be accepted for processing.
@@ -163,7 +145,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The validity start time of the token or null if the <c>nbf</c> claim is missing.
     /// </value>
-    public DateTimeOffset? NotBefore => _notBefore.Value;
+    public DateTimeOffset? NotBefore { get; private set; }
 
     /// <summary>
     /// Gets the subject of the token. Usually a machine-readable identifier of the resource owner who authorized the token.
@@ -171,7 +153,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The subject of the token or null if the <c>sub</c> claim is missing.
     /// </value>
-    public string? Subject => _subject.Value;
+    public string? Subject { get; private set; }
 
     /// <summary>
     /// Gets the service-specific list of string identifiers representing the intended audience for the token.
@@ -179,7 +161,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The service-specific list of string identifiers representing the intended audience for the token or an empty array if no <c>aud</c> claim is present.
     /// </value>
-    public string[] Audiences => _audiences.Value;
+    public string[] Audiences { get; private set; } = [];
 
     /// <summary>
     /// Gets the string representing the issuer of the token.
@@ -187,7 +169,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The string representing the issuer of the token or null if the <c>iss</c> claim is missing.
     /// </value>
-    public string? Issuer => _issuer.Value;
+    public string? Issuer { get; private set; }
 
     /// <summary>
     /// Gets the string identifier for the token.
@@ -195,7 +177,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <value>
     /// The string identifier for the token or null if the <c>jti</c> claim is missing.
     /// </value>
-    public string? JwtId => _jwtId.Value;
+    public string? JwtId { get; private set; }
 
     /// <summary>
     /// Gets the claims.
