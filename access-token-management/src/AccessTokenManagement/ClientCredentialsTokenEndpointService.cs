@@ -69,17 +69,18 @@ public class ClientCredentialsTokenEndpointService : IClientCredentialsTokenEndp
             ClientId = client.ClientId,
             ClientSecret = client.ClientSecret,
             ClientCredentialStyle = client.ClientCredentialStyle,
+            AuthorizationHeaderStyle = client.AuthorizationHeaderStyle
         };
 
         request.Parameters.AddRange(client.Parameters);
-        
+
         parameters ??= new TokenRequestParameters();
-        
+
         if (!string.IsNullOrWhiteSpace(parameters.Scope))
         {
             request.Scope = parameters.Scope;
         }
-        
+
         if (!string.IsNullOrWhiteSpace(parameters.Resource))
         {
             request.Resource.Clear();
@@ -103,14 +104,14 @@ public class ClientCredentialsTokenEndpointService : IClientCredentialsTokenEndp
         else
         {
             var assertion = await _clientAssertionService.GetClientAssertionAsync(clientName).ConfigureAwait(false);
-                
+
             if (assertion != null)
             {
                 request.ClientAssertion = assertion;
                 request.ClientCredentialStyle = ClientCredentialStyle.PostBody;
             }
         }
-        
+
         request.Options.TryAdd(ClientCredentialsTokenManagementDefaults.TokenRequestParametersOptionsName, parameters);
 
         var key = await _dPoPKeyMaterialService.GetKeyAsync(clientName);
@@ -134,19 +135,19 @@ public class ClientCredentialsTokenEndpointService : IClientCredentialsTokenEndp
         }
         else if (!string.IsNullOrWhiteSpace(client.HttpClientName))
         {
-            httpClient = _httpClientFactory.CreateClient(client.HttpClientName);    
+            httpClient = _httpClientFactory.CreateClient(client.HttpClientName);
         }
         else
         {
-            httpClient = _httpClientFactory.CreateClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);    
+            httpClient = _httpClientFactory.CreateClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
         }
-        
+
         _logger.LogDebug("Requesting client credentials access token at endpoint: {endpoint}", request.Address);
         var response = await httpClient.RequestClientCredentialsTokenAsync(request, cancellationToken).ConfigureAwait(false);
 
-        if (response.IsError && 
-            (response.Error == OidcConstants.TokenErrors.UseDPoPNonce || response.Error == OidcConstants.TokenErrors.InvalidDPoPProof) && 
-            key != null && 
+        if (response.IsError &&
+            (response.Error == OidcConstants.TokenErrors.UseDPoPNonce || response.Error == OidcConstants.TokenErrors.InvalidDPoPProof) &&
+            key != null &&
             response.DPoPNonce != null)
         {
             _logger.LogDebug("Token request failed with DPoP nonce error. Retrying with new nonce.");
@@ -173,7 +174,7 @@ public class ClientCredentialsTokenEndpointService : IClientCredentialsTokenEndp
                 Error = response.Error
             };
         }
-        
+
         return new ClientCredentialsToken
         {
             AccessToken = response.AccessToken,
