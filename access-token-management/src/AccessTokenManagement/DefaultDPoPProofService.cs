@@ -119,6 +119,14 @@ public class DefaultDPoPProofService : IDPoPProofService
             payload.Add(JwtClaimTypes.Nonce, nonce);
         }
 
+        if (request.AdditionalPayloadClaims?.Count > 0)
+        {
+            foreach (var claim in request.AdditionalPayloadClaims)
+            {
+                payload.Add(claim.Key, claim.Value);
+            }
+        }
+
         var handler = new JsonWebTokenHandler() { SetDefaultTimesOnTokenCreation = false };
         var key = new SigningCredentials(jsonWebKey, jsonWebKey.Alg);
         var proofToken = handler.CreateToken(JsonSerializer.Serialize(payload), key, header);
