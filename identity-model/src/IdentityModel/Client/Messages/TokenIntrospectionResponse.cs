@@ -78,8 +78,8 @@ public class TokenIntrospectionResponse : ProtocolResponse
     {
         var claimValue = claims.FirstOrDefault(e => e.Type == claimType)?.Value;
         if (claimValue == null) return null;
+        if (!long.TryParse(claimValue, NumberStyles.AllowLeadingSign, NumberFormatInfo.InvariantInfo, out var seconds)) return null;
 
-        var seconds = long.Parse(claimValue, NumberStyles.AllowLeadingSign, NumberFormatInfo.InvariantInfo);
         return DateTimeOffset.FromUnixTimeSeconds(seconds);
     }
 
@@ -127,7 +127,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// Gets the time on or after which the token must not be accepted for processing.
     /// </summary>
     /// <value>
-    /// The expiration time of the token or null if the <c>exp</c> claim is missing.
+    /// The expiration time of the token or null if the <c>exp</c> claim is either missing or not a valid number.
     /// </value>
     public DateTimeOffset? Expiration { get; private set; }
 
@@ -135,7 +135,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// Gets the time when the token was issued.
     /// </summary>
     /// <value>
-    /// The issuance time of the token or null if the <c>iat</c> claim is missing.
+    /// The issuance time of the token or null if the <c>iat</c> claim is either missing or not a valid number.
     /// </value>
     public DateTimeOffset? IssuedAt { get; private set; }
 
@@ -143,7 +143,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// Gets the time before which the token must not be accepted for processing.
     /// </summary>
     /// <value>
-    /// The validity start time of the token or null if the <c>nbf</c> claim is missing.
+    /// The validity start time of the token or null if the <c>nbf</c> claim is either missing or not a valid number.
     /// </value>
     public DateTimeOffset? NotBefore { get; private set; }
 
