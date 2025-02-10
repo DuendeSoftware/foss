@@ -207,7 +207,7 @@ public static class StepExtensions
         job.Step()
             .Name($"Test report - {testProject}")
             .Uses("dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5") // v1.9.1
-            .If("github.event == 'push' && (success() || failure())")
+            .If("success() || failure()")
             .With(
                 ("name", $"Test Report - {testProject}"),
                 ("path", $"{componentName}/{path}/TestResults/{logFileName}"),

@@ -45,7 +45,7 @@ jobs:
     - name: Test - IdentityModel.Tests
       run: dotnet test -c Release test/IdentityModel.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=Tests.trx" --collect:"XPlat Code Coverage"
     - name: Test report - IdentityModel.Tests
-      if: github.event == 'push' && (success() || failure())
+      if: success() || failure()
       uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5
       with:
         name: Test Report - IdentityModel.Tests
