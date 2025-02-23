@@ -77,4 +77,14 @@ public static class DPoPExtensions
     {
         return request.RequestUri!.Scheme + "://" + request.RequestUri!.Authority + request.RequestUri!.LocalPath;
     }
+
+    /// <summary>
+    /// Additional claims that will be added to the DPoP proof payload on generation
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="customClaims"></param>
+    public static void AddDPoPProofAdditionalPayloadClaims(this HttpRequestMessage request, IDictionary<string, string> customClaims)
+    {
+        request.Options.TryAdd("Duende.AccessTokenManagement.DPoPProofAdditionalPayloadClaims", customClaims.AsReadOnly());
+    }
 }
