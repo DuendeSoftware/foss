@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text;
@@ -35,11 +35,11 @@ public static class HttpClientDynamicRegistrationExtensions
         {
             clone.SetBearerToken(request.Token!);
         }
-
-        HttpResponseMessage response;
+ 
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using HttpResponseMessage response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<DynamicClientRegistrationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -49,7 +49,5 @@ public static class HttpClientDynamicRegistrationExtensions
         {
             return ProtocolResponse.FromException<DynamicClientRegistrationResponse>(ex);
         }
-
-        return await ProtocolResponse.FromHttpResponseAsync<DynamicClientRegistrationResponse>(response).ConfigureAwait();
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -50,10 +50,10 @@ public static class HttpClientBackchannelAuthenticationExtensions
         clone.Method = HttpMethod.Post;
         clone.Prepare();
                         
-        HttpResponseMessage response;
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using var response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<BackchannelAuthenticationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -63,7 +63,5 @@ public static class HttpClientBackchannelAuthenticationExtensions
         {
             return ProtocolResponse.FromException<BackchannelAuthenticationResponse>(ex);
         }
-
-        return await ProtocolResponse.FromHttpResponseAsync<BackchannelAuthenticationResponse>(response).ConfigureAwait();
     }
 }

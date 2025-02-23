@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -26,10 +26,10 @@ public static class HttpClientTokenRevocationExtensions
         clone.Parameters.AddOptional(OidcConstants.TokenIntrospectionRequest.TokenTypeHint, request.TokenTypeHint);
         clone.Prepare();
 
-        HttpResponseMessage response;
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using var response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<TokenRevocationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -39,7 +39,5 @@ public static class HttpClientTokenRevocationExtensions
         {
             return ProtocolResponse.FromException<TokenRevocationResponse>(ex);
         }
-
-        return await ProtocolResponse.FromHttpResponseAsync<TokenRevocationResponse>(response).ConfigureAwait();
     }
 }
