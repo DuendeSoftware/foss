@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -208,25 +208,24 @@ public static class HttpClientTokenRequestExtensions
         return await client.RequestTokenAsync(request, cancellationToken).ConfigureAwait();
     }
 
-    internal static async Task<TokenResponse> RequestTokenAsync(this HttpMessageInvoker client, ProtocolRequest request, CancellationToken cancellationToken = default)
+    private static async Task<TokenResponse> RequestTokenAsync(this HttpMessageInvoker client, ProtocolRequest request,
+        CancellationToken cancellationToken = default)
     {
         request.Prepare();
         request.Method = HttpMethod.Post;
-            
-        HttpResponseMessage response;
+
         try
         {
-            response = await client.SendAsync(request, cancellationToken).ConfigureAwait();
+            using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<TokenResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
-		{
+        {
             throw;
-		}
+        }
         catch (Exception ex)
         {
             return ProtocolResponse.FromException<TokenResponse>(ex);
         }
-
-        return await ProtocolResponse.FromHttpResponseAsync<TokenResponse>(response).ConfigureAwait();
     }
 }

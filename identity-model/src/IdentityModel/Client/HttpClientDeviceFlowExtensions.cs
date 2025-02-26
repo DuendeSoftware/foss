@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -32,10 +32,10 @@ public static class HttpClientDeviceFlowExtensions
             clone.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>());
         }
 
-        HttpResponseMessage response;
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using var response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<DeviceAuthorizationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
         {
@@ -45,7 +45,5 @@ public static class HttpClientDeviceFlowExtensions
         {
             return ProtocolResponse.FromException<DeviceAuthorizationResponse>(ex);
         }
-
-        return await ProtocolResponse.FromHttpResponseAsync<DeviceAuthorizationResponse>(response).ConfigureAwait();
     }
 }

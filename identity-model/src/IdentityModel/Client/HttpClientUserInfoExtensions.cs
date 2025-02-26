@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -27,10 +27,13 @@ public static class HttpClientUserInfoExtensions
         clone.SetBearerToken(request.Token!);
         clone.Prepare();
 
-        HttpResponseMessage response;
         try
         {
-            response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            using var response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
+            // response.Content can be null in net462 and net471
+            var skipJsonParsing = response.Content?.Headers.ContentType?.MediaType != "application/json";
+            return await ProtocolResponse.FromHttpResponseAsync<UserInfoResponse>(response, skipJson: skipJsonParsing).ConfigureAwait();
+
         }
         catch (OperationCanceledException)
         {
@@ -40,9 +43,5 @@ public static class HttpClientUserInfoExtensions
         {
             return ProtocolResponse.FromException<UserInfoResponse>(ex);
         }
-
-        // response.Content can be null in net462 and net471
-        var skipJsonParsing = response.Content?.Headers.ContentType?.MediaType != "application/json";
-        return await ProtocolResponse.FromHttpResponseAsync<UserInfoResponse>(response, skipJson: skipJsonParsing).ConfigureAwait();
     }
 }
