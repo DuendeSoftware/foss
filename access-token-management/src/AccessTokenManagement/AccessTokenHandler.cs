@@ -134,6 +134,8 @@ public abstract class AccessTokenHandler : DelegatingHandler
 
         if (!string.IsNullOrEmpty(token.DPoPJsonWebKey))
         {
+            request.Options.TryGetValue(new HttpRequestOptionsKey<IReadOnlyDictionary<string, string>>("Duende.AccessTokenManagement.DPoPProofAdditionalPayloadClaims"), out var additionalClaims);
+
             // create proof
             var proofToken = await _dPoPProofService.CreateProofTokenAsync(new DPoPProofRequest
             {
@@ -142,6 +144,7 @@ public abstract class AccessTokenHandler : DelegatingHandler
                 Method = request.Method.ToString(),
                 DPoPJsonWebKey = token.DPoPJsonWebKey,
                 DPoPNonce = dpopNonce,
+                AdditionalPayloadClaims = additionalClaims,
             });
 
             if (proofToken != null)
