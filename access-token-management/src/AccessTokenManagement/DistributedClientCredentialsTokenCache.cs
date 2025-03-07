@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -13,19 +13,18 @@ namespace Duende.AccessTokenManagement;
 /// Client access token cache using IDistributedCache
 /// </summary>
 public class DistributedClientCredentialsTokenCache(
-    IDistributedCache cache,
+    [FromKeyedServices(nameof(DistributedClientCredentialsTokenCache))] OptionallyKeyedDependency<IDistributedCache> cache,
     ITokenRequestSynchronization synchronization,
     IOptions<ClientCredentialsTokenManagementOptions> options,
     ILogger<DistributedClientCredentialsTokenCache> logger
     )
     : IClientCredentialsTokenCache
 {
-    private readonly IDistributedCache _cache = cache;
+    private readonly IDistributedCache _cache = cache.Dependency;
     private readonly ITokenRequestSynchronization _synchronization = synchronization;
     private readonly ILogger<DistributedClientCredentialsTokenCache> _logger = logger;
     private readonly ClientCredentialsTokenManagementOptions _options = options.Value;
 
-        
     /// <inheritdoc/>
     public async Task SetAsync(
         string clientName,
