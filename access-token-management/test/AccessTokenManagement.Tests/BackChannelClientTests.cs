@@ -1,10 +1,10 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using Duende.IdentityModel.Client;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 
@@ -75,6 +75,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         token.Error.ShouldBe("Not Found");
         mockHttp.GetMatchCount(request).ShouldBe(1);
     }
+
     [Fact]
     public async Task Getting_a_token_with_different_scope_twice_sequentially_will_result_in_two_calls()
     {
@@ -171,7 +172,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         ClientCredentialsToken token2 = null!;
         var t2 = Task.Run(async () =>
         {
-
             token2 = await sut.GetAccessTokenAsync("test", new TokenRequestParameters()
             {
                 ForceRenewal = false,
@@ -232,7 +232,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
                 ForceRenewal = false,
                 Parameters = new Parameters()
                 {
-                    {"tenant", "1"}
+                    { "tenant", "1" }
                 }
 
             });
@@ -243,13 +243,12 @@ public class BackChannelClientTests(ITestOutputHelper output)
         ClientCredentialsToken token2 = null!;
         var t2 = Task.Run(async () =>
         {
-
             token2 = await sut.GetAccessTokenAsync("test", new TokenRequestParameters()
             {
                 ForceRenewal = false,
                 Parameters = new Parameters()
                 {
-                    {"tenant", "2"}
+                    { "tenant", "2" }
                 }
 
             });
@@ -268,6 +267,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         mockHttp.GetMatchCount(request).ShouldBe(1);
 
     }
+
     [Fact]
     public async Task Get_access_token_uses_specific_http_client_instance()
     {
@@ -298,52 +298,90 @@ public class BackChannelClientTests(ITestOutputHelper output)
         token.Error.ShouldBe("Not Found");
         mockHttp.GetMatchCount(request).ShouldBe(1);
     }
-}
 
-
-public static class TimeoutExtensions
-{
-    public static async Task<T> ThrowOnTimeout<T>(this Task<T> task, TimeSpan timeout = default, string? message = null)
+    [Fact]
+    public async Task Can_use_custom_cache_implementation()
     {
-        Stopwatch sw = Stopwatch.StartNew();
-        timeout = GetTimeOutOrDefault(timeout);
+        var services = new ServiceCollection();
 
-        using (var cts = new CancellationTokenSource())
+        services.AddDistributedMemoryCache();
+        var replacementCache = new FakeCache();
+        services.AddKeyedSingleton<IDistributedCache>(nameof(DistributedClientCredentialsTokenCache), replacementCache);
+
+        services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.TokenEndpoint = "https://as";
+                client.ClientId = "id";
+
+                client.HttpClientName = "custom";
+            });
+
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("https://as/*")
+            .Respond(HttpStatusCode.OK, JsonContent.Create(new TokenResponse()));
+
+        services.AddHttpClient("custom")
+            .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
+
+        var provider = services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManagementService>();
+
+        var token = await sut.GetAccessTokenAsync("test");
+
+        token.Error.ShouldBeNull();
+
+        // Verify we actually used the cache
+        replacementCache.GetCount.ShouldBe(1);
+        replacementCache.SetCount.ShouldBe(1);
+    }
+
+    public class FakeCache : IDistributedCache
+    {
+        public int GetCount = 0;
+        public int SetCount = 0;
+
+        public byte[]? Get(string key)
         {
-            var delayTask = Task.Delay(timeout, cts.Token);
-
-            var resultTask = await Task.WhenAny(task, delayTask);
-            if (resultTask == delayTask)
-                // Operation cancelled
-                throw new OperationCanceledException((message ?? "operation cancelled") + " after " + sw.ElapsedMilliseconds + "ms");
-            cts.Cancel();
-
-            return await task;
+            throw new InvalidOperationException();
         }
-    }
 
-    private static TimeSpan GetTimeOutOrDefault(TimeSpan timeout)
-    {
-        if (Debugger.IsAttached) return TimeSpan.FromMinutes(5);
-
-        return timeout == default ? TimeSpan.FromSeconds(2) : timeout;
-    }
-
-    public static async Task ThrowOnTimeout(this Task task, TimeSpan timeout = default)
-    {
-        timeout = GetTimeOutOrDefault(timeout);
-
-        using (var cts = new CancellationTokenSource())
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = new CancellationToken())
         {
-            var delayTask = Task.Delay(timeout, cts.Token);
+            Interlocked.Increment(ref GetCount);
+            return Task.FromResult<byte[]?>(null);
+        }
 
-            var resultTask = await Task.WhenAny(task, delayTask);
-            if (resultTask == delayTask)
-                // Operation cancelled
-                throw new OperationCanceledException();
-            cts.Cancel();
+        public void Refresh(string key)
+        {
+            throw new InvalidOperationException();
+        }
 
-            await task;
+        public Task RefreshAsync(string key, CancellationToken token = new CancellationToken())
+        {
+            throw new InvalidOperationException();
+        }
+
+        public void Remove(string key)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public Task RemoveAsync(string key, CancellationToken token = new CancellationToken())
+        {
+            throw new InvalidOperationException();
+        }
+
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options,
+            CancellationToken token = new CancellationToken())
+        {
+            Interlocked.Increment(ref SetCount);
+            return Task.CompletedTask;
         }
     }
 }

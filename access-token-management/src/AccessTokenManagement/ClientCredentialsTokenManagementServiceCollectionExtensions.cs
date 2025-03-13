@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
@@ -38,12 +39,21 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
         services.TryAddSingleton<ITokenRequestSynchronization, TokenRequestSynchronization>();
 
         services.TryAddTransient<IClientCredentialsTokenManagementService, ClientCredentialsTokenManagementService>();
+
+        // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
+        // without key. If desired, a consumers can register the distributed cache with a key
+        services.TryAddKeyedTransient<IDistributedCache>(nameof(DistributedClientCredentialsTokenCache), (sp, _) => sp.GetRequiredService<IDistributedCache>());
         services.TryAddTransient<IClientCredentialsTokenCache, DistributedClientCredentialsTokenCache>();
         services.TryAddTransient<IClientCredentialsTokenEndpointService, ClientCredentialsTokenEndpointService>();
         services.TryAddTransient<IClientAssertionService, DefaultClientAssertionService>();
 
         services.TryAddTransient<IDPoPProofService, DefaultDPoPProofService>();
         services.TryAddTransient<IDPoPKeyStore, DefaultDPoPKeyStore>();
+
+        // ** DistributedDPoPNonceStore **
+        // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
+        // without key. If desired, a consumers can register the distributed cache with a key
+        services.TryAddKeyedTransient<IDistributedCache>(nameof(DistributedDPoPNonceStore), (sp, _) => sp.GetRequiredService<IDistributedCache>());
         services.TryAddTransient<IDPoPNonceStore, DistributedDPoPNonceStore>();
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);

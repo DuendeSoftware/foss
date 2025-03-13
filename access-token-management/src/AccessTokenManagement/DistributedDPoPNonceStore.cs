@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement;
@@ -23,7 +24,7 @@ public class DistributedDPoPNonceStore : IDPoPNonceStore
     /// <param name="cache"></param>
     /// <param name="logger"></param>
     public DistributedDPoPNonceStore(
-        IDistributedCache cache, 
+        [FromKeyedServices(nameof(DistributedDPoPNonceStore))] IDistributedCache cache, 
         ILogger<DistributedDPoPNonceStore> logger)
     {
         _cache = cache;
