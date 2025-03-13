@@ -212,6 +212,7 @@ public class UserTokenManagementTests : IntegrationTestBase
         // Respond to refresh with a short token lifetime so that we trigger another refresh on 2nd use
         var refreshTokenResponse = new
         {
+            id_token = "refreshed1_id_token",
             access_token = "refreshed1_access_token",
             token_type = "token_type1",
             expires_in = 10,
@@ -225,6 +226,7 @@ public class UserTokenManagementTests : IntegrationTestBase
         // Respond to second refresh with a long token lifetime so that we don't trigger another refresh on 3rd use
         var refreshTokenResponse2 = new
         {
+            id_token = "refreshed2_id_token",
             access_token = "refreshed2_access_token",
             token_type = "token_type2",
             expires_in = 3600,
@@ -245,6 +247,7 @@ public class UserTokenManagementTests : IntegrationTestBase
 
         token.ShouldNotBeNull();
         token.IsError.ShouldBeFalse();
+        token.IdentityToken.ShouldBe("refreshed1_id_token");
         token.AccessToken.ShouldBe("refreshed1_access_token");
         token.AccessTokenType.ShouldBe("token_type1");
         token.RefreshToken.ShouldBe("refreshed1_refresh_token");
@@ -256,6 +259,7 @@ public class UserTokenManagementTests : IntegrationTestBase
 
         token.ShouldNotBeNull();
         token.IsError.ShouldBeFalse();
+        token.IdentityToken.ShouldBe("refreshed2_id_token");
         token.AccessToken.ShouldBe("refreshed2_access_token");
         token.AccessTokenType.ShouldBe("token_type2");
         token.RefreshToken.ShouldBe("refreshed2_refresh_token");

@@ -117,6 +117,7 @@
     public class UserToken : Duende.AccessTokenManagement.ClientCredentialsToken
     {
         public UserToken() { }
+        public string? IdentityToken { get; set; }
         public string? RefreshToken { get; set; }
     }
     public class UserTokenEndpointService : Duende.AccessTokenManagement.OpenIdConnect.IUserTokenEndpointService
