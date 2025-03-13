@@ -8,13 +8,6 @@
     <WilsonVersion>7.1.2</WilsonVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0'">
-    <FrameworkVersion>6.0.1</FrameworkVersion>
-    <ExtensionsVersion>6.0.0</ExtensionsVersion>
-    <WilsonVersion>6.35.0</WilsonVersion>
-    <IdentityServerVersion>6.3.10</IdentityServerVersion>
-  </PropertyGroup>
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
     <FrameworkVersion>8.0.1</FrameworkVersion>
     <ExtensionsVersion>8.0.0</ExtensionsVersion>
