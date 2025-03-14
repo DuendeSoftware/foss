@@ -59,6 +59,11 @@ public class ClientAssertionService : IClientAssertionService
                 { JwtClaimTypes.JwtId, Guid.NewGuid().ToString() },
                 { JwtClaimTypes.Subject, config.ClientId! },
                 { JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime() }
+            },
+
+            AdditionalHeaderClaims = new Dictionary<string, object>
+            {
+                { JwtClaimTypes.TokenType, "client-authentication+jwt" }
             }
         };
 
