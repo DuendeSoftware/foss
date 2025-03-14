@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -104,17 +104,14 @@ public static class HttpClientDiscoveryExtensions
                         {
                             return ProtocolResponse.FromException<DiscoveryDocumentResponse>(jwkResponse.Exception, jwkResponse.Error);
                         }
-                        else if(jwkResponse.HttpResponse != null)
+                        if(jwkResponse.HttpResponse != null)
                         {
                             return await ProtocolResponse.FromHttpResponseAsync<DiscoveryDocumentResponse>(jwkResponse.HttpResponse, $"Error connecting to {jwkUrl}: {jwkResponse.HttpErrorReason}").ConfigureAwait();
                         }
                         // If IsError is true, but we have neither an Exception nor an HttpResponse, something very weird is going on
                         // I don't think it is actually possible for this to occur, but just in case...
-                        else
-                        {
-                            return ProtocolResponse.FromException<DiscoveryDocumentResponse>(
-                                new ArgumentNullException(nameof(jwkResponse.HttpResponse)), $"Unknown error retrieving JWKS - neither an exception nor an HttpResponse is available");
-                        }
+                        return ProtocolResponse.FromException<DiscoveryDocumentResponse>(
+                            new ArgumentNullException(nameof(jwkResponse.HttpResponse)), $"Unknown error retrieving JWKS - neither an exception nor an HttpResponse is available");
                     }
 
                     disco.KeySet = jwkResponse.KeySet;

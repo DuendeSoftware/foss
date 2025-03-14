@@ -68,21 +68,19 @@ public static class HttpClientPushedAuthorizationExtensions
     {
         request.Prepare();
         request.Method = HttpMethod.Post;
-            
-        HttpResponseMessage response;
+
         try
         {
-            response = await client.SendAsync(request, cancellationToken).ConfigureAwait();
+            using HttpResponseMessage response = await client.SendAsync(request, cancellationToken).ConfigureAwait();
+            return await ProtocolResponse.FromHttpResponseAsync<PushedAuthorizationResponse>(response).ConfigureAwait();
         }
         catch (OperationCanceledException)
-		{
+        {
             throw;
-		}
+        }
         catch (Exception ex)
         {
             return ProtocolResponse.FromException<PushedAuthorizationResponse>(ex);
         }
-
-        return await ProtocolResponse.FromHttpResponseAsync<PushedAuthorizationResponse>(response).ConfigureAwait();
     }
 }
