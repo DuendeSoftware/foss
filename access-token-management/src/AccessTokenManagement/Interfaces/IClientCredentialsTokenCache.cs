@@ -29,26 +29,13 @@ public interface IClientCredentialsTokenCache
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a client access token from the cache
-    /// </summary>
-    /// <param name="clientName"></param>
-    /// <param name="requestParameters"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task<ClientCredentialsToken?> GetAsync(
-        string clientName,
-        TokenRequestParameters requestParameters,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Deletes a client access token from the cache
     /// </summary>
     /// <param name="clientName"></param>
     /// <param name="requestParameters"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task DeleteAsync(
-        string clientName,
+    ValueTask DeleteAsync(string clientName,
         TokenRequestParameters requestParameters,
         CancellationToken cancellationToken = default);
 }

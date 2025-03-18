@@ -7,7 +7,6 @@ using System.Net.Http.Json;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
-
 namespace Duende.AccessTokenManagement.Tests;
 
 public class BackChannelClientTests(ITestOutputHelper output)
@@ -17,7 +16,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
     {
         var services = new ServiceCollection();
 
-        services.AddDistributedMemoryCache();
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
@@ -48,7 +46,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
     {
         var services = new ServiceCollection();
 
-        services.AddDistributedMemoryCache();
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
@@ -80,7 +77,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
     {
         var services = new ServiceCollection();
 
-        services.AddDistributedMemoryCache();
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
@@ -130,7 +126,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
     {
         var services = new ServiceCollection();
 
-        services.AddDistributedMemoryCache();
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
@@ -199,7 +194,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
     {
         var services = new ServiceCollection();
 
-        services.AddDistributedMemoryCache();
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
@@ -278,7 +272,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var services = new ServiceCollection();
 
-        services.AddDistributedMemoryCache();
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {

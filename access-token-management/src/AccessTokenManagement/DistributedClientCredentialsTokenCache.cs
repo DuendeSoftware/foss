@@ -1,31 +1,33 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Collections.Concurrent;
-using System.Text.Json;
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement;
 
+public static class ServiceProviderKeys
+{
+    public const string DistributedClientCredentialsTokenCache = "DistributedClientCredentialsTokenCache";
+    public const string DistributedDPoPNonceStore = "DistributedDPoPNonceStore";
+}
+
 /// <summary>
 /// Client access token cache using IDistributedCache
 /// </summary>
 public class DistributedClientCredentialsTokenCache(
-    IDistributedCache cache,
+    [FromKeyedServices(ServiceProviderKeys.DistributedClientCredentialsTokenCache)]HybridCache cache,
+    TimeProvider time,
     ITokenRequestSynchronization synchronization,
     IOptions<ClientCredentialsTokenManagementOptions> options,
     ILogger<DistributedClientCredentialsTokenCache> logger
     )
     : IClientCredentialsTokenCache
 {
-    private readonly IDistributedCache _cache = cache;
-    private readonly ITokenRequestSynchronization _synchronization = synchronization;
-    private readonly ILogger<DistributedClientCredentialsTokenCache> _logger = logger;
     private readonly ClientCredentialsTokenManagementOptions _options = options.Value;
 
-        
     /// <inheritdoc/>
     public async Task SetAsync(
         string clientName,
@@ -34,21 +36,38 @@ public class DistributedClientCredentialsTokenCache(
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(clientName);
-            
-        var cacheExpiration = clientCredentialsToken.Expiration.AddSeconds(-_options.CacheLifetimeBuffer);
-        var data = JsonSerializer.Serialize(clientCredentialsToken);
 
-        var entryOptions = new DistributedCacheEntryOptions
+        try
         {
-            AbsoluteExpiration = cacheExpiration
-        };
+            var entryOptions = GetHybridCacheEntryOptions(clientCredentialsToken);
 
-        _logger.LogTrace("Caching access token for client: {clientName}. Expiration: {expiration}", clientName, cacheExpiration);
-            
-        var cacheKey = GenerateCacheKey(_options, clientName, requestParameters);
-        await _cache.SetStringAsync(cacheKey, data, entryOptions, token: cancellationToken).ConfigureAwait(false);
+            var cacheKey = GenerateCacheKey(_options, clientName, requestParameters);
+            logger.LogTrace("Caching access token for client: {clientName}. Expiration: {expiration}", clientName, entryOptions.Expiration);
+            await cache.SetAsync(cacheKey, clientCredentialsToken, entryOptions, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e,
+                "Error trying to set token in cache for client {clientName}. Error = {error}",
+                clientName, e.Message);
+        }
     }
 
+    private HybridCacheEntryOptions GetHybridCacheEntryOptions(ClientCredentialsToken clientCredentialsToken)
+    {
+        var absoluteCacheExpiration = clientCredentialsToken.Expiration.AddSeconds(-_options.CacheLifetimeBuffer);
+        var relativeCacheExpiration = absoluteCacheExpiration - time.GetUtcNow();
+        var entryOptions = new HybridCacheEntryOptions()
+        {
+            Expiration = relativeCacheExpiration
+        };
+        return entryOptions;
+    }
+
+    private class TokenErrorException(ClientCredentialsToken token) : Exception
+    {
+        public ClientCredentialsToken Token { get; } = token;
+    }
     public async Task<ClientCredentialsToken> GetOrCreateAsync(
         string clientName, TokenRequestParameters requestParameters,
         Func<string, TokenRequestParameters, CancellationToken, Task<ClientCredentialsToken>> factory,
@@ -58,64 +77,57 @@ public class DistributedClientCredentialsTokenCache(
 
         var cacheKey = GenerateCacheKey(_options, clientName, requestParameters);
 
-        return await _synchronization.SynchronizeAsync(cacheKey, async () =>
+        ClientCredentialsToken? token;
+        if (!requestParameters.ForceRenewal)
         {
-            var token = await factory(clientName, requestParameters, cancellationToken).ConfigureAwait(false);
-            if (token.IsError)
-            {
-                _logger.LogError(
-                    "Error requesting access token for client {clientName}. Error = {error}.",
-                    clientName, token.Error);
+            // We don't need the token to be absolutely fresh, so we can get one from the cache. 
+            token = await cache.GetOrDefaultAsync<ClientCredentialsToken>(
+                key: cacheKey,
+                cancellationToken: cancellationToken);
 
-                return token;
-            }
-
-            try
+            if (token?.Expiration > DateTimeOffset.MinValue)
             {
-                await SetAsync(clientName, token, requestParameters, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e,
-                    "Error trying to set token in cache for client {clientName}. Error = {error}",
-                    clientName, e.Message);
-            }
+                var absoluteCacheExpiration = token.Expiration.AddSeconds(-_options.CacheLifetimeBuffer);
 
-            return token;
-        }).ConfigureAwait(false);
-    }
+                if (absoluteCacheExpiration > time.GetUtcNow())
+                {
+                    // It's possible that we have only read the token from L2 cache, not L1 cache. 
+                    // just to be sure, write the token also into L1 cache (which should be fast)
+                    // https://github.com/dotnet/extensions/issues/5688#issuecomment-2692247434
+                    var defaultWriteOptions = GetHybridCacheEntryOptions(token);
+                    await cache.SetAsync(cacheKey, token, new HybridCacheEntryOptions()
+                    {
+                        Flags = HybridCacheEntryFlags.DisableDistributedCacheWrite,
+                        Expiration = defaultWriteOptions.Expiration,
+                        LocalCacheExpiration = defaultWriteOptions.LocalCacheExpiration
+                    }, cancellationToken: cancellationToken);
 
-    /// <inheritdoc/>
-    public async Task<ClientCredentialsToken?> GetAsync(
-        string clientName, 
-        TokenRequestParameters requestParameters,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(clientName);
-            
-        var cacheKey = GenerateCacheKey(_options, clientName, requestParameters);
-        var entry = await _cache.GetStringAsync(cacheKey, token: cancellationToken).ConfigureAwait(false);
-
-        if (entry != null)
-        {
-            try
-            {
-                _logger.LogDebug("Cache hit for access token for client: {clientName}", clientName);
-                return JsonSerializer.Deserialize<ClientCredentialsToken>(entry);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical(ex, "Error parsing cached access token for client {clientName}", clientName);
-                return null;
+                    return token;
+                }
             }
         }
 
-        _logger.LogTrace("Cache miss for access token for client: {clientName}", clientName);
-        return null;
+        // Apparently, there's either no value in the cache, or we want a fresh one.
+        // Since we aren't using GetOrCreate, we'll have to protect against cache stampedes ourselves.
+        return await synchronization.SynchronizeAsync(cacheKey, async () =>
+        {
+            token = await factory(clientName, requestParameters, cancellationToken).ConfigureAwait(false);
+
+            // Don't cache the token if there's an error. 
+            if (!token.IsError)
+            {
+                await SetAsync(clientName, token, requestParameters, cancellationToken);
+            }
+
+            return token;
+        });
+
+        
     }
 
+
     /// <inheritdoc/>
-    public Task DeleteAsync(
+    public ValueTask DeleteAsync(
         string clientName,
         TokenRequestParameters requestParameters,
         CancellationToken cancellationToken = default)
@@ -123,7 +135,7 @@ public class DistributedClientCredentialsTokenCache(
         if (clientName is null) throw new ArgumentNullException(nameof(clientName));
 
         var cacheKey = GenerateCacheKey(_options, clientName, requestParameters);
-        return _cache.RemoveAsync(cacheKey, cancellationToken);
+        return cache.RemoveAsync(cacheKey, cancellationToken);
     }
 
     /// <summary>

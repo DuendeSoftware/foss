@@ -10,14 +10,14 @@
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
     <FrameworkVersion>8.0.1</FrameworkVersion>
-    <ExtensionsVersion>8.0.0</ExtensionsVersion>
+    <ExtensionsVersion>9.0.3</ExtensionsVersion>
     <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion> 
     <IdentityServerVersion>7.0.8</IdentityServerVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0'">
     <FrameworkVersion>9.0.0</FrameworkVersion>
-    <ExtensionsVersion>9.0.0</ExtensionsVersion>
+    <ExtensionsVersion>9.0.3</ExtensionsVersion>
     <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
     <IdentityServerVersion>7.0.8</IdentityServerVersion>
   </PropertyGroup>
@@ -33,7 +33,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(FrameworkVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="$(FrameworkVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="$(ExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid " Version="9.3.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(ExtensionsVersion)" />

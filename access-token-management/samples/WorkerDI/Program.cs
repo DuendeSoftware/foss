@@ -31,8 +31,6 @@ public class Program
                 
             .ConfigureServices((services) =>
             {
-                services.AddDistributedMemoryCache();
-
                 services.AddClientCredentialsTokenManagement();
                 services.AddSingleton(new DiscoveryCache("https://demo.duendesoftware.com"));
                 services.AddSingleton<IConfigureOptions<ClientCredentialsClient>, ClientCredentialsClientConfigureOptions>();

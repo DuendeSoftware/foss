@@ -113,7 +113,7 @@ public class ClientTokenManagementTests
         {
             access_token = "access_token",
             token_type = "token_type",
-            expires_in = 60,
+            expires_in = 100,
             scope = "scope"
         };
 
@@ -236,7 +236,7 @@ public class ClientTokenManagementTests
         {
             access_token = "access_token",
             token_type = "token_type",
-            expires_in = 60,
+            expires_in = 100,
             scope = "scope_per_request"
         };
 
@@ -295,7 +295,7 @@ public class ClientTokenManagementTests
         {
             access_token = "access_token",
             token_type = "token_type",
-            expires_in = 60,
+            expires_in = 100,
             scope = "scope"
         };
 
@@ -348,7 +348,7 @@ public class ClientTokenManagementTests
         {
             access_token = "access_token",
             token_type = "token_type",
-            expires_in = 60,
+            expires_in = 100,
             scope = "scope"
         };
 
@@ -410,7 +410,7 @@ public class ClientTokenManagementTests
         {
             access_token = "access_token",
             token_type = "token_type",
-            expires_in = 60,
+            expires_in = 100,
             scope = "scope"
         };
 

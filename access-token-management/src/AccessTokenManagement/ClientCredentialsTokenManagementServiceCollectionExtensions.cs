@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
@@ -47,6 +48,19 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
         services.TryAddTransient<IDPoPNonceStore, DistributedDPoPNonceStore>();
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
+
+        // We can add the hybrid cache, because it does a 'tryadd' everywhere
+        services.AddHybridCache();
+
+        // Add indirection from keyed service to non-keyed service
+        services.TryAddKeyedSingleton<HybridCache>(
+            serviceKey: ServiceProviderKeys.DistributedClientCredentialsTokenCache,
+            implementationFactory: (sp, _) => sp.GetRequiredService<HybridCache>());
+
+        // Add indirection from keyed service to non-keyed service
+        services.TryAddKeyedSingleton<HybridCache>(
+            serviceKey: ServiceProviderKeys.DistributedDPoPNonceStore,
+            implementationFactory: (sp, _) => sp.GetRequiredService<HybridCache>());
 
         return new ClientCredentialsTokenManagementBuilder(services);
     }

@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Duende.AccessTokenManagement;
 
@@ -14,8 +16,13 @@ public class DistributedDPoPNonceStore : IDPoPNonceStore
     const string CacheKeyPrefix = "DistributedDPoPNonceStore";
     const char CacheKeySeparator = ':';
 
-    private readonly IDistributedCache _cache;
+    private readonly HybridCache _cache;
     private readonly ILogger<DistributedDPoPNonceStore> _logger;
+
+    private static readonly HybridCacheEntryOptions NonceStoreCacheOptions = new HybridCacheEntryOptions()
+    {
+        LocalCacheExpiration = TimeSpan.FromHours(1)
+    };
 
     /// <summary>
     /// ctor
@@ -23,7 +30,7 @@ public class DistributedDPoPNonceStore : IDPoPNonceStore
     /// <param name="cache"></param>
     /// <param name="logger"></param>
     public DistributedDPoPNonceStore(
-        IDistributedCache cache, 
+        [FromKeyedServices(ServiceProviderKeys.DistributedDPoPNonceStore)]HybridCache cache, 
         ILogger<DistributedDPoPNonceStore> logger)
     {
         _cache = cache;
@@ -36,7 +43,7 @@ public class DistributedDPoPNonceStore : IDPoPNonceStore
         ArgumentNullException.ThrowIfNull(context);
 
         var cacheKey = GenerateCacheKey(context);
-        var entry = await _cache.GetStringAsync(cacheKey, token: cancellationToken).ConfigureAwait(false);
+        var entry = await _cache.GetOrDefaultAsync<string>(cacheKey).ConfigureAwait(false);
 
         if (entry != null)
         {
@@ -53,18 +60,13 @@ public class DistributedDPoPNonceStore : IDPoPNonceStore
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var cacheExpiration = DateTimeOffset.UtcNow.AddHours(1);
         var data = nonce;
 
-        var entryOptions = new DistributedCacheEntryOptions
-        {
-            AbsoluteExpiration = cacheExpiration
-        };
 
-        _logger.LogTrace("Caching DPoP nonce for URL: {url}, method: {method}. Expiration: {expiration}", context.Url, context.Method, cacheExpiration);
+        _logger.LogTrace("Caching DPoP nonce for URL: {url}, method: {method}. Expiration: {expiration}", context.Url, context.Method, NonceStoreCacheOptions.Expiration);
 
         var cacheKey = GenerateCacheKey(context);
-        await _cache.SetStringAsync(cacheKey, data, entryOptions, token: cancellationToken).ConfigureAwait(false);
+        await _cache.SetAsync(cacheKey, data, NonceStoreCacheOptions, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
 
