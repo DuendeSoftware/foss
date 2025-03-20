@@ -5,7 +5,7 @@
     <AssemblyName>$(PackageId)</AssemblyName>
     <RootNamespace>$(PackageId)</RootNamespace>
     <Description>Automatic access token management for OAuth client credential flows</Description>
-    <IsTrimmable>false</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
     <PackageReadmePath>README.md</PackageReadmePath>
   </PropertyGroup>
   <ItemGroup>
