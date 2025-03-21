@@ -10,7 +10,8 @@
     <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">true</IsAotCompatible> 
     <Nullable>disable</Nullable>
     <PackageReadmePath>README.md</PackageReadmePath>
-    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <!-- The default is true for .NET 5 and higher. -->
+    <ProduceReferenceAssembly Condition="'$(TargetFramework)' == 'netstandard2.0'">true</ProduceReferenceAssembly>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel" />
