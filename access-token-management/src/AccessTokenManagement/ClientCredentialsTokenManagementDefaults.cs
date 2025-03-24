@@ -17,4 +17,11 @@ public static class ClientCredentialsTokenManagementDefaults
     /// Name used to propagate access token parameters to HttpRequestMessage
     /// </summary>
     public const string TokenRequestParametersOptionsName = "Duende.AccessTokenManagement.AccessTokenParameters";
+
+    /// <summary>
+    /// Name used to propagate additional claims to DPoP proof. The value is a dictionary of claims.
+    /// </summary>
+    public const string DPoPProofAdditionalPayloadClaims =
+        "Duende.AccessTokenManagement.DPoPProofAdditionalPayloadClaims";
+
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Diagnostics.CodeAnalysis;
 using Duende.IdentityModel;
 
 namespace Duende.AccessTokenManagement;
@@ -84,6 +85,18 @@ public static class DPoPExtensions
     /// <param name="customClaims"></param>
     public static void AddDPoPProofAdditionalPayloadClaims(this HttpRequestMessage request, IDictionary<string, string> customClaims)
     {
-        request.Options.TryAdd("Duende.AccessTokenManagement.DPoPProofAdditionalPayloadClaims", customClaims.AsReadOnly());
+        request.Options.TryAdd(ClientCredentialsTokenManagementDefaults.DPoPProofAdditionalPayloadClaims, customClaims.AsReadOnly());
+    }
+
+    /// <summary>
+    /// Additional claims that will be added to the DPoP proof payload on generation
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="additionalClaims"></param>
+    /// <returns></returns>
+    public static bool TryGetDPopProofAdditionalPayloadClaims(this HttpRequestMessage request,
+        [NotNullWhen(true)] out IReadOnlyDictionary<string, string>? additionalClaims)
+    {
+        return request.Options.TryGetValue(new HttpRequestOptionsKey<IReadOnlyDictionary<string, string>>(ClientCredentialsTokenManagementDefaults.DPoPProofAdditionalPayloadClaims), out additionalClaims);
     }
 }
