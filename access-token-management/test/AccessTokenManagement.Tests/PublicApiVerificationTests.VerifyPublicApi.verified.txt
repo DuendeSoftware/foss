@@ -1,0 +1,176 @@
+﻿namespace Duende.AccessTokenManagement
+{
+    public abstract class AccessTokenHandler : System.Net.Http.DelegatingHandler
+    {
+        public AccessTokenHandler(Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Microsoft.Extensions.Logging.ILogger logger) { }
+        protected abstract System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, System.Threading.CancellationToken cancellationToken);
+        protected override System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) { }
+        protected virtual System.Threading.Tasks.Task<bool> SetDPoPProofTokenAsync(System.Net.Http.HttpRequestMessage request, Duende.AccessTokenManagement.ClientCredentialsToken token, System.Threading.CancellationToken cancellationToken, string? dpopNonce = null) { }
+        protected virtual System.Threading.Tasks.Task SetTokenAsync(System.Net.Http.HttpRequestMessage request, bool forceRenewal, System.Threading.CancellationToken cancellationToken, string? dpopNonce = null) { }
+    }
+    public class ClientCredentialsClient
+    {
+        public ClientCredentialsClient() { }
+        public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
+        public string? ClientId { get; set; }
+        public string? ClientSecret { get; set; }
+        public string? DPoPJsonWebKey { get; set; }
+        public System.Net.Http.HttpClient? HttpClient { get; set; }
+        public string? HttpClientName { get; set; }
+        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
+        public string? Resource { get; set; }
+        public string? Scope { get; set; }
+        public string? TokenEndpoint { get; set; }
+    }
+    public class ClientCredentialsToken
+    {
+        public ClientCredentialsToken() { }
+        public string? AccessToken { get; set; }
+        public string? AccessTokenType { get; set; }
+        public string? DPoPJsonWebKey { get; set; }
+        public string? Error { get; set; }
+        public System.DateTimeOffset Expiration { get; set; }
+        public bool IsError { get; }
+        public string? Scope { get; set; }
+    }
+    public class ClientCredentialsTokenEndpointService : Duende.AccessTokenManagement.IClientCredentialsTokenEndpointService
+    {
+        public ClientCredentialsTokenEndpointService(System.Net.Http.IHttpClientFactory httpClientFactory, Microsoft.Extensions.Options.IOptionsMonitor<Duende.AccessTokenManagement.ClientCredentialsClient> options, Duende.AccessTokenManagement.IClientAssertionService clientAssertionService, Duende.AccessTokenManagement.IDPoPKeyStore dPoPKeyMaterialService, Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.ClientCredentialsTokenEndpointService> logger) { }
+        public virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> RequestToken(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public class ClientCredentialsTokenHandler : Duende.AccessTokenManagement.AccessTokenHandler
+    {
+        public ClientCredentialsTokenHandler(Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Duende.AccessTokenManagement.IClientCredentialsTokenManagementService accessTokenManagementService, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.ClientCredentialsTokenHandler> logger, string tokenClientName) { }
+        protected override System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, System.Threading.CancellationToken cancellationToken) { }
+    }
+    public static class ClientCredentialsTokenManagementDefaults
+    {
+        public const string BackChannelHttpClientName = "Duende.AccessTokenManagement.BackChannelHttpClient";
+        public const string TokenRequestParametersOptionsName = "Duende.AccessTokenManagement.AccessTokenParameters";
+    }
+    public class ClientCredentialsTokenManagementOptions
+    {
+        public ClientCredentialsTokenManagementOptions() { }
+        public string CacheKeyPrefix { get; set; }
+        public int CacheLifetimeBuffer { get; set; }
+    }
+    public class ClientCredentialsTokenManagementService : Duende.AccessTokenManagement.IClientCredentialsTokenManagementService
+    {
+        public ClientCredentialsTokenManagementService(Duende.AccessTokenManagement.IClientCredentialsTokenEndpointService clientCredentialsTokenEndpointService, Duende.AccessTokenManagement.IClientCredentialsTokenCache tokenCache, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.ClientCredentialsTokenManagementService> logger) { }
+        public System.Threading.Tasks.Task DeleteAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public static class DPoPExtensions
+    {
+        public static void ClearDPoPProofToken(this System.Net.Http.HttpRequestMessage request) { }
+        public static string? GetDPoPNonce(this System.Net.Http.HttpResponseMessage response) { }
+        public static string GetDPoPUrl(this System.Net.Http.HttpRequestMessage request) { }
+        public static bool IsDPoPError(this System.Net.Http.HttpResponseMessage response) { }
+        public static void SetDPoPProofToken(this System.Net.Http.HttpRequestMessage request, string? proofToken) { }
+    }
+    public class DPoPKey
+    {
+        public DPoPKey() { }
+        public string JsonWebKey { get; set; }
+    }
+    public class DPoPNonceContext
+    {
+        public DPoPNonceContext() { }
+        public string Method { get; set; }
+        public string Url { get; set; }
+    }
+    public class DPoPProof
+    {
+        public DPoPProof() { }
+        public string ProofToken { get; set; }
+    }
+    public class DPoPProofRequest
+    {
+        public DPoPProofRequest() { }
+        public string? AccessToken { get; set; }
+        public string DPoPJsonWebKey { get; set; }
+        public string? DPoPNonce { get; set; }
+        public string Method { get; set; }
+        public string Url { get; set; }
+    }
+    public class DefaultClientAssertionService : Duende.AccessTokenManagement.IClientAssertionService
+    {
+        public DefaultClientAssertionService() { }
+        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion?> GetClientAssertionAsync(string? clientName = null, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null) { }
+    }
+    public class DefaultDPoPKeyStore : Duende.AccessTokenManagement.IDPoPKeyStore
+    {
+        public DefaultDPoPKeyStore(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AccessTokenManagement.ClientCredentialsClient> options) { }
+        public virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPKey?> GetKeyAsync(string clientName) { }
+    }
+    public class DefaultDPoPProofService : Duende.AccessTokenManagement.IDPoPProofService
+    {
+        public DefaultDPoPProofService(Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.DefaultDPoPProofService> logger) { }
+        public virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPProof?> CreateProofTokenAsync(Duende.AccessTokenManagement.DPoPProofRequest request) { }
+        public virtual string? GetProofKeyThumbprint(Duende.AccessTokenManagement.DPoPProofRequest request) { }
+    }
+    public class DistributedClientCredentialsTokenCache : Duende.AccessTokenManagement.IClientCredentialsTokenCache
+    {
+        public DistributedClientCredentialsTokenCache(Microsoft.Extensions.Caching.Distributed.IDistributedCache cache, Duende.AccessTokenManagement.ITokenRequestSynchronization synchronization, Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.ClientCredentialsTokenManagementOptions> options, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.DistributedClientCredentialsTokenCache> logger) { }
+        public System.Threading.Tasks.Task DeleteAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default) { }
+        protected virtual string GenerateCacheKey(Duende.AccessTokenManagement.ClientCredentialsTokenManagementOptions options, string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken?> GetAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetOrCreateAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Func<string, Duende.AccessTokenManagement.TokenRequestParameters, System.Threading.CancellationToken, System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> factory, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task SetAsync(string clientName, Duende.AccessTokenManagement.ClientCredentialsToken clientCredentialsToken, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public class DistributedDPoPNonceStore : Duende.AccessTokenManagement.IDPoPNonceStore
+    {
+        public DistributedDPoPNonceStore(Microsoft.Extensions.Caching.Distributed.IDistributedCache cache, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.DistributedDPoPNonceStore> logger) { }
+        protected virtual string GenerateCacheKey(Duende.AccessTokenManagement.DPoPNonceContext context) { }
+        public virtual System.Threading.Tasks.Task<string?> GetNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, System.Threading.CancellationToken cancellationToken = default) { }
+        public virtual System.Threading.Tasks.Task StoreNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, string nonce, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public interface IClientAssertionService
+    {
+        System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion?> GetClientAssertionAsync(string? clientName = null, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null);
+    }
+    public interface IClientCredentialsTokenCache
+    {
+        System.Threading.Tasks.Task DeleteAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken?> GetAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetOrCreateAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Func<string, Duende.AccessTokenManagement.TokenRequestParameters, System.Threading.CancellationToken, System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> factory, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task SetAsync(string clientName, Duende.AccessTokenManagement.ClientCredentialsToken clientCredentialsToken, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IClientCredentialsTokenEndpointService
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> RequestToken(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IClientCredentialsTokenManagementService
+    {
+        System.Threading.Tasks.Task DeleteAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IDPoPKeyStore
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPKey?> GetKeyAsync(string clientName);
+    }
+    public interface IDPoPNonceStore
+    {
+        System.Threading.Tasks.Task<string?> GetNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task StoreNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, string nonce, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IDPoPProofService
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPProof?> CreateProofTokenAsync(Duende.AccessTokenManagement.DPoPProofRequest request);
+        string? GetProofKeyThumbprint(Duende.AccessTokenManagement.DPoPProofRequest request);
+    }
+    public interface ITokenRequestSynchronization
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> SynchronizeAsync(string name, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> func);
+    }
+    public class TokenRequestParameters
+    {
+        public TokenRequestParameters() { }
+        public Duende.IdentityModel.Client.ClientAssertion? Assertion { get; set; }
+        public Duende.IdentityModel.Client.Parameters Context { get; set; }
+        public bool ForceRenewal { get; set; }
+        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
+        public string? Resource { get; set; }
+        public string? Scope { get; set; }
+    }
+}

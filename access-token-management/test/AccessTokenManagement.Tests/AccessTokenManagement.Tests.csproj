@@ -13,6 +13,8 @@
     <PackageReference Include="Duende.IdentityServer"/>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="PublicApiGenerator" />
+    <PackageReference Include="Verify.Xunit" />
 
     <PackageReference Include="RichardSzalay.MockHttp" />
   </ItemGroup>
