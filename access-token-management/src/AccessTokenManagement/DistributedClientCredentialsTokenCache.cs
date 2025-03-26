@@ -34,7 +34,7 @@ public class DistributedClientCredentialsTokenCache(
         ArgumentNullException.ThrowIfNull(clientName);
 
         var cacheExpiration = clientCredentialsToken.Expiration.AddSeconds(-_options.CacheLifetimeBuffer);
-        var data = JsonSerializer.Serialize(clientCredentialsToken);
+        var data = JsonSerializer.Serialize(clientCredentialsToken, DuendeAccessTokenSerializationContext.Default.ClientCredentialsToken);
 
         var entryOptions = new DistributedCacheEntryOptions
         {
@@ -99,7 +99,7 @@ public class DistributedClientCredentialsTokenCache(
             try
             {
                 _logger.LogDebug("Cache hit for access token for client: {clientName}", clientName);
-                return JsonSerializer.Deserialize<ClientCredentialsToken>(entry);
+                return JsonSerializer.Deserialize(entry, DuendeAccessTokenSerializationContext.Default.ClientCredentialsToken);
             }
             catch (Exception ex)
             {
