@@ -12,6 +12,7 @@ namespace Duende.AccessTokenManagement;
 /// Implements token endpoint operations using IdentityModel
 /// </summary>
 public class ClientCredentialsTokenEndpointService(
+    Metrics metrics,
     IHttpClientFactory httpClientFactory,
     IOptionsMonitor<ClientCredentialsClient> options,
     IClientAssertionService clientAssertionService,
@@ -152,9 +153,12 @@ public class ClientCredentialsTokenEndpointService(
 
             return new ClientCredentialsToken
             {
-                Error = response.Error
+                Error = response.Error,
+                ClientId = request.ClientId
             };
         }
+
+        metrics.TokenRetrieved(request.ClientId, Metrics.TokenRequestType.ClientCredentials);
 
         var token = new ClientCredentialsToken
         {
@@ -164,7 +168,8 @@ public class ClientCredentialsTokenEndpointService(
             Expiration = response.ExpiresIn == 0
                 ? DateTimeOffset.MaxValue
                 : DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn),
-            Scope = response.Scope
+            Scope = response.Scope,
+            ClientId = request.ClientId
         };
 
 

@@ -60,6 +60,8 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
 
+        services.AddSingleton<Metrics>();
+
         return new ClientCredentialsTokenManagementBuilder(services);
     }
 

@@ -42,4 +42,9 @@ public class ClientCredentialsToken
     /// Checks for an error
     /// </summary>
     public bool IsError => !string.IsNullOrWhiteSpace(Error);
+
+    /// <summary>
+    /// The Client id that this token was originally requested for. 
+    /// </summary>
+    public string? ClientId { get; set; }
 }
