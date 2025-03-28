@@ -310,6 +310,7 @@ public class StoreTokensInAuthenticationPropertiesTests
         RefreshToken = Guid.NewGuid().ToString(),
         Expiration = new DateTimeOffset(new DateTime(DateTime.Now.Ticks + Random.Shared.Next())),
         DPoPJsonWebKey = Guid.NewGuid().ToString()
+
     };
 
     private UserToken GenerateAnotherTokenForADifferentResource(UserToken previousToken) => new UserToken
@@ -320,6 +321,6 @@ public class StoreTokensInAuthenticationPropertiesTests
 
         // These two values don't change when we switch resources
         RefreshToken = previousToken.RefreshToken,
-        DPoPJsonWebKey = previousToken.DPoPJsonWebKey,
+        DPoPJsonWebKey = previousToken.DPoPJsonWebKey
     };
 }

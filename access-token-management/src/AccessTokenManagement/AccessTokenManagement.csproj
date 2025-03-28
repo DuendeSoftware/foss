@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <PackageId>Duende.AccessTokenManagement</PackageId>
@@ -14,10 +14,11 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
   <ItemGroup>
-      <InternalsVisibleTo Include="Duende.AccessTokenManagement.OpenIdConnect, PublicKey=00240000048000009400000006020000002400005253413100040000010001002f25809ad9fde9869a3ae4558b897c8a23458393921395b9439e03d6a52afadbf6ff65ef1049cd2ee4ca5501976ad45b453dc3780b8fa7eb39bae755163ef92d53403a0da484b79d24de1bb759eedceb1e13416c734d9c48b226fcd26c18e0a525b68cdba9f2395502d7df5a6d45c2478edd52752511e2924ea209f83aaa23a1"/>
+    <InternalsVisibleTo Include="Duende.AccessTokenManagement.OpenIdConnect, PublicKey=00240000048000009400000006020000002400005253413100040000010001002f25809ad9fde9869a3ae4558b897c8a23458393921395b9439e03d6a52afadbf6ff65ef1049cd2ee4ca5501976ad45b453dc3780b8fa7eb39bae755163ef92d53403a0da484b79d24de1bb759eedceb1e13416c734d9c48b226fcd26c18e0a525b68cdba9f2395502d7df5a6d45c2478edd52752511e2924ea209f83aaa23a1" />
   </ItemGroup>
 </Project>

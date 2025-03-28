@@ -58,6 +58,7 @@ public class AccessTokenHandlerTests
         {
             AccessToken = "at",
             AccessTokenType = "bearer",
+            ClientId = "some-client"
         };
 
         public AccessTokenHandlerSubject(IDPoPProofService dPoPProofService, IDPoPNonceStore dPoPNonceStore, ILogger logger) : base(dPoPProofService, dPoPNonceStore, logger)

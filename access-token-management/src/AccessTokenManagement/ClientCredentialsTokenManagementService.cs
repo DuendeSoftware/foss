@@ -7,6 +7,7 @@ namespace Duende.AccessTokenManagement;
 /// Implements token management logic
 /// </summary>
 public class ClientCredentialsTokenManagementService(
+    Metrics metrics,
     IClientCredentialsTokenEndpointService clientCredentialsTokenEndpointService,
     IClientCredentialsTokenCache tokenCache
 ) : IClientCredentialsTokenManagementService
@@ -20,11 +21,15 @@ public class ClientCredentialsTokenManagementService(
     {
         parameters ??= new TokenRequestParameters();
 
-        return await tokenCache.GetOrCreateAsync(
+        var token = await tokenCache.GetOrCreateAsync(
             clientName: clientName,
             requestParameters: parameters,
             factory: InvokeGetAccessToken,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        metrics.AccessTokenUsed(token.ClientId, Metrics.TokenRequestType.ClientCredentials);
+
+        return token;
     }
 
     private async Task<ClientCredentialsToken> InvokeGetAccessToken(string clientName, TokenRequestParameters parameters, CancellationToken cancellationToken)

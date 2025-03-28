@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Diagnostics.Metrics;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 /// Implements token endpoint operations using IdentityModel
 /// </summary>
 public class UserTokenEndpointService(
+    Metrics metrics,
     IOpenIdConnectConfigurationService configurationService,
     IOptions<UserTokenManagementOptions> options,
     IClientAssertionService clientAssertionService,
@@ -89,7 +91,6 @@ public class UserTokenEndpointService(
 
         logger.SendingRefreshTokenRequest(request.Address);
         var response = await oidc.HttpClient!.RequestRefreshTokenAsync(request, cancellationToken).ConfigureAwait(false);
-
         if (response.IsError &&
             (response.Error == OidcConstants.TokenErrors.UseDPoPNonce || response.Error == OidcConstants.TokenErrors.InvalidDPoPProof) &&
             dPoPJsonWebKey != null &&
@@ -108,18 +109,23 @@ public class UserTokenEndpointService(
 
             if (request.DPoPProofToken != null)
             {
+                metrics.TokenRetrievalFailed(request.ClientId, Metrics.TokenRequestType.User, response.Error);
                 response = await oidc.HttpClient!.RequestRefreshTokenAsync(request, cancellationToken).ConfigureAwait(false);
             }
         }
 
         var token = new UserToken();
+        token.ClientId = request.ClientId;
         if (response.IsError)
         {
             logger.FailedToRefreshAccessToken(response.Error, response.ErrorDescription);
             token.Error = response.Error;
+            metrics.TokenRetrievalFailed(request.ClientId, Metrics.TokenRequestType.User, response.Error);
         }
         else
         {
+            metrics.TokenRetrieved(request.ClientId, Metrics.TokenRequestType.User);
+
             token.IdentityToken = response.IdentityToken;
             token.AccessToken = response.AccessToken;
             token.AccessTokenType = response.TokenType;
