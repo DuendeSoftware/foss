@@ -1,6 +1,8 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Net.Http.Headers;
+
 namespace Duende.IdentityModel.Client;
 
 /// <summary>
@@ -52,6 +54,12 @@ public class IntrospectionClient
             {
                 request.Parameters.Add(parameter);
             }
+        }
+
+        if (_options.ResponseFormat is IntrospectionResponseFormat.Jwt)
+        {
+            request.Headers.Accept.Clear();
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/token-introspection+jwt"));
         }
     }
 
