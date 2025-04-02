@@ -1,14 +1,12 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebJarJwt.Controllers;
 
@@ -35,25 +33,25 @@ public class HomeController : Controller
         var token = await _tokenManagementService.GetAccessTokenAsync(User);
         var client = _httpClientFactory.CreateClient();
         client.SetBearerToken(token.AccessToken!);
-            
+
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/test");
         ViewBag.Json = PrettyPrint(response);
 
         return View("CallApi");
     }
-        
+
     public async Task<IActionResult> CallApiAsUserExtensionMethod()
     {
         var token = await HttpContext.GetUserAccessTokenAsync();
         var client = _httpClientFactory.CreateClient();
         client.SetBearerToken(token.AccessToken!);
-            
+
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/test");
         ViewBag.Json = PrettyPrint(response);
 
         return View("CallApi");
     }
-        
+
     public async Task<IActionResult> CallApiAsUserFactory()
     {
         var client = _httpClientFactory.CreateClient("user_client");
@@ -78,19 +76,19 @@ public class HomeController : Controller
         var token = await HttpContext.GetClientAccessTokenAsync();
         var client = _httpClientFactory.CreateClient();
         client.SetBearerToken(token.AccessToken!);
-            
+
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/test");
-        
+
         ViewBag.Json = PrettyPrint(response);
         return View("CallApi");
     }
-    
+
     [AllowAnonymous]
     public async Task<IActionResult> CallApiAsClientFactory()
     {
         var client = _httpClientFactory.CreateClient("client");
         var response = await client.GetStringAsync("test");
-        
+
         ViewBag.Json = PrettyPrint(response);
         return View("CallApi");
     }

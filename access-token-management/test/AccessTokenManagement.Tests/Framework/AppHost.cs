@@ -1,16 +1,16 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Net;
+using System.Net.Http.Json;
+using System.Web;
+using Duende.AccessTokenManagement.OpenIdConnect;
+using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net;
-using System.Web;
-using Duende.IdentityModel;
-using Duende.AccessTokenManagement.OpenIdConnect;
 using RichardSzalay.MockHttp;
-using System.Net.Http.Json;
 
 namespace Duende.AccessTokenManagement.Tests;
 
@@ -23,12 +23,13 @@ public class AppHost : GenericHost
     private readonly Action<UserTokenManagementOptions>? _configureUserTokenManagementOptions;
 
     public AppHost(
-        IdentityServerHost identityServerHost, 
-        ApiHost apiHost, 
+        WriteTestOutput writeTestOutput,
+        IdentityServerHost identityServerHost,
+        ApiHost apiHost,
         string clientId,
         string baseAddress = "https://app",
         Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = default)
-        : base(baseAddress)
+        : base(writeTestOutput, baseAddress)
     {
         _identityServerHost = identityServerHost;
         _apiHost = apiHost;
@@ -62,7 +63,7 @@ public class AppHost : GenericHost
                 {
                     await e.HttpContext.RevokeRefreshTokenAsync();
                 };
-                
+
                 options.Authority = _identityServerHost.Url();
 
                 options.ClientId = ClientId;
@@ -86,13 +87,13 @@ public class AppHost : GenericHost
                     options.Scope.Add("offline_access");
                 }
 
-                var identityServerHandler = _identityServerHost.Server.CreateHandler();   
+                var identityServerHandler = _identityServerHost.Server.CreateHandler();
                 if (IdentityServerHttpHandler != null)
                 {
                     // allow discovery document
                     IdentityServerHttpHandler.When("/.well-known/*")
                         .Respond(identityServerHandler);
-                    
+
                     options.BackchannelHttpHandler = IdentityServerHttpHandler;
                 }
                 else
@@ -114,7 +115,8 @@ public class AppHost : GenericHost
             }
         });
 
-        services.AddUserAccessTokenHttpClient("callApi", configureClient: client => {
+        services.AddUserAccessTokenHttpClient("callApi", configureClient: client =>
+        {
             client.BaseAddress = new Uri(_apiHost.Url());
         })
         .ConfigurePrimaryHttpMessageHandler(() => _apiHost.HttpMessageHandler);
@@ -135,12 +137,12 @@ public class AppHost : GenericHost
                     RedirectUri = "/"
                 });
             });
-                
+
             endpoints.MapGet("/logout", async context =>
             {
                 await context.SignOutAsync();
             });
-            
+
             endpoints.MapGet("/user_token", async context =>
             {
                 var token = await context.GetUserAccessTokenAsync();
@@ -162,7 +164,7 @@ public class AppHost : GenericHost
                 });
                 await context.Response.WriteAsJsonAsync(token);
             });
-            
+
             endpoints.MapGet("/client_token", async context =>
             {
                 var token = await context.GetClientAccessTokenAsync();

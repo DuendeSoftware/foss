@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -35,21 +35,21 @@ public static class HttpClientBackchannelAuthenticationExtensions
             clone.Parameters.AddOptional(OidcConstants.BackchannelAuthenticationRequest.IdTokenHint, request.IdTokenHint);
             clone.Parameters.AddOptional(OidcConstants.BackchannelAuthenticationRequest.BindingMessage, request.BindingMessage);
             clone.Parameters.AddOptional(OidcConstants.BackchannelAuthenticationRequest.UserCode, request.UserCode);
-        
+
             if (request.RequestedExpiry.HasValue)
             {
-                clone.Parameters.AddOptional(OidcConstants.BackchannelAuthenticationRequest.RequestedExpiry, request.RequestedExpiry.ToString());    
-            }  
-            
+                clone.Parameters.AddOptional(OidcConstants.BackchannelAuthenticationRequest.RequestedExpiry, request.RequestedExpiry.ToString());
+            }
+
             foreach (var resource in request.Resource)
             {
                 clone.Parameters.AddRequired(OidcConstants.TokenRequest.Resource, resource, allowDuplicates: true);
             }
         }
-        
+
         clone.Method = HttpMethod.Post;
         clone.Prepare();
-                        
+
         HttpResponseMessage response;
         try
         {

@@ -1,11 +1,8 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
 using Duende.AccessTokenManagement;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
@@ -34,7 +31,7 @@ public static class Startup
             {
                 options.Authority = "https://demo.duendesoftware.com";
                 options.ClientId = "interactive.confidential.short.jar.jwt";
-                
+
                 options.ResponseType = "code";
                 options.ResponseMode = "query";
 
@@ -101,7 +98,7 @@ public static class Startup
 
         app.MapDefaultControllerRoute()
             .RequireAuthorization();
-        
+
         return app;
     }
 }

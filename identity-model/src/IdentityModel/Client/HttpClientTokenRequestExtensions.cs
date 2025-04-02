@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -23,7 +23,7 @@ public static class HttpClientTokenRequestExtensions
 
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.ClientCredentials);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
-            
+
         foreach (var resource in request.Resource)
         {
             clone.Parameters.AddRequired(OidcConstants.TokenRequest.Resource, resource, allowDuplicates: true);
@@ -45,7 +45,7 @@ public static class HttpClientTokenRequestExtensions
 
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.DeviceCode);
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.DeviceCode, request.DeviceCode);
-            
+
         return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait();
     }
 
@@ -64,7 +64,7 @@ public static class HttpClientTokenRequestExtensions
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.UserName, request.UserName);
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.Password, request.Password, allowEmptyValue: true);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
-            
+
         foreach (var resource in request.Resource)
         {
             clone.Parameters.AddRequired(OidcConstants.TokenRequest.Resource, resource, allowDuplicates: true);
@@ -111,7 +111,7 @@ public static class HttpClientTokenRequestExtensions
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.RefreshToken);
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.RefreshToken, request.RefreshToken);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
-            
+
         foreach (var resource in request.Resource)
         {
             clone.Parameters.AddRequired(OidcConstants.TokenRequest.Resource, resource, allowDuplicates: true);
@@ -119,7 +119,7 @@ public static class HttpClientTokenRequestExtensions
 
         return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait();
     }
-        
+
     /// <summary>
     /// Sends a token exchange request.
     /// </summary>
@@ -134,17 +134,17 @@ public static class HttpClientTokenRequestExtensions
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.TokenExchange);
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.SubjectToken, request.SubjectToken);
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.SubjectTokenType, request.SubjectTokenType);
-            
+
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.Resource, request.Resource);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.Audience, request.Audience);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.RequestedTokenType, request.RequestedTokenType);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.ActorToken, request.ActorToken);
         clone.Parameters.AddOptional(OidcConstants.TokenRequest.ActorTokenType, request.ActorTokenType);
-            
+
         return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait();
     }
-    
+
     /// <summary>
     /// Sends a token request using the urn:openid:params:grant-type:ciba grant type.
     /// </summary>
@@ -158,7 +158,7 @@ public static class HttpClientTokenRequestExtensions
 
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.Ciba);
         clone.Parameters.AddRequired(OidcConstants.TokenRequest.AuthenticationRequestId, request.AuthenticationRequestId);
-            
+
         foreach (var resource in request.Resource)
         {
             clone.Parameters.AddRequired(OidcConstants.TokenRequest.Resource, resource, allowDuplicates: true);
@@ -212,16 +212,16 @@ public static class HttpClientTokenRequestExtensions
     {
         request.Prepare();
         request.Method = HttpMethod.Post;
-            
+
         HttpResponseMessage response;
         try
         {
             response = await client.SendAsync(request, cancellationToken).ConfigureAwait();
         }
         catch (OperationCanceledException)
-		{
+        {
             throw;
-		}
+        }
         catch (Exception ex)
         {
             return ProtocolResponse.FromException<TokenResponse>(ex);

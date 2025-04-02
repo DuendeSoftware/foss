@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text;
-using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -135,7 +134,7 @@ public class DPoPJwtBearerEvents : JwtBearerEvents
 
         context.Response.Headers.Append(HeaderNames.WWWAuthenticate, sb.ToString());
 
-        
+
         if (context.HttpContext.Items.ContainsKey("DPoP-Nonce"))
         {
             var nonce = context.HttpContext.Items["DPoP-Nonce"] as string;

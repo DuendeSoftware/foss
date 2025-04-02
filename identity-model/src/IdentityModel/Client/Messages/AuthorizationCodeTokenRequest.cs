@@ -24,7 +24,7 @@ public class AuthorizationCodeTokenRequest : TokenRequest
     /// The redirect URI.
     /// </value>
     public string RedirectUri { get; set; } = default!;
-        
+
     /// <summary>
     /// List of requested resources
     /// </summary>

@@ -114,6 +114,7 @@
             public const string AccessToken = "at+jwt";
             public const string AuthorizationRequest = "oauth-authz-req+jwt";
             public const string DPoPProofToken = "dpop+jwt";
+            public const string IntrospectionJwtResponse = "token-introspection+jwt";
         }
     }
     public static class OidcConstants
@@ -302,6 +303,9 @@
             public const string IdentityTokenEncryptedResponseEncryption = "id_token_encrypted_response_enc";
             public const string IdentityTokenSignedResponseAlgorithm = "id_token_signed_response_alg";
             public const string InitiateLoginUri = "initiate_login_uri";
+            public const string IntrospectionEncryptedResponseAlgorithm = "introspection_encrypted_response_alg";
+            public const string IntrospectionEncryptedResponseEncryption = "introspection_encrypted_response_enc";
+            public const string IntrospectionSignedResponseAlgorithm = "introspection_signed_response_alg";
             public const string Jwks = "jwks";
             public const string JwksUri = "jwks_uri";
             public const string LogoUri = "logo_uri";
@@ -370,7 +374,10 @@
             public const string IdTokenEncryptionAlgorithmsSupported = "id_token_encryption_alg_values_supported";
             public const string IdTokenEncryptionEncValuesSupported = "id_token_encryption_enc_values_supported";
             public const string IdTokenSigningAlgorithmsSupported = "id_token_signing_alg_values_supported";
+            public const string IntrospectionEncryptionAlgorithmsSupported = "introspection_encryption_alg_values_supported";
+            public const string IntrospectionEncryptionEncValuesSupported = "introspection_encryption_enc_values_supported";
             public const string IntrospectionEndpoint = "introspection_endpoint";
+            public const string IntrospectionSigningAlgorithmsSupported = "introspection_signing_alg_values_supported";
             public const string Issuer = "issuer";
             public const string JwksUri = "jwks_uri";
             public const string MtlsEndpointAliases = "mtls_endpoint_aliases";
@@ -808,7 +815,10 @@ namespace Duende.IdentityModel.Client
         public bool? FrontChannelLogoutSessionSupported { get; }
         public bool? FrontChannelLogoutSupported { get; }
         public System.Collections.Generic.IEnumerable<string> GrantTypesSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> IntrospectionEncryptionAlgorithmsSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> IntrospectionEncryptionEncValuesSupported { get; }
         public string? IntrospectionEndpoint { get; }
+        public System.Collections.Generic.IEnumerable<string> IntrospectionSigningAlgorithmsSupported { get; }
         public string? Issuer { get; }
         public string? JwksUri { get; }
         public Duende.IdentityModel.Jwk.JsonWebKeySet? KeySet { get; set; }
@@ -893,6 +903,12 @@ namespace Duende.IdentityModel.Client
         public string? IdentityTokenSignedResponseAlgorithm { get; set; }
         [System.Text.Json.Serialization.JsonPropertyName("initiate_login_uri")]
         public System.Uri? InitiateLoginUri { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("introspection_encrypted_response_alg")]
+        public string? IntrospectionEncryptedResponseAlgorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("introspection_encrypted_response_enc")]
+        public string? IntrospectionEncryptedResponseEncryption { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("introspection_signed_response_alg")]
+        public string? IntrospectionSignedResponseAlgorithm { get; set; }
         [System.Text.Json.Serialization.JsonPropertyName("jwks")]
         public Duende.IdentityModel.Jwk.JsonWebKeySet? Jwks { get; set; }
         [System.Text.Json.Serialization.JsonPropertyName("jwks_uri")]

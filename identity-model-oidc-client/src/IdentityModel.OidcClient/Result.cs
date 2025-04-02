@@ -1,37 +1,36 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.OidcClient.Infrastructure;
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+/// <summary>
+/// Base class for results.
+/// </summary>
+public abstract class Result
 {
     /// <summary>
-    /// Base class for results.
+    /// Gets a value indicating whether this instance is error.
     /// </summary>
-    public abstract class Result
-    {
-        /// <summary>
-        /// Gets a value indicating whether this instance is error.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if this instance is error; otherwise, <c>false</c>.
-        /// </value>
-        public virtual bool IsError => Error.IsPresent();
+    /// <value>
+    ///   <c>true</c> if this instance is error; otherwise, <c>false</c>.
+    /// </value>
+    public virtual bool IsError => Error.IsPresent();
 
-        /// <summary>
-        /// Gets or sets the error.
-        /// </summary>
-        /// <value>
-        /// The error.
-        /// </value>
-        public virtual string Error { get; set; }
+    /// <summary>
+    /// Gets or sets the error.
+    /// </summary>
+    /// <value>
+    /// The error.
+    /// </value>
+    public virtual string Error { get; set; }
 
-        /// <summary>
-        /// Gets or sets the error description.
-        /// </summary>
-        /// <value>
-        /// The error description.
-        /// </value>
-        public virtual string ErrorDescription { get; set; }
-    }
+    /// <summary>
+    /// Gets or sets the error description.
+    /// </summary>
+    /// <value>
+    /// The error description.
+    /// </value>
+    public virtual string ErrorDescription { get; set; }
 }

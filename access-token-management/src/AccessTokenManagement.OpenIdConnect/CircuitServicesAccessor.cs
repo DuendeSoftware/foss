@@ -13,37 +13,33 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 /// Provides access to scoped blazor services from non-blazor DI scopes, such as
 /// scopes created using IHttpClientFactory.
 /// </summary>
+[Obsolete(Constants.AtmPublicSurfaceInternal, UrlFormat = Constants.AtmPublicSurfaceLink)]
 public class CircuitServicesAccessor
 {
-    static readonly AsyncLocal<IServiceProvider> blazorServices = new();
+    static readonly AsyncLocal<IServiceProvider> BlazorServices = new();
 
     internal IServiceProvider? Services
     {
-        get => blazorServices.Value;
-        set => blazorServices.Value = value!;
+        get => BlazorServices.Value;
+        set => BlazorServices.Value = value!;
     }
 }
 
-internal class ServicesAccessorCircuitHandler : CircuitHandler
+internal class ServicesAccessorCircuitHandler(
+    IServiceProvider services,
+#pragma warning disable CS0618 // Type or member is obsolete
+    CircuitServicesAccessor servicesAccessor)
+#pragma warning restore CS0618 // Type or member is obsolete
+    : CircuitHandler
 {
-    readonly IServiceProvider services;
-    readonly CircuitServicesAccessor circuitServicesAccessor;
-
-    public ServicesAccessorCircuitHandler(IServiceProvider services, 
-        CircuitServicesAccessor servicesAccessor)
-    {
-        this.services = services;
-        this.circuitServicesAccessor = servicesAccessor;
-    }
-
     public override Func<CircuitInboundActivityContext, Task> CreateInboundActivityHandler(
         Func<CircuitInboundActivityContext, Task> next)
     {
         return async context =>
         {
-            circuitServicesAccessor.Services = services;
+            servicesAccessor.Services = services;
             await next(context);
-            circuitServicesAccessor.Services = null;
+            servicesAccessor.Services = null;
         };
     }
 }
@@ -53,7 +49,9 @@ internal static class CircuitServicesServiceCollectionExtensions
     public static IServiceCollection AddCircuitServicesAccessor(
         this IServiceCollection services)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         services.AddScoped<CircuitServicesAccessor>();
+#pragma warning restore CS0618 // Type or member is obsolete
         services.AddScoped<CircuitHandler, ServicesAccessorCircuitHandler>();
 
         return services;

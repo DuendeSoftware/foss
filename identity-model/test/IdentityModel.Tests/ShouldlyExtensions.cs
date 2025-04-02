@@ -1,4 +1,7 @@
-﻿namespace Duende.IdentityModel;
+// Copyright (c) Duende Software. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+
+namespace Duende.IdentityModel;
 
 internal static class ShouldlyExtensions
 {
@@ -12,7 +15,7 @@ internal static class ShouldlyExtensions
         actual.ShouldNotBeNull(customMessage);
         expected.ShouldNotBeNull(customMessage);
 
-        var actualList   = new List<T>(actual);
+        var actualList = new List<T>(actual);
         var expectedList = new List<T>(expected);
 
         actualList.Count.ShouldBe(expectedList.Count, customMessage);

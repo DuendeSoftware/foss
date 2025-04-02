@@ -41,7 +41,11 @@ jobs:
         dotnet-version: |-
           6.0.x
           8.0.x
-          9.0.x
+          9.0.103
+    - name: Verify Formatting
+      run: |-
+        dotnet restore ../
+        dotnet format ../ --verify-no-changes --no-restore
     - name: Test - IdentityModel.OidcClient.Tests
       run: dotnet test -c Release test/IdentityModel.OidcClient.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=IdentityModel.OidcClient.Tests.trx" --collect:"XPlat Code Coverage"
     - name: Test report

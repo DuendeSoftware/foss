@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Logicality.GitHub.Actions.Workflow;
@@ -16,7 +16,7 @@ Component[] components = [
         ["AccessTokenManagement.Tests"],
         "atm"),
 
-    new("identity-model", 
+    new("identity-model",
         ["IdentityModel"],
         ["IdentityModel.Tests"],
         "im"),
@@ -39,9 +39,9 @@ GenerateUploadTestResultsWorkflow();
 void GenerateCiWorkflow(Component component)
 {
     var workflow = new Workflow(component.CiWorkflowName);
-    var paths    = new[]
+    var paths = new[]
     {
-        $".github/workflows/{component.Name}-**", 
+        $".github/workflows/{component.Name}-**",
         $"{component.Name}/**",
         "Directory.Packages.props"
     };
@@ -67,7 +67,7 @@ void GenerateCiWorkflow(Component component)
     job.Permissions(
         actions: Permission.Read,
         contents: Permission.Read,
-        checks: Permission.Write, 
+        checks: Permission.Write,
         packages: Permission.Write);
 
     job.TimeoutMinutes(15);
@@ -76,6 +76,8 @@ void GenerateCiWorkflow(Component component)
         .ActionsCheckout("11bd71901bbe5b1630ceea73d27597364c9af683"); // Pinned to 4.2.2
 
     job.StepSetupDotNet();
+
+    job.StepVerifyFormatting();
 
     foreach (var testProject in component.Tests)
     {
@@ -175,7 +177,7 @@ git push origin {component.TagPrefix}-{contexts.Event.Input.Version}");
         .RunsOn(GitHubHostedRunners.UbuntuLatest)
         .Needs("tag")
         .Environment("nuget.org", "");
-        ;
+    ;
 
     publishJob.Step()
         .Uses("actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16") // 4.1.8
@@ -187,8 +189,6 @@ git push origin {component.TagPrefix}-{contexts.Event.Input.Version}");
         .Name("List files")
         .Shell("bash")
         .Run("tree");
-
-    tagJob.StepPush("MyGet", "https://www.myget.org/F/duende_identityserver/api/v2/package", "MYGET", pushAlways: true);
 
     publishJob.StepPush("nuget.org", "https://api.nuget.org/v3/index.json", "NUGET_ORG_API_KEY", pushAlways: true);
 
@@ -208,7 +208,7 @@ void GenerateUploadTestResultsWorkflow()
         .Job("report")
         .Name("report")
         .RunsOn(GitHubHostedRunners.UbuntuLatest);
-        
+
     job.Permissions(
         actions: Permission.Read,
         contents: Permission.Read,
@@ -250,16 +250,16 @@ public static class StepExtensions
     public static void StepSetupDotNet(this Job job)
         => job.Step()
             .Name("Setup .NET")
-            .ActionsSetupDotNet("3e891b0cb619bf60e2c25674b222b8940e2c1c25", ["6.0.x", "8.0.x", "9.0.x"]); // v4.1.0
+            .ActionsSetupDotNet("3e891b0cb619bf60e2c25674b222b8940e2c1c25", ["6.0.x", "8.0.x", "9.0.103"]); // v4.1.0
 
-    public static Step IfRefMain(this Step step) 
+    public static Step IfRefMain(this Step step)
         => step.If("github.ref == 'refs/heads/main'");
 
     public static void StepTest(this Job job, string componentName, string testProject)
     {
-        var path        = $"test/{testProject}";
+        var path = $"test/{testProject}";
         var logFileName = $"{testProject}.trx";
-        var flags = $"--logger \"console;verbosity=normal\" "      +
+        var flags = $"--logger \"console;verbosity=normal\" " +
                     $"--logger \"trx;LogFileName={logFileName}\" " +
                     $"--collect:\"XPlat Code Coverage\"";
         job.Step()
@@ -312,12 +312,12 @@ public static class StepExtensions
 
     public static void StepSign(this Job job, bool always = false)
     {
-        var flags = "--file-digest sha256 "                                                +
-                    "--timestamp-rfc3161 http://timestamp.digicert.com "                   +
+        var flags = "--file-digest sha256 " +
+                    "--timestamp-rfc3161 http://timestamp.digicert.com " +
                     "--azure-key-vault-url https://duendecodesigninghsm.vault.azure.net/ " +
-                    "--azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 "    +
-                    "--azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 "    +
-                    "--azure-key-vault-client-secret ${{ secrets.SignClientSecret }} "     +
+                    "--azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 " +
+                    "--azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 " +
+                    "--azure-key-vault-client-secret ${{ secrets.SignClientSecret }} " +
                     "--azure-key-vault-certificate NuGetPackageSigning";
         var step = job.Step()
             .Name("Sign packages");
@@ -350,6 +350,13 @@ public static class StepExtensions
         }
         return step.Run($"dotnet nuget push artifacts/*.nupkg --source {sourceUrl} --api-key {apiKey} --skip-duplicate");
     }
+    public static Step StepVerifyFormatting(this Job job)
+        => job.Step()
+            .Name("Verify Formatting")
+            .Run("""
+                 dotnet restore ../
+                 dotnet format ../ --verify-no-changes --no-restore
+                 """);
 
     public static void StepUploadArtifacts(this Job job, string componentName, bool uploadAlways = false)
     {
@@ -373,10 +380,10 @@ public static class StepExtensions
 
 public class GitHubContexts
 {
-    public static  GitHubContexts Instance { get; } = new();
-    public virtual GitHubContext  GitHub   { get; } = new();
-    public virtual SecretsContext Secrets  { get; } = new();
-    public virtual EventContext   Event    { get; } = new();
+    public static GitHubContexts Instance { get; } = new();
+    public virtual GitHubContext GitHub { get; } = new();
+    public virtual SecretsContext Secrets { get; } = new();
+    public virtual EventContext Event { get; } = new();
 
     public abstract class Context(string name)
     {
@@ -396,7 +403,7 @@ public class GitHubContexts
 
     public class EventContext() : Context("github.event")
     {
-        public EventsInputContext Input { get; } = new ();
+        public EventsInputContext Input { get; } = new();
     }
 
     public class EventsInputContext() : Context("github.event.inputs")

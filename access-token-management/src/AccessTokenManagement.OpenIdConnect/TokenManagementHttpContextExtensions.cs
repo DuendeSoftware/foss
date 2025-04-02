@@ -1,12 +1,13 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.AspNetCore.Authentication;
 
 /// <summary>
@@ -44,10 +45,10 @@ public static class TokenManagementHttpContextExtensions
         CancellationToken cancellationToken = default)
     {
         var service = httpContext.RequestServices.GetRequiredService<IUserTokenManagementService>();
-        
+
         await service.RevokeRefreshTokenAsync(httpContext.User, parameters, cancellationToken).ConfigureAwait(false);
     }
-    
+
     /// <summary>
     /// Returns an access token for the OpenID Connect client using client credentials flow
     /// </summary>
@@ -65,7 +66,7 @@ public static class TokenManagementHttpContextExtensions
         var schemes = httpContext.RequestServices.GetRequiredService<IAuthenticationSchemeProvider>();
 
         var schemeName = parameters?.ChallengeScheme ?? options.Value.ChallengeScheme;
-        
+
         if (string.IsNullOrEmpty(schemeName))
         {
             var defaultScheme = await schemes.GetDefaultChallengeSchemeAsync().ConfigureAwait(false);
@@ -76,7 +77,7 @@ public static class TokenManagementHttpContextExtensions
 
         return await service.GetAccessTokenAsync(
             OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix + schemeName,
-            parameters, 
+            parameters,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -87,18 +88,11 @@ public static class TokenManagementHttpContextExtensions
     }
     internal static string? GetProofKey(this AuthenticationProperties properties)
     {
-        if (properties.Items.ContainsKey(AuthenticationPropertiesDPoPKey))
+        if (properties.Items.TryGetValue(AuthenticationPropertiesDPoPKey, out var key))
         {
-            return properties.Items[AuthenticationPropertiesDPoPKey] as string;
+            return key;
         }
         return null;
-    }
-    internal static void RemoveProofKey(this AuthenticationProperties properties)
-    {
-        if (properties.Items.ContainsKey(AuthenticationPropertiesDPoPKey))
-        {
-            properties.Items.Remove(AuthenticationPropertiesDPoPKey);
-        }
     }
 
     const string HttpContextDPoPKey = "dpop_proof_key";
@@ -108,9 +102,9 @@ public static class TokenManagementHttpContextExtensions
     }
     internal static string? GetCodeExchangeDPoPKey(this HttpContext context)
     {
-        if (context.Items.ContainsKey(HttpContextDPoPKey))
+        if (context.Items.TryGetValue(HttpContextDPoPKey, out var item))
         {
-            return context.Items[HttpContextDPoPKey] as string;
+            return item as string;
         }
         return null;
     }

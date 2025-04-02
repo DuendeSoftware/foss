@@ -1,420 +1,419 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
 using Duende.IdentityModel.Client;
 
 
-namespace Duende.IdentityModel
+namespace Duende.IdentityModel;
+
+public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsBase
 {
-    public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsBase
+    public DiscoveryPolicyTests_AuthorityUriComparison() : base(new AuthorityUrlValidationStrategy())
     {
-        public DiscoveryPolicyTests_AuthorityUriComparison() : base(new AuthorityUrlValidationStrategy())
+
+    }
+
+    [Theory]
+    [InlineData("http://localhost")]
+    [InlineData("http://LocalHost")]
+    [InlineData("http://127.0.0.1")]
+    [InlineData("http://localhost:5000")]
+    [InlineData("http://LocalHost:5000")]
+    [InlineData("http://127.0.0.1:5000")]
+    [InlineData("https://authority")]
+    [InlineData("https://authority:5000")]
+    [InlineData("https://authority/sub")]
+    [InlineData("https://authority:5000/sub")]
+    [InlineData("https://demo.identityserver.io")]
+    [InlineData("https://sub.demo.identityserver.io")]
+    [InlineData("https://demo.identityserver.io/sub")]
+    [InlineData("https://demo.identityserver.io:5000/sub")]
+    [InlineData("https://sub.demo.identityserver.io:5000/sub")]
+    public async Task Valid_Urls_with_default_policy_should_succeed(string input)
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
+            RequireHttps = true,
+            AllowHttpOnLoopback = true
+        });
 
-        }
-
-        [Theory]
-        [InlineData("http://localhost")]
-        [InlineData("http://LocalHost")]
-        [InlineData("http://127.0.0.1")]
-        [InlineData("http://localhost:5000")]
-        [InlineData("http://LocalHost:5000")]
-        [InlineData("http://127.0.0.1:5000")]
-        [InlineData("https://authority")]
-        [InlineData("https://authority:5000")]
-        [InlineData("https://authority/sub")]
-        [InlineData("https://authority:5000/sub")]
-        [InlineData("https://demo.identityserver.io")]
-        [InlineData("https://sub.demo.identityserver.io")]
-        [InlineData("https://demo.identityserver.io/sub")]
-        [InlineData("https://demo.identityserver.io:5000/sub")]
-        [InlineData("https://sub.demo.identityserver.io:5000/sub")]
-        public async Task Valid_Urls_with_default_policy_should_succeed(string input)
+        var client = new HttpClient(GetHandler(input));
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                AllowHttpOnLoopback = true
-            });
+            Address = input,
+            Policy = policy
+        });
 
-            var client = new HttpClient(GetHandler(input));
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = input,
-                Policy = policy
-            });
+        disco.IsError.ShouldBeFalse();
+    }
 
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task Connecting_to_http_should_return_error()
+    [Fact]
+    public async Task Connecting_to_http_should_return_error()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                AllowHttpOnLoopback = true
-            });
+            RequireHttps = true,
+            AllowHttpOnLoopback = true
+        });
 
-            var client = new HttpClient();
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "http://authority",
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeTrue();
-            disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
-            disco.ErrorType.ShouldBe(ResponseErrorType.Exception);
-            disco.Error.ShouldStartWith("Error connecting to");
-            disco.Error.ShouldEndWith("HTTPS required.");
-        }
-
-        [Fact]
-        public async Task If_policy_allows_http_non_http_must_not_return_error()
+        var client = new HttpClient();
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = false
-            });
+            Address = "http://authority",
+            Policy = policy
+        });
 
-            var client = new HttpClient(GetHandler("http://authority"));
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "http://authority",
-                Policy = policy
-            });
+        disco.IsError.ShouldBeTrue();
+        disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        disco.ErrorType.ShouldBe(ResponseErrorType.Exception);
+        disco.Error.ShouldStartWith("Error connecting to");
+        disco.Error.ShouldEndWith("HTTPS required.");
+    }
 
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Theory]
-        [InlineData("http://localhost")]
-        [InlineData("http://LocalHost")]
-        [InlineData("http://127.0.0.1")]
-        public async Task Http_on_loopback_must_not_return_error(string input)
+    [Fact]
+    public async Task If_policy_allows_http_non_http_must_not_return_error()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                AllowHttpOnLoopback = true
-            });
+            RequireHttps = false
+        });
 
-            var client = new HttpClient(GetHandler(input));
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = input,
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeFalse();
-        }
-
-
-        [Fact]
-        public async Task Invalid_issuer_name_must_return_policy_error()
+        var client = new HttpClient(GetHandler("http://authority"));
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                ValidateIssuerName = true
-            });
+            Address = "http://authority",
+            Policy = policy
+        });
 
-            var client = new HttpClient(GetHandler("https://differentissuer"));
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority",
-                Policy = policy
-            });
+        disco.IsError.ShouldBeFalse();
+    }
 
-            disco.IsError.ShouldBeTrue();
-            disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
-            disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
-            disco.Error.ShouldStartWith("Issuer name does not match authority");
-        }
-
-        [Fact]
-        public async Task Excluded_endpoints_should_not_fail_validation()
+    [Theory]
+    [InlineData("http://localhost")]
+    [InlineData("http://LocalHost")]
+    [InlineData("http://127.0.0.1")]
+    public async Task Http_on_loopback_must_not_return_error(string input)
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                ValidateEndpoints = true,
-                EndpointValidationExcludeList =
-                    {
-                        "jwks_uri",
-                        "authorization_endpoint",
-                        "token_endpoint",
-                        "userinfo_endpoint",
-                        "end_session_endpoint",
-                        "check_session_iframe",
-                        "revocation_endpoint",
-                        "introspection_endpoint"
-                    }
-            });
+            RequireHttps = true,
+            AllowHttpOnLoopback = true
+        });
 
-            var handler = GetHandler("https://authority", "https://otherserver");
-            var client = new HttpClient(handler);
-
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority",
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task Valid_issuer_name_must_return_no_error()
+        var client = new HttpClient(GetHandler(input));
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                ValidateIssuerName = true
-            });
+            Address = input,
+            Policy = policy
+        });
 
-            var handler = GetHandler("https://authority");
-            var client = new HttpClient(handler);
+        disco.IsError.ShouldBeFalse();
+    }
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority",
-                Policy = policy
-            });
 
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task Authority_comparison_with_uri_equivalence()
+    [Fact]
+    public async Task Invalid_issuer_name_must_return_policy_error()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                ValidateIssuerName = true,
-                AuthorityValidationStrategy = new AuthorityUrlValidationStrategy()
-            });
+            ValidateIssuerName = true
+        });
 
-            var handler = GetHandler(issuer: "https://authority:443/tenantid/");
-            var client = new HttpClient(handler);
-
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority/tenantid",
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task String_comparison_with_uri_equivalence_is_default_strategy()
+        var client = new HttpClient(GetHandler("https://differentissuer"));
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = new DiscoveryPolicy
-            {
-                ValidateIssuerName = true
-            };
+            Address = "https://authority",
+            Policy = policy
+        });
 
-            var handler = GetHandler(issuer: "https://authority:443/tenantid/");
-            var client = new HttpClient(handler);
+        disco.IsError.ShouldBeTrue();
+        disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
+        disco.Error.ShouldStartWith("Issuer name does not match authority");
+    }
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority/tenantid",
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeTrue();
-        }
-
-        [Fact]
-        public async Task Endpoints_not_using_https_should_return_policy_error()
+    [Fact]
+    public async Task Excluded_endpoints_should_not_fail_validation()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+            ValidateEndpoints = true,
+            EndpointValidationExcludeList =
             {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = true
-            });
+                "jwks_uri",
+                "authorization_endpoint",
+                "token_endpoint",
+                "userinfo_endpoint",
+                "end_session_endpoint",
+                "check_session_iframe",
+                "revocation_endpoint",
+                "introspection_endpoint"
+            }
+        });
 
-            var handler = GetHandler("https://authority", "http://authority");
-            var client = new HttpClient(handler);
+        var handler = GetHandler("https://authority", "https://otherserver");
+        var client = new HttpClient(handler);
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority",
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeTrue();
-            disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
-            disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
-            disco.Error.ShouldStartWith("Endpoint does not use HTTPS");
-        }
-
-        [Theory]
-        [InlineData("https://authority/sub", "https://authority")]
-        [InlineData("https://authority/sub1", "https://authority/sub2")]
-        public async Task Endpoints_not_beneath_authority_must_return_policy_error(string authority, string endpointBase)
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = true
-            });
+            Address = "https://authority",
+            Policy = policy
+        });
 
-            var handler = GetHandler(authority, endpointBase);
-            var client = new HttpClient(handler);
+        disco.IsError.ShouldBeFalse();
+    }
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = authority,
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeTrue();
-            disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
-            disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
-            disco.Error.ShouldStartWith("Invalid base address for endpoint");
-            disco.Error.ShouldContain(endpointBase);
-            disco.Error.ShouldContain(authority);
-        }
-
-        [Theory]
-        [InlineData("https://authority/sub", "https://authority")]
-        [InlineData("https://authority/sub1", "https://authority/sub2")]
-        public async Task Endpoints_not_beneath_authority_must_be_allowed_if_whitelisted(string authority, string endpointBase)
+    [Fact]
+    public async Task Valid_issuer_name_must_return_no_error()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = true,
+            ValidateIssuerName = true
+        });
 
-                AdditionalEndpointBaseAddresses =
-                    {
-                        endpointBase
-                    }
-            });
+        var handler = GetHandler("https://authority");
+        var client = new HttpClient(handler);
 
-            var handler = GetHandler(authority, endpointBase);
-            var client = new HttpClient(handler);
-
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = authority,
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Theory]
-        [InlineData("https://authority", "https://differentauthority")]
-        [InlineData("https://authority/sub", "https://differentauthority")]
-        [InlineData("https://127.0.0.1", "https://differentauthority")]
-        [InlineData("https://127.0.0.1", "https://127.0.0.2")]
-        [InlineData("https://127.0.0.1", "https://localhost")]
-        public async Task Endpoints_not_belonging_to_authority_host_must_return_policy_error(string authority, string endpointBase)
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = true
-            });
+            Address = "https://authority",
+            Policy = policy
+        });
 
-            var handler = GetHandler(authority, endpointBase);
-            var client = new HttpClient(handler);
+        disco.IsError.ShouldBeFalse();
+    }
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = authority,
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeTrue();
-            disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
-            disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
-            disco.Error.ShouldStartWith("Endpoint is on a different host than authority");
-        }
-
-        [Theory]
-        [InlineData("https://authority", "https://differentauthority")]
-        [InlineData("https://authority/sub", "https://differentauthority")]
-        [InlineData("https://127.0.0.1", "https://differentauthority")]
-        [InlineData("https://127.0.0.1", "https://127.0.0.2")]
-        [InlineData("https://127.0.0.1", "https://localhost")]
-        public async Task Endpoints_not_belonging_to_authority_host_must_be_allowed_if_whitelisted(string authority, string endpointBase)
+    [Fact]
+    public async Task Authority_comparison_with_uri_equivalence()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = true,
+            ValidateIssuerName = true,
+            AuthorityValidationStrategy = new AuthorityUrlValidationStrategy()
+        });
 
-                AdditionalEndpointBaseAddresses =
-                    {
-                        endpointBase
-                    }
-            });
+        var handler = GetHandler(issuer: "https://authority:443/tenantid/");
+        var client = new HttpClient(handler);
 
-            var handler = GetHandler(authority, endpointBase);
-            var client = new HttpClient(handler);
-
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = authority,
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task Issuer_and_endpoint_can_be_unrelated_if_allowed()
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
-            {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = false
-            });
+            Address = "https://authority/tenantid",
+            Policy = policy
+        });
 
-            var handler = GetHandler("https://authority", "https://differentauthority");
-            var client = new HttpClient(handler);
+        disco.IsError.ShouldBeFalse();
+    }
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-            {
-                Address = "https://authority",
-                Policy = policy
-            });
-
-            disco.IsError.ShouldBeFalse();
-        }
-
-        [Fact]
-        public async Task Issuer_and_endpoint_can_be_unrelated_if_allowed_but_https_is_still_enforced()
+    [Fact]
+    public async Task String_comparison_with_uri_equivalence_is_default_strategy()
+    {
+        var policy = new DiscoveryPolicy
         {
-            var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+            ValidateIssuerName = true
+        };
+
+        var handler = GetHandler(issuer: "https://authority:443/tenantid/");
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = "https://authority/tenantid",
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Endpoints_not_using_https_should_return_policy_error()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = true
+        });
+
+        var handler = GetHandler("https://authority", "http://authority");
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = "https://authority",
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeTrue();
+        disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
+        disco.Error.ShouldStartWith("Endpoint does not use HTTPS");
+    }
+
+    [Theory]
+    [InlineData("https://authority/sub", "https://authority")]
+    [InlineData("https://authority/sub1", "https://authority/sub2")]
+    public async Task Endpoints_not_beneath_authority_must_return_policy_error(string authority, string endpointBase)
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = true
+        });
+
+        var handler = GetHandler(authority, endpointBase);
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = authority,
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeTrue();
+        disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
+        disco.Error.ShouldStartWith("Invalid base address for endpoint");
+        disco.Error.ShouldContain(endpointBase);
+        disco.Error.ShouldContain(authority);
+    }
+
+    [Theory]
+    [InlineData("https://authority/sub", "https://authority")]
+    [InlineData("https://authority/sub1", "https://authority/sub2")]
+    public async Task Endpoints_not_beneath_authority_must_be_allowed_if_whitelisted(string authority, string endpointBase)
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = true,
+
+            AdditionalEndpointBaseAddresses =
             {
-                RequireHttps = true,
-                ValidateIssuerName = true,
-                ValidateEndpoints = false
-            });
+                endpointBase
+            }
+        });
 
-            var handler = GetHandler("https://authority", "http://differentauthority");
-            var client = new HttpClient(handler);
+        var handler = GetHandler(authority, endpointBase);
+        var client = new HttpClient(handler);
 
-            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = authority,
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData("https://authority", "https://differentauthority")]
+    [InlineData("https://authority/sub", "https://differentauthority")]
+    [InlineData("https://127.0.0.1", "https://differentauthority")]
+    [InlineData("https://127.0.0.1", "https://127.0.0.2")]
+    [InlineData("https://127.0.0.1", "https://localhost")]
+    public async Task Endpoints_not_belonging_to_authority_host_must_return_policy_error(string authority, string endpointBase)
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = true
+        });
+
+        var handler = GetHandler(authority, endpointBase);
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = authority,
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeTrue();
+        disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
+        disco.Error.ShouldStartWith("Endpoint is on a different host than authority");
+    }
+
+    [Theory]
+    [InlineData("https://authority", "https://differentauthority")]
+    [InlineData("https://authority/sub", "https://differentauthority")]
+    [InlineData("https://127.0.0.1", "https://differentauthority")]
+    [InlineData("https://127.0.0.1", "https://127.0.0.2")]
+    [InlineData("https://127.0.0.1", "https://localhost")]
+    public async Task Endpoints_not_belonging_to_authority_host_must_be_allowed_if_whitelisted(string authority, string endpointBase)
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = true,
+
+            AdditionalEndpointBaseAddresses =
             {
-                Address = "https://authority",
-                Policy = policy
-            });
+                endpointBase
+            }
+        });
 
-            disco.IsError.ShouldBeTrue();
-            disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
-            disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
-            disco.Error.ShouldStartWith("Endpoint does not use HTTPS");
-        }
+        var handler = GetHandler(authority, endpointBase);
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = authority,
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Issuer_and_endpoint_can_be_unrelated_if_allowed()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = false
+        });
+
+        var handler = GetHandler("https://authority", "https://differentauthority");
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = "https://authority",
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Issuer_and_endpoint_can_be_unrelated_if_allowed_but_https_is_still_enforced()
+    {
+        var policy = ForceTestedAuthorityValidationStrategy(new DiscoveryPolicy
+        {
+            RequireHttps = true,
+            ValidateIssuerName = true,
+            ValidateEndpoints = false
+        });
+
+        var handler = GetHandler("https://authority", "http://differentauthority");
+        var client = new HttpClient(handler);
+
+        var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = "https://authority",
+            Policy = policy
+        });
+
+        disco.IsError.ShouldBeTrue();
+        disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        disco.ErrorType.ShouldBe(ResponseErrorType.PolicyViolation);
+        disco.Error.ShouldStartWith("Endpoint does not use HTTPS");
     }
 }

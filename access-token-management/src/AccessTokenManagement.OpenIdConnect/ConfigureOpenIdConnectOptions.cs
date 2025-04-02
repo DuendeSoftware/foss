@@ -14,50 +14,31 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 /// <summary>
 /// Configures OpenIdConnectOptions for user token management
 /// </summary>
-public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnectOptions>
+public class ConfigureOpenIdConnectOptions(
+    IDPoPNonceStore dPoPNonceStore,
+    IDPoPProofService dPoPProofService,
+    IHttpContextAccessor httpContextAccessor,
+    IOptions<UserTokenManagementOptions> userAccessTokenManagementOptions,
+    IAuthenticationSchemeProvider schemeProvider,
+    ILoggerFactory loggerFactory) : IConfigureNamedOptions<OpenIdConnectOptions>
 {
-    private readonly IDPoPNonceStore _dPoPNonceStore;
-    private readonly IDPoPProofService _dPoPProofService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IOptions<UserTokenManagementOptions> _userAccessTokenManagementOptions;
+    private readonly string? _configScheme = GetConfigScheme(userAccessTokenManagementOptions.Value, schemeProvider);
 
-    private readonly ILoggerFactory _loggerFactory;
+    private string ClientName =>
+        OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix + _configScheme;
 
-    private readonly string? _configScheme;
-    private readonly string _clientName;
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    public ConfigureOpenIdConnectOptions(
-        IDPoPNonceStore dPoPNonceStore,
-        IDPoPProofService dPoPProofService,
-        IHttpContextAccessor httpContextAccessor,
-        IOptions<UserTokenManagementOptions> userAccessTokenManagementOptions,
-        IAuthenticationSchemeProvider schemeProvider,
-        ILoggerFactory loggerFactory)
+    private static string GetConfigScheme(UserTokenManagementOptions options, IAuthenticationSchemeProvider schemeProvider)
     {
-        _dPoPNonceStore = dPoPNonceStore;
-        _dPoPProofService = dPoPProofService;
-        _httpContextAccessor = httpContextAccessor;
-        _userAccessTokenManagementOptions = userAccessTokenManagementOptions;
-
-        _configScheme = _userAccessTokenManagementOptions.Value.ChallengeScheme;
-        if (string.IsNullOrWhiteSpace(_configScheme))
+        var scheme = options.ChallengeScheme;
+        if (!string.IsNullOrWhiteSpace(scheme))
         {
-            var defaultScheme = schemeProvider.GetDefaultChallengeSchemeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-
-            if (defaultScheme is null)
-            {
-                throw new InvalidOperationException(
-                    "No OpenID Connect authentication scheme configured for getting client configuration. Either set the scheme name explicitly or set the default challenge scheme");
-            }
-
-            _configScheme = defaultScheme.Name;
+            return scheme;
         }
 
-        _clientName = OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix + _configScheme;
-        _loggerFactory = loggerFactory;
+        var defaultScheme = schemeProvider.GetDefaultChallengeSchemeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+
+        return defaultScheme?.Name ?? throw new InvalidOperationException(
+            "No OpenID Connect authentication scheme configured for getting client configuration. Either set the scheme name explicitly or set the default challenge scheme");
     }
 
     /// <inheritdoc/>
@@ -75,7 +56,7 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
             options.Events.OnAuthorizationCodeReceived = CreateCallback(options.Events.OnAuthorizationCodeReceived);
             options.Events.OnTokenValidated = CreateCallback(options.Events.OnTokenValidated);
 
-            options.BackchannelHttpHandler = new AuthorizationServerDPoPHandler(_dPoPProofService, _dPoPNonceStore, _httpContextAccessor, _loggerFactory)
+            options.BackchannelHttpHandler = new AuthorizationServerDPoPHandler(dPoPProofService, dPoPNonceStore, httpContextAccessor, loggerFactory)
             {
                 InnerHandler = options.BackchannelHttpHandler ?? new HttpClientHandler()
             };
@@ -86,17 +67,14 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
     {
         async Task Callback(RedirectContext context)
         {
-            if (inner != null)
-            {
-                await inner.Invoke(context);
-            }
+            await inner.Invoke(context);
 
             var dPoPKeyStore = context.HttpContext.RequestServices.GetRequiredService<IDPoPKeyStore>();
 
-            var key = await dPoPKeyStore.GetKeyAsync(_clientName);
+            var key = await dPoPKeyStore.GetKeyAsync(ClientName);
             if (key != null)
             {
-                var jkt = _dPoPProofService.GetProofKeyThumbprint(new DPoPProofRequest
+                var jkt = dPoPProofService.GetProofKeyThumbprint(new DPoPProofRequest
                 {
                     Url = context.ProtocolMessage.AuthorizationEndpoint,
                     Method = "GET",
@@ -116,7 +94,7 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
                     context.ProtocolMessage.Parameters[OidcConstants.AuthorizeRequest.DPoPKeyThumbprint] = jkt;
                 }
             }
-        };
+        }
 
         return Callback;
     }
@@ -125,7 +103,7 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
     {
         Task Callback(AuthorizationCodeReceivedContext context)
         {
-            var result = inner?.Invoke(context) ?? Task.CompletedTask;
+            var result = inner.Invoke(context);
 
             // get key from storage
             var jwk = context.Properties?.GetProofKey();
@@ -136,7 +114,7 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
             }
 
             return result;
-        };
+        }
 
         return Callback;
     }
@@ -145,7 +123,7 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
     {
         Task Callback(TokenValidatedContext context)
         {
-            var result = inner?.Invoke(context) ?? Task.CompletedTask;
+            var result = inner.Invoke(context);
 
             // TODO: we don't have a good approach for this right now, since the IUserTokenStore
             // just assumes that the session management has been populated with all the token values
@@ -160,7 +138,7 @@ public class ConfigureOpenIdConnectOptions : IConfigureNamedOptions<OpenIdConnec
             //}
 
             return result;
-        };
+        }
 
         return Callback;
     }

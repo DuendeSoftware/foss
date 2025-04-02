@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -104,7 +104,7 @@ public static class HttpClientDiscoveryExtensions
                         {
                             return ProtocolResponse.FromException<DiscoveryDocumentResponse>(jwkResponse.Exception, jwkResponse.Error);
                         }
-                        else if(jwkResponse.HttpResponse != null)
+                        else if (jwkResponse.HttpResponse != null)
                         {
                             return await ProtocolResponse.FromHttpResponseAsync<DiscoveryDocumentResponse>(jwkResponse.HttpResponse, $"Error connecting to {jwkUrl}: {jwkResponse.HttpErrorReason}").ConfigureAwait();
                         }

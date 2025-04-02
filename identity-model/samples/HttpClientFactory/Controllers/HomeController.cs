@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net.Http;
@@ -6,69 +6,68 @@ using System.Threading.Tasks;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebApplication1.Controllers
+namespace WebApplication1.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    public HomeController(IHttpClientFactory httpClientFactory)
     {
-        public HomeController(IHttpClientFactory httpClientFactory)
+        HttpClientFactory = httpClientFactory;
+    }
+
+    public IHttpClientFactory HttpClientFactory { get; }
+    public TokenClient TokenClient { get; }
+
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    public async Task<string> NoFactory()
+    {
+        var client = new HttpClient();
+
+        var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
         {
-            HttpClientFactory = httpClientFactory;
-        }
+            Address = "https://demo.identityserver.io/connect/token",
+            ClientId = "client",
+            ClientSecret = "secret"
+        });
 
-        public IHttpClientFactory HttpClientFactory { get; }
-        public TokenClient TokenClient { get; }
+        return response.AccessToken ?? response.Error;
+    }
 
-        public IActionResult Index()
+    public async Task<string> Simple()
+    {
+        var client = HttpClientFactory.CreateClient();
+
+        var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
         {
-            return View();
-        }
+            Address = "https://demo.identityserver.io/connect/token",
+            ClientId = "client",
+            ClientSecret = "secret"
+        });
 
-        public async Task<string> NoFactory()
+        return response.AccessToken ?? response.Error;
+    }
+
+    public async Task<string> WithAddress()
+    {
+        var client = HttpClientFactory.CreateClient("token_client");
+
+        var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
         {
-            var client = new HttpClient();
+            ClientId = "client",
+            ClientSecret = "secret"
+        });
 
-            var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-            {
-                Address = "https://demo.identityserver.io/connect/token",
-                ClientId = "client",
-                ClientSecret = "secret"
-            });
+        return response.AccessToken ?? response.Error;
+    }
 
-            return response.AccessToken ?? response.Error;
-        }
+    public async Task<string> Typed([FromServices] TokenClient tokenClient)
+    {
+        var response = await tokenClient.RequestClientCredentialsTokenAsync();
 
-        public async Task<string> Simple()
-        {
-            var client = HttpClientFactory.CreateClient();
-
-            var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-            {
-                Address = "https://demo.identityserver.io/connect/token",
-                ClientId = "client",
-                ClientSecret = "secret"
-            });
-
-            return response.AccessToken ?? response.Error;
-        }
-
-        public async Task<string> WithAddress()
-        {
-            var client = HttpClientFactory.CreateClient("token_client");
-
-            var response = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-            {
-                ClientId = "client",
-                ClientSecret = "secret"
-            });
-
-            return response.AccessToken ?? response.Error;
-        }
-
-        public async Task<string> Typed([FromServices] TokenClient tokenClient)
-        {
-            var response = await tokenClient.RequestClientCredentialsTokenAsync();
-
-            return response.AccessToken;
-        }
+        return response.AccessToken;
     }
 }

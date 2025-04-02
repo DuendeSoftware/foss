@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
@@ -42,29 +42,29 @@ public class JsonWebKey
 
     private void Copy(JsonWebKey key)
     {
-        this.Alg = key.Alg;
-        this.Crv = key.Crv;
-        this.D = key.D;
-        this.DP = key.DP;
-        this.DQ = key.DQ;
-        this.E = key.E;
-        this.K = key.K;
-        this.Kid = key.Kid;
-        this.Kty = key.Kty;
-        this.N = key.N;
-        this.Oth = key.Oth;
-        this.P = key.P;
-        this.Q = key.Q;
-        this.QI = key.QI;
-        this.Use = key.Use;
-        this.X5t = key.X5t;
-        this.X5tS256 = key.X5tS256;
-        this.X5u = key.X5u;
-        this.X = key.X;
-        this.Y = key.Y;
+        Alg = key.Alg;
+        Crv = key.Crv;
+        D = key.D;
+        DP = key.DP;
+        DQ = key.DQ;
+        E = key.E;
+        K = key.K;
+        Kid = key.Kid;
+        Kty = key.Kty;
+        N = key.N;
+        Oth = key.Oth;
+        P = key.P;
+        Q = key.Q;
+        QI = key.QI;
+        Use = key.Use;
+        X5t = key.X5t;
+        X5tS256 = key.X5tS256;
+        X5u = key.X5u;
+        X = key.X;
+        Y = key.Y;
 
-        this._certificateClauses = new List<string>(key.X5c);
-        this._keyops = new List<string>(key.KeyOps);
+        _certificateClauses = new List<string>(key.X5c);
+        _keyops = new List<string>(key.KeyOps);
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class JsonWebKey
         {
             if (value == null) throw new ArgumentNullException("KeyOps");
 
-            foreach (string keyOp in value)
+            foreach (var keyOp in value)
                 _keyops.Add(keyOp);
         }
     }
@@ -200,7 +200,7 @@ public class JsonWebKey
             //if (value == null)
             //    throw LogHelper.LogException<ArgumentNullException>(LogMessages.IDX10001, "X5c");
 
-            foreach (string clause in value)
+            foreach (var clause in value)
                 _certificateClauses.Add(clause);
         }
     }

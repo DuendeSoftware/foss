@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Globalization;
@@ -31,7 +31,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
     {
         if (!IsError)
         {
-            if(Json == null)
+            if (Json == null)
             {
                 throw new InvalidOperationException("Json is null"); // TODO better exception
             }
@@ -79,7 +79,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
 
             Claims = claims;
         }
-        
+
         return Task.CompletedTask;
     }
 

@@ -6,6 +6,7 @@ using Duende.IdentityModel.Client;
 namespace Duende.AccessTokenManagement;
 
 /// <inheritdoc />
+[Obsolete(Constants.AtmPublicSurfaceInternal, UrlFormat = Constants.AtmPublicSurfaceLink)]
 public class DefaultClientAssertionService : IClientAssertionService
 {
     /// <inheritdoc />

@@ -4,17 +4,16 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+[JsonSourceGenerationOptions(
+    WriteIndented = false,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    GenerationMode = JsonSourceGenerationMode.Metadata,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+[JsonSerializable(typeof(AuthorizeState))]
+[JsonSerializable(typeof(Dictionary<string, JsonElement>))]
+[JsonSerializable(typeof(OidcClientOptions))]
+internal partial class SourceGenerationContext : JsonSerializerContext
 {
-    [JsonSourceGenerationOptions(
-        WriteIndented = false,
-        PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-        GenerationMode = JsonSourceGenerationMode.Metadata,
-	    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonSerializable(typeof(AuthorizeState))]
-    [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
-    [JsonSerializable(typeof(OidcClientOptions))]
-    internal partial class SourceGenerationContext : JsonSerializerContext
-    {
-    }
 }

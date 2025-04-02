@@ -1,7 +1,6 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
@@ -10,38 +9,20 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 namespace Duende.AccessTokenManagement.OpenIdConnect;
 
 /// <inheritdoc />
-public class OpenIdConnectConfigurationService : IOpenIdConnectConfigurationService
+[Obsolete(Constants.AtmPublicSurfaceInternal, UrlFormat = Constants.AtmPublicSurfaceLink)]
+public class OpenIdConnectConfigurationService(
+    IOptions<UserTokenManagementOptions> userAccessTokenManagementOptions,
+    IOptionsMonitor<OpenIdConnectOptions> oidcOptionsMonitor,
+    IAuthenticationSchemeProvider schemeProvider) : IOpenIdConnectConfigurationService
 {
-    private readonly IOptions<UserTokenManagementOptions> _userAccessTokenManagementOptions;
-    private readonly IOptionsMonitor<OpenIdConnectOptions> _oidcOptionsMonitor;
-    private readonly IAuthenticationSchemeProvider _schemeProvider;
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    /// <param name="userAccessTokenManagementOptions"></param>
-    /// <param name="oidcOptionsMonitor"></param>
-    /// <param name="schemeProvider"></param>
-    public OpenIdConnectConfigurationService(
-        IOptions<UserTokenManagementOptions> userAccessTokenManagementOptions,
-        IOptionsMonitor<OpenIdConnectOptions> oidcOptionsMonitor,
-        IAuthenticationSchemeProvider schemeProvider)
-    {
-        _userAccessTokenManagementOptions = userAccessTokenManagementOptions;
-        _oidcOptionsMonitor = oidcOptionsMonitor;
-        _schemeProvider = schemeProvider;
-    }
-
     /// <inheritdoc />
     public async Task<OpenIdConnectClientConfiguration> GetOpenIdConnectConfigurationAsync(string? schemeName = null)
     {
-        OpenIdConnectOptions options;
-
-        var configScheme = schemeName ?? _userAccessTokenManagementOptions.Value.ChallengeScheme;
+        var configScheme = schemeName ?? userAccessTokenManagementOptions.Value.ChallengeScheme;
 
         if (string.IsNullOrWhiteSpace(configScheme))
         {
-            var defaultScheme = await _schemeProvider.GetDefaultChallengeSchemeAsync().ConfigureAwait(false);
+            var defaultScheme = await schemeProvider.GetDefaultChallengeSchemeAsync().ConfigureAwait(false);
 
             if (defaultScheme is null)
             {
@@ -52,12 +33,12 @@ public class OpenIdConnectConfigurationService : IOpenIdConnectConfigurationServ
             configScheme = defaultScheme.Name;
         }
 
-        options = _oidcOptionsMonitor.Get(configScheme);
+        var options = oidcOptionsMonitor.Get(configScheme);
 
         OpenIdConnectConfiguration configuration;
         try
         {
-            configuration = await options.ConfigurationManager!.GetConfigurationAsync(default).ConfigureAwait(false);
+            configuration = await options.ConfigurationManager!.GetConfigurationAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -68,10 +49,10 @@ public class OpenIdConnectConfigurationService : IOpenIdConnectConfigurationServ
         return new OpenIdConnectClientConfiguration
         {
             Scheme = configScheme,
-            
+
             Authority = options.Authority,
             TokenEndpoint = configuration.TokenEndpoint,
-            RevocationEndpoint = configuration.RevocationEndpoint,            
+            RevocationEndpoint = configuration.RevocationEndpoint,
             ClientId = options.ClientId,
             ClientSecret = options.ClientSecret,
             HttpClient = options.Backchannel,

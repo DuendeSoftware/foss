@@ -61,7 +61,7 @@ public class BackchannelAuthenticationRequest : ProtocolRequest
     /// OPTIONAL. A signed authentication request is made by encoding all of the authentication request parameters as claims of a signed JWT with each parameter name as the claim name and its value as a JSON string.
     /// </summary>
     public string? RequestObject { get; set; }
-    
+
     /// <summary>
     /// List of requested resources
     /// </summary>

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Reflection;
@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Duende.IdentityModel.OidcClient.DPoP.Framework;
 
-public class GenericHost
+public class GenericHost : IAsyncDisposable
 {
     public GenericHost(string baseAddress = "https://server")
     {
@@ -40,7 +40,7 @@ public class GenericHost
 
     public string Url(string path = null)
     {
-        path = path ?? String.Empty;
+        path = path ?? string.Empty;
         if (!path.StartsWith("/")) path = "/" + path;
         return _baseAddress + path;
     }
@@ -97,7 +97,24 @@ public class GenericHost
     void ConfigureApp(IApplicationBuilder app)
     {
         _appServices = app.ApplicationServices;
-            
+
         OnConfigure(app);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Server != null) await CastAndDispose(Server);
+        if (HttpClient != null) await CastAndDispose(HttpClient);
+        if (Logger != null) await CastAndDispose(Logger);
+
+        return;
+
+        static async ValueTask CastAndDispose(IDisposable resource)
+        {
+            if (resource is IAsyncDisposable resourceAsyncDisposable)
+                await resourceAsyncDisposable.DisposeAsync();
+            else
+                resource?.Dispose();
+        }
     }
 }

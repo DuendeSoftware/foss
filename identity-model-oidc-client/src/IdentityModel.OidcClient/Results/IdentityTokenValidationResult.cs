@@ -1,23 +1,22 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
 
-namespace Duende.IdentityModel.OidcClient.Results
+namespace Duende.IdentityModel.OidcClient.Results;
+
+/// <summary>
+/// Identity token validation result
+/// </summary>
+public class IdentityTokenValidationResult : Result
 {
     /// <summary>
-    /// Identity token validation result
+    /// The user represented by the identity token
     /// </summary>
-    public class IdentityTokenValidationResult : Result
-    {
-        /// <summary>
-        /// The user represented by the identity token
-        /// </summary>
-        public ClaimsPrincipal User { get; set; }
-        
-        /// <summary>
-        /// The signature algorithm of the identity token 
-        /// </summary>
-        public string SignatureAlgorithm { get; set; }
-    }
+    public ClaimsPrincipal User { get; set; }
+
+    /// <summary>
+    /// The signature algorithm of the identity token 
+    /// </summary>
+    public string SignatureAlgorithm { get; set; }
 }

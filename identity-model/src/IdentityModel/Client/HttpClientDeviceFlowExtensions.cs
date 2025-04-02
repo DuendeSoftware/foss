@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -24,7 +24,7 @@ public static class HttpClientDeviceFlowExtensions
         clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Scope, request.Scope);
         clone.Method = HttpMethod.Post;
         clone.Prepare();
-        
+
         // make sure to send form encoded body (even if no parameters are in the body)
         // todo: test with real implementation, maybe turn into a more formal feature
         if (clone.Content == null)

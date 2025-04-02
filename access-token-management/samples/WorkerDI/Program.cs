@@ -1,13 +1,10 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using System;
 using Duende.AccessTokenManagement;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace WorkerService;
@@ -28,7 +25,7 @@ public class Program
     {
         var host = Host.CreateDefaultBuilder(args)
             .UseSerilog()
-                
+
             .ConfigureServices((services) =>
             {
                 services.AddDistributedMemoryCache();
@@ -47,12 +44,12 @@ public class Program
 
                     client.Scope = "api";
                 });
-                
+
                 services.AddClientCredentialsHttpClient("client", "demo", client =>
                 {
                     client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
                 });
-                
+
                 services.AddHttpClient<TypedClient>(client =>
                     {
                         client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
@@ -60,7 +57,7 @@ public class Program
                     .AddClientCredentialsTokenHandler("demo");
 
                 services.AddTransient<IClientAssertionService, ClientAssertionService>();
-                
+
                 //services.AddHostedService<WorkerManual>();
                 services.AddHostedService<WorkerManualJwt>();
                 //services.AddHostedService<WorkerHttpClient>();
@@ -69,5 +66,5 @@ public class Program
 
         return host;
     }
-            
+
 }

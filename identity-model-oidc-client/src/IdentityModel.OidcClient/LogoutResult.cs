@@ -1,36 +1,35 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+/// <summary>
+/// Models the result of a logout
+/// </summary>
+/// <seealso cref="IdentityModel.OidcClient.Result" />
+public class LogoutResult : Result
 {
     /// <summary>
-    /// Models the result of a logout
+    /// Initializes a new instance of the <see cref="LogoutResult"/> class.
     /// </summary>
-    /// <seealso cref="IdentityModel.OidcClient.Result" />
-    public class LogoutResult : Result
+    public LogoutResult()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogoutResult"/> class.
-        /// </summary>
-        public LogoutResult()
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogoutResult"/> class.
-        /// </summary>
-        /// <param name="error">The error.</param>
-        public LogoutResult(string error)
-        {
-            Error = error;
-        }
-
-        /// <summary>
-        /// Gets or sets the response.
-        /// </summary>
-        /// <value>
-        /// The response.
-        /// </value>
-        public string Response { get; set; }
     }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LogoutResult"/> class.
+    /// </summary>
+    /// <param name="error">The error.</param>
+    public LogoutResult(string error)
+    {
+        Error = error;
+    }
+
+    /// <summary>
+    /// Gets or sets the response.
+    /// </summary>
+    /// <value>
+    /// The response.
+    /// </value>
+    public string Response { get; set; }
 }

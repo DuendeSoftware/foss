@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json.Serialization;
-using Duende.IdentityModel;
 
 namespace Duende.IdentityModel.OidcClient.DPoP;
 
@@ -21,8 +20,8 @@ internal class DPoPProofPayload
     public string DPoPHttpUrl { get; set; } = default!;
     [JsonPropertyName(JwtClaimTypes.IssuedAt)]
     public long IssuedAt { get; set; }
-    [JsonPropertyName(JwtClaimTypes. DPoPAccessTokenHash)]
+    [JsonPropertyName(JwtClaimTypes.DPoPAccessTokenHash)]
     public string? DPoPAccessTokenHash { get; set; }
-    [JsonPropertyName(JwtClaimTypes. Nonce)]
+    [JsonPropertyName(JwtClaimTypes.Nonce)]
     public string? Nonce { get; set; }
 }

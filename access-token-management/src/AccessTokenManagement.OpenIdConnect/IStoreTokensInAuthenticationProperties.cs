@@ -14,19 +14,20 @@ public interface IStoreTokensInAuthenticationProperties
     /// Gets a UserToken from the AuthenticationProperties
     /// </summary>
     UserToken GetUserToken(AuthenticationProperties authenticationProperties, UserTokenRequestParameters? parameters = null);
-    
+
     /// <summary>
     /// Sets a UserToken in the AuthenticationProperties.
     /// </summary>
-    void SetUserToken(UserToken token, AuthenticationProperties authenticationProperties, UserTokenRequestParameters? parameters = null);
-    
+    Task SetUserToken(UserToken token, AuthenticationProperties authenticationProperties,
+        UserTokenRequestParameters? parameters = null);
+
     /// <summary>
     /// Removes a UserToken from the AuthenticationProperties.
     /// </summary>
     /// <param name="authenticationProperties"></param>
     /// <param name="parameters"></param>
     void RemoveUserToken(AuthenticationProperties authenticationProperties, UserTokenRequestParameters? parameters = null);
-    
+
     /// <summary>
     /// Gets the scheme name used when storing a UserToken in an
     /// AuthenticationProperties.

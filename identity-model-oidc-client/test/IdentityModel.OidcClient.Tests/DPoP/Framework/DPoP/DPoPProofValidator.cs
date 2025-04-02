@@ -4,7 +4,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Duende.IdentityModel;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -53,7 +52,7 @@ public class DPoPProofValidator
 
         try
         {
-            if (String.IsNullOrEmpty(context?.ProofToken))
+            if (string.IsNullOrEmpty(context?.ProofToken))
             {
                 result.IsError = true;
                 result.ErrorDescription = "Missing DPoP proof value.";
@@ -217,7 +216,7 @@ public class DPoPProofValidator
             result.AccessTokenHash = ath as string;
         }
 
-        if (String.IsNullOrEmpty(result.AccessTokenHash))
+        if (string.IsNullOrEmpty(result.AccessTokenHash))
         {
             result.IsError = true;
             result.ErrorDescription = "Invalid 'ath' value.";
@@ -243,7 +242,7 @@ public class DPoPProofValidator
             result.TokenId = jti as string;
         }
 
-        if (String.IsNullOrEmpty(result.TokenId))
+        if (string.IsNullOrEmpty(result.TokenId))
         {
             result.IsError = true;
             result.ErrorDescription = "Invalid 'jti' value.";
@@ -268,11 +267,11 @@ public class DPoPProofValidator
         {
             if (iat is int)
             {
-                result.IssuedAt = (int) iat;
+                result.IssuedAt = (int)iat;
             }
             if (iat is long)
             {
-                result.IssuedAt = (long) iat;
+                result.IssuedAt = (long)iat;
             }
         }
 
@@ -388,7 +387,7 @@ public class DPoPProofValidator
     /// </summary>
     protected virtual async Task ValidateNonceAsync(DPoPProofValidatonContext context, DPoPProofValidatonResult result)
     {
-        if (String.IsNullOrWhiteSpace(result.Nonce))
+        if (string.IsNullOrWhiteSpace(result.Nonce))
         {
             result.IsError = true;
             result.Error = OidcConstants.TokenErrors.UseDPoPNonce;
@@ -440,7 +439,7 @@ public class DPoPProofValidator
         try
         {
             var value = DataProtector.Unprotect(result.Nonce);
-            if (Int64.TryParse(value, out long iat))
+            if (long.TryParse(value, out var iat))
             {
                 return ValueTask.FromResult(iat);
             }
@@ -460,7 +459,7 @@ public class DPoPProofValidator
     protected virtual bool IsExpired(DPoPProofValidatonContext context, DPoPProofValidatonResult result, TimeSpan clockSkew, long issuedAtTime)
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var start = now + (int) clockSkew.TotalSeconds;
+        var start = now + (int)clockSkew.TotalSeconds;
         if (start < issuedAtTime)
         {
             var diff = issuedAtTime - now;
@@ -469,8 +468,8 @@ public class DPoPProofValidator
         }
 
         var dpopOptions = OptionsMonitor.Get(context.Scheme);
-        var expiration = issuedAtTime + (int) dpopOptions.ProofTokenValidityDuration.TotalSeconds;
-        var end = now - (int) clockSkew.TotalSeconds;
+        var expiration = issuedAtTime + (int)dpopOptions.ProofTokenValidityDuration.TotalSeconds;
+        var end = now - (int)clockSkew.TotalSeconds;
         if (expiration < end)
         {
             var diff = now - expiration;

@@ -1,9 +1,8 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Text;
 using Duende.IdentityModel.OidcClient;
 
@@ -21,7 +20,7 @@ Console.ReadKey();
 async void SignIn()
 {
     // create a redirect URI using an available port on the loopback address.
-    string redirectUri = string.Format("http://127.0.0.1:7890/");
+    var redirectUri = string.Format("http://127.0.0.1:7890/");
     Console.WriteLine("redirect URI: " + redirectUri);
 
     // create an HttpListener to listen for requests on that redirect URI.
@@ -41,7 +40,7 @@ async void SignIn()
     var client = new OidcClient(options);
     var state = await client.PrepareLoginAsync();
 
-    if(state.IsError)
+    if (state.IsError)
     {
         Console.WriteLine($"Failed to create authentication state: {state.Error} - {state.ErrorDescription}");
         http.Stop();
@@ -56,13 +55,13 @@ async void SignIn()
         FileName = state.StartUrl,
         UseShellExecute = true,
     });
-    
+
     // wait for the authorization response.
     var context = await http.GetContextAsync();
 
     // sends an HTTP response to the browser.
     var response = context.Response;
-    string responseString = string.Format("<html><head><meta http-equiv='refresh' content='10;url=https://demo.duendesoftware.com'></head><body>Please return to the app.</body></html>");
+    var responseString = string.Format("<html><head><meta http-equiv='refresh' content='10;url=https://demo.duendesoftware.com'></head><body>Please return to the app.</body></html>");
     var buffer = Encoding.UTF8.GetBytes(responseString);
     response.ContentLength64 = buffer.Length;
     var responseOutput = response.OutputStream;

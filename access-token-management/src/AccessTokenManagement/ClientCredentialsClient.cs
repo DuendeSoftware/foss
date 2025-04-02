@@ -56,7 +56,7 @@ public class ClientCredentialsClient
     /// <summary>
     /// Additional parameters to send with token requests.
     /// </summary>
-    public Parameters Parameters { get; set; } = new Parameters();
+    public Parameters Parameters { get; set; } = [];
 
     /// <summary>
     /// The HTTP client instance to use for the back-channel operations, will override the HTTP client name if set

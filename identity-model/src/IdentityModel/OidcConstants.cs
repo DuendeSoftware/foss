@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 #pragma warning disable 1591
@@ -122,7 +122,7 @@ public static class OidcConstants
         public const string SubjectTokenType = "subject_token_type";
         public const string ActorToken = "actor_token";
         public const string ActorTokenType = "actor_token_type";
-        
+
         // ciba
         public const string AuthenticationRequestId = "auth_req_id";
     }
@@ -273,6 +273,9 @@ public static class OidcConstants
         public const string RequestObjectEncryptionEncryption = "request_object_encryption_enc";
         public const string RequireSignedRequestObject = "require_signed_request_object";
         public const string AlwaysUseDPoPBoundAccessTokens = "dpop_bound_access_tokens";
+        public const string IntrospectionSignedResponseAlgorithm = "introspection_signed_response_alg";
+        public const string IntrospectionEncryptedResponseAlgorithm = "introspection_encrypted_response_alg";
+        public const string IntrospectionEncryptedResponseEncryption = "introspection_encrypted_response_enc";
     }
 
     public static class TokenTypes
@@ -296,7 +299,7 @@ public static class OidcConstants
     {
         public const string AuthorizationHeaderBearer = "Bearer";
         public const string AuthorizationHeaderDPoP = "DPoP";
-        
+
         public const string FormPostBearer = "access_token";
         public const string QueryStringBearer = "access_token";
 
@@ -495,13 +498,16 @@ public static class OidcConstants
         public const string TlsClientCertificateBoundAccessTokens = "tls_client_certificate_bound_access_tokens";
         public const string AuthorizationResponseIssParameterSupported = "authorization_response_iss_parameter_supported";
         public const string PromptValuesSupported = "prompt_values_supported";
+        public const string IntrospectionSigningAlgorithmsSupported = "introspection_signing_alg_values_supported";
+        public const string IntrospectionEncryptionAlgorithmsSupported = "introspection_encryption_alg_values_supported";
+        public const string IntrospectionEncryptionEncValuesSupported = "introspection_encryption_enc_values_supported";
 
         // CIBA
         public const string BackchannelTokenDeliveryModesSupported = "backchannel_token_delivery_modes_supported";
         public const string BackchannelAuthenticationEndpoint = "backchannel_authentication_endpoint";
         public const string BackchannelAuthenticationRequestSigningAlgValuesSupported = "backchannel_authentication_request_signing_alg_values_supported";
         public const string BackchannelUserCodeParameterSupported = "backchannel_user_code_parameter_supported";
-        
+
         // DPoP
         public const string DPoPSigningAlgorithmsSupported = "dpop_signing_alg_values_supported";
 
@@ -541,7 +547,7 @@ public static class OidcConstants
         /// <summary>This scope value MUST NOT be used with the OpenID Connect Implicit Client Implementer's Guide 1.0. See the OpenID Connect Basic Client Implementer's Guide 1.0 (http://openid.net/specs/openid-connect-implicit-1_0.html#OpenID.Basic) for its usage in that subset of OpenID Connect.</summary>
         public const string OfflineAccess = "offline_access";
     }
-    
+
     public static class HttpHeaders
     {
         public const string DPoP = "DPoP";

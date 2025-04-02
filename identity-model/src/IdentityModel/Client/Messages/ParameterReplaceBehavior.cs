@@ -11,13 +11,13 @@ public enum ParameterReplaceBehavior
     /// <summary>
     /// Allow multiple
     /// </summary>
-    None, 
-        
+    None,
+
     /// <summary>
     /// Replace a single parameter with the same key
     /// </summary>
-    Single, 
-        
+    Single,
+
     /// <summary>
     /// Replace all parameters with same key
     /// </summary>

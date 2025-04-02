@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
@@ -56,17 +56,17 @@ public class ClaimComparer : EqualityComparer<Claim>
         var valueComparison = StringComparison.Ordinal;
         if (_options.IgnoreValueCase == true) valueComparison = StringComparison.OrdinalIgnoreCase;
 
-        var equal = (String.Equals(x.Type, y.Type, StringComparison.OrdinalIgnoreCase) &&
-                         String.Equals(x.Value, y.Value, valueComparison) &&
-                         String.Equals(x.ValueType, y.ValueType, StringComparison.Ordinal));
-            
+        var equal = (string.Equals(x.Type, y.Type, StringComparison.OrdinalIgnoreCase) &&
+                         string.Equals(x.Value, y.Value, valueComparison) &&
+                         string.Equals(x.ValueType, y.ValueType, StringComparison.Ordinal));
+
         if (_options.IgnoreIssuer)
         {
             return equal;
         }
         else
         {
-            return (equal && String.Equals(x.Issuer, y.Issuer, valueComparison));
+            return (equal && string.Equals(x.Issuer, y.Issuer, valueComparison));
         }
     }
 
@@ -75,7 +75,7 @@ public class ClaimComparer : EqualityComparer<Claim>
     {
         if (claim is null) return 0;
 
-        int typeHash = claim.Type?.ToLowerInvariant().GetHashCode() ?? 0 ^ claim.ValueType?.GetHashCode() ?? 0;
+        var typeHash = claim.Type?.ToLowerInvariant().GetHashCode() ?? 0 ^ claim.ValueType?.GetHashCode() ?? 0;
         int valueHash;
         int issuerHash;
 
@@ -93,7 +93,7 @@ public class ClaimComparer : EqualityComparer<Claim>
         if (_options.IgnoreIssuer)
         {
             return typeHash ^ valueHash;
-                
+
         }
         else
         {

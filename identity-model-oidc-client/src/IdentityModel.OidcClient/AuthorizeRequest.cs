@@ -1,16 +1,15 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.IdentityModel.OidcClient.Browser;
 using Duende.IdentityModel.Client;
+using Duende.IdentityModel.OidcClient.Browser;
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+class AuthorizeRequest
 {
-    class AuthorizeRequest
-    {
-        public DisplayMode DisplayMode { get; set; } = DisplayMode.Visible;
-        public int Timeout { get; set; } = 300;
-        
-        public Parameters ExtraParameters = new Parameters();
-    }
+    public DisplayMode DisplayMode { get; set; } = DisplayMode.Visible;
+    public int Timeout { get; set; } = 300;
+
+    public Parameters ExtraParameters = new Parameters();
 }

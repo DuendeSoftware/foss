@@ -23,7 +23,7 @@ public class TokenExchangeTokenRequest : TokenRequest
     /// OPTIONAL. Space separated list of the requested scopes
     /// </summary>
     public string? Scope { get; set; }
-        
+
     /// <summary>
     /// OPTIONAL.  An identifier for the type of the requested security token.
     /// </summary>

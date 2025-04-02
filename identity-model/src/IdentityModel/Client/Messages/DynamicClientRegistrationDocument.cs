@@ -272,12 +272,21 @@ public class DynamicClientRegistrationDocument
     /// </summary>
     [JsonPropertyName(OidcConstants.ClientMetadata.RequestUris)]
     public ICollection<Uri> RequestUris { get; set; } = new HashSet<Uri>();
-    
+
     /// <summary>
     /// Custom client metadata fields to include in the serialization.
     /// </summary>
     [JsonExtensionData]
     public IDictionary<string, JsonElement>? Extensions { get; set; } = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+
+    [JsonPropertyName(OidcConstants.ClientMetadata.IntrospectionSignedResponseAlgorithm)]
+    public string? IntrospectionSignedResponseAlgorithm { get; set; }
+
+    [JsonPropertyName(OidcConstants.ClientMetadata.IntrospectionEncryptedResponseAlgorithm)]
+    public string? IntrospectionEncryptedResponseAlgorithm { get; set; }
+
+    [JsonPropertyName(OidcConstants.ClientMetadata.IntrospectionEncryptedResponseEncryption)]
+    public string? IntrospectionEncryptedResponseEncryption { get; set; }
 
     // Don't serialize empty arrays
     public bool ShouldSerializeRequestUris() => RequestUris.Any();

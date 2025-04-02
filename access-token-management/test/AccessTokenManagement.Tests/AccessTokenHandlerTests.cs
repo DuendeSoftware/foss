@@ -1,20 +1,22 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Diagnostics.Metrics;
+using Duende.AccessTokenManagement.OTel;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement.Tests;
 
-public class AccessTokenHandlerTests 
+public class AccessTokenHandlerTests
 {
     TestDPoPProofService _testDPoPProofService = new TestDPoPProofService();
     TestHttpMessageHandler _testHttpMessageHandler = new TestHttpMessageHandler();
 
     AccessTokenHandlerSubject _subject;
 
-    public AccessTokenHandlerTests()
+    public AccessTokenHandlerTests(ITestOutputHelper output)
     {
-        _subject = new AccessTokenHandlerSubject(_testDPoPProofService, new TestDPoPNonceStore(), new TestLoggerProvider().CreateLogger("AccessTokenHandlerSubject"));
+        _subject = new AccessTokenHandlerSubject(_testDPoPProofService, new TestDPoPNonceStore(), new TestLoggerProvider(output.WriteLine, "AccessTokenHandler").CreateLogger("AccessTokenHandlerSubject"));
         _subject.InnerHandler = _testHttpMessageHandler;
     }
 
@@ -30,7 +32,7 @@ public class AccessTokenHandlerTests
 
             _testHttpMessageHandler.Request!.Headers.Authorization!.Scheme.ShouldBe("Bearer");
         }
-        
+
         {
             _subject.AccessToken.AccessTokenType = "dpop";
 
@@ -52,21 +54,38 @@ public class AccessTokenHandlerTests
         }
     }
 
-    public class AccessTokenHandlerSubject : AccessTokenHandler
+    public class AccessTokenHandlerSubject(
+        IDPoPProofService dPoPProofService,
+        IDPoPNonceStore dPoPNonceStore,
+        ILogger logger)
+        : AccessTokenHandler(new AccessTokenManagementMetrics(new DummyMeterFactory()), dPoPProofService, dPoPNonceStore, logger)
     {
         public ClientCredentialsToken AccessToken { get; set; } = new ClientCredentialsToken
         {
             AccessToken = "at",
             AccessTokenType = "bearer",
+            ClientId = "some-client"
         };
-
-        public AccessTokenHandlerSubject(IDPoPProofService dPoPProofService, IDPoPNonceStore dPoPNonceStore, ILogger logger) : base(dPoPProofService, dPoPNonceStore, logger)
-        {
-        }
 
         protected override Task<ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, CancellationToken cancellationToken)
         {
             return Task.FromResult(AccessToken);
         }
+
+        protected override AccessTokenManagementMetrics.TokenRequestType TokenRequestType => AccessTokenManagementMetrics.TokenRequestType.ClientCredentials;
+
+        private class DummyMeterFactory : IMeterFactory
+        {
+            public void Dispose()
+            {
+            }
+
+            public Meter Create(MeterOptions options)
+            {
+                return new Meter(options);
+            }
+        }
     }
+
+
 }

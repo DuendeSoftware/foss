@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics;
@@ -24,7 +24,7 @@ public class TestBrowserClient : HttpClient
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             CurrentUri = request.RequestUri!;
-            string cookieHeader = CookieContainer.GetCookieHeader(request.RequestUri!);
+            var cookieHeader = CookieContainer.GetCookieHeader(request.RequestUri!);
             if (!string.IsNullOrEmpty(cookieHeader))
             {
                 request.Headers.Add("Cookie", cookieHeader);
@@ -45,7 +45,7 @@ public class TestBrowserClient : HttpClient
     }
 
     private CookieHandler _handler;
-        
+
     public CookieContainer CookieContainer => _handler.CookieContainer;
     public Uri CurrentUri => _handler.CurrentUri;
     public HttpResponseMessage LastResponse => _handler.LastResponse;
@@ -65,7 +65,7 @@ public class TestBrowserClient : HttpClient
     {
         return GetCookie(_handler.CurrentUri.ToString(), name);
     }
-        
+
     public Cookie? GetCookie(string uri, string name)
     {
         return _handler.CookieContainer.GetCookies(new Uri(uri)).Cast<Cookie>().Where(x => x.Name == name).FirstOrDefault();
@@ -75,7 +75,7 @@ public class TestBrowserClient : HttpClient
     {
         RemoveCookie(CurrentUri.ToString(), name);
     }
-        
+
     public void RemoveCookie(string uri, string name)
     {
         var cookie = CookieContainer.GetCookies(new Uri(uri)).Cast<Cookie>().Where(x => x.Name == name).FirstOrDefault();
@@ -101,7 +101,7 @@ public class TestBrowserClient : HttpClient
     {
         return ReadFormAsync(LastResponse, selector);
     }
-        
+
     public async Task<HtmlForm> ReadFormAsync(HttpResponseMessage response, string? selector = null)
     {
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -184,9 +184,9 @@ public class TestBrowserClient : HttpClient
     {
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var html    = await response.Content.ReadAsStringAsync();
-        var parser  = new HtmlParser();
-        var dom     = parser.ParseDocument(html);
+        var html = await response.Content.ReadAsStringAsync();
+        var parser = new HtmlParser();
+        var dom = parser.ParseDocument(html);
         var element = dom.QuerySelector(selector);
         element.ShouldNotBeNull();
     }
@@ -200,9 +200,9 @@ public class TestBrowserClient : HttpClient
     {
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var html    = await response.Content.ReadAsStringAsync();
-        var parser  = new HtmlParser();
-        var dom     = parser.ParseDocument(html);
+        var html = await response.Content.ReadAsStringAsync();
+        var parser = new HtmlParser();
+        var dom = parser.ParseDocument(html);
         var element = dom.QuerySelector(selector);
         element.ShouldNotBeNull();
     }
@@ -216,7 +216,7 @@ public class TestBrowserClient : HttpClient
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         await AssertExistsAsync(response, ".error-page");
 
-        if (!String.IsNullOrWhiteSpace(error))
+        if (!string.IsNullOrWhiteSpace(error))
         {
             var errorText = await ReadElementTextAsync(response, ".alert.alert-danger");
             errorText.ShouldContain(error);
@@ -232,7 +232,7 @@ public class TestBrowserClient : HttpClient
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         await AssertExistsAsync(response, ".validation-summary-errors");
 
-        if (!String.IsNullOrWhiteSpace(error))
+        if (!string.IsNullOrWhiteSpace(error))
         {
             var errorText = await ReadElementTextAsync(response, ".validation-summary-errors");
             errorText.ToLowerInvariant().ShouldContain(error.ToLowerInvariant());

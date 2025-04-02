@@ -1,6 +1,9 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Net;
+using System.Reflection;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,21 +11,16 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Reflection;
-using System.Security.Claims;
 
 namespace Duende.AccessTokenManagement.Tests;
 
-public class GenericHost
+public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "https://server") : IAsyncDisposable
 {
-    public GenericHost(string baseAddress = "https://server")
-    {
-        if (baseAddress.EndsWith("/")) baseAddress = baseAddress.Substring(0, baseAddress.Length - 1);
-        _baseAddress = baseAddress;
-    }
 
-    protected readonly string _baseAddress;
+    protected readonly string BaseAddress = baseAddress.EndsWith("/")
+        ? baseAddress.Substring(0, baseAddress.Length - 1)
+        : baseAddress;
+
     IServiceProvider _appServices = default!;
 
     public Assembly HostAssembly { get; set; } = default!;
@@ -33,7 +31,8 @@ public class GenericHost
     public HttpClient HttpClient { get; set; } = default!;
     public HttpMessageHandler HttpMessageHandler { get; set; } = default!;
 
-    public TestLoggerProvider Logger { get; set; } = new TestLoggerProvider();
+    private TestLoggerProvider Logger { get; } = new(writeOutput, baseAddress + " - ");
+
 
 
     public T Resolve<T>()
@@ -45,13 +44,15 @@ public class GenericHost
 
     public string Url(string? path = null)
     {
-        path = path ?? String.Empty;
+        path = path ?? string.Empty;
         if (!path.StartsWith("/")) path = "/" + path;
-        return _baseAddress + path;
+        return BaseAddress + path;
     }
 
     public async Task InitializeAsync()
     {
+        if (Server != null) throw new InvalidOperationException("Already initialized");
+
         var hostBuilder = new HostBuilder()
             .ConfigureWebHost(builder =>
             {
@@ -104,7 +105,7 @@ public class GenericHost
     void ConfigureApp(IApplicationBuilder app)
     {
         _appServices = app.ApplicationServices;
-            
+
         OnConfigure(app);
 
         ConfigureSignin(app);
@@ -127,7 +128,7 @@ public class GenericHost
             await next();
         });
     }
-        
+
     public async Task RevokeSessionCookieAsync()
     {
         var response = await BrowserClient.GetAsync(Url("__signout"));
@@ -148,7 +149,7 @@ public class GenericHost
 
                 var props = _propsToSignIn ?? new AuthenticationProperties();
                 await ctx.SignInAsync(_userToSignIn, props);
-                    
+
                 _userToSignIn = null;
                 _propsToSignIn = null;
 
@@ -159,10 +160,10 @@ public class GenericHost
             await next();
         });
     }
-        
+
     ClaimsPrincipal? _userToSignIn = default!;
     AuthenticationProperties? _propsToSignIn = default!;
-        
+
     public async Task IssueSessionCookieAsync(params Claim[] claims)
     {
         _userToSignIn = new ClaimsPrincipal(new ClaimsIdentity(claims, "test", "name", "role"));
@@ -177,5 +178,24 @@ public class GenericHost
     public Task IssueSessionCookieAsync(string sub, params Claim[] claims)
     {
         return IssueSessionCookieAsync(claims.Append(new Claim("sub", sub)).ToArray());
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CastAndDispose(Server);
+        await CastAndDispose(BrowserClient);
+        await CastAndDispose(HttpClient);
+        await CastAndDispose(HttpMessageHandler);
+        await CastAndDispose(Logger);
+
+        return;
+
+        static async ValueTask CastAndDispose(IDisposable resource)
+        {
+            if (resource is IAsyncDisposable resourceAsyncDisposable)
+                await resourceAsyncDisposable.DisposeAsync();
+            else
+                resource?.Dispose();
+        }
     }
 }

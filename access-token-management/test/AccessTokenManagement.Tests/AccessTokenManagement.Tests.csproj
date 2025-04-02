@@ -4,6 +4,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Duende.AccessTokenManagement</RootNamespace>
+    <AssemblyOriginatorKeyFile>../../../key.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -13,6 +16,8 @@
     <PackageReference Include="Duende.IdentityServer"/>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="PublicApiGenerator" />
+    <PackageReference Include="Verify.XunitV3" />
 
     <PackageReference Include="RichardSzalay.MockHttp" />
   </ItemGroup>

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -51,15 +51,15 @@ public sealed class AuthorityUrlValidationStrategy : IAuthorityValidationStrateg
             return AuthorityValidationResult.CreateError("Endpoint is not a valid URL");
         }
 
-        foreach (string authority in allowedAuthorities)
+        foreach (var authority in allowedAuthorities)
         {
             if (!Uri.TryCreate(authority.RemoveTrailingSlash(), UriKind.Absolute, out var authorityUrl))
             {
                 throw new ArgumentOutOfRangeException("Authority must be a URL.", nameof(allowedAuthorities));
             }
 
-            string expectedString = authorityUrl.ToString();
-            string testString = endpointUrl.ToString();
+            var expectedString = authorityUrl.ToString();
+            var testString = endpointUrl.ToString();
 
             if (testString.StartsWith(expectedString, StringComparison.Ordinal))
             {

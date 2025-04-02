@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -49,7 +49,7 @@ public sealed class StringComparisonAuthorityValidationStrategy : IAuthorityVali
         if (string.IsNullOrEmpty(endpoint))
             return AuthorityValidationResult.CreateError("endpoint is empty");
 
-        foreach (string authority in allowedAuthorities)
+        foreach (var authority in allowedAuthorities)
         {
             if (endpoint.StartsWith(authority, _stringComparison))
                 return AuthorityValidationResult.SuccessResult;

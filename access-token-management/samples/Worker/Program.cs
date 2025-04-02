@@ -1,15 +1,12 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using System;
-using Duende.AccessTokenManagement;
-using Serilog.Sinks.SystemConsole.Themes;
-using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Duende.AccessTokenManagement;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace WorkerService;
 
@@ -29,7 +26,7 @@ public class Program
     {
         var host = Host.CreateDefaultBuilder(args)
             .UseSerilog()
-                
+
             .ConfigureServices((services) =>
             {
                 services.AddDistributedMemoryCache();

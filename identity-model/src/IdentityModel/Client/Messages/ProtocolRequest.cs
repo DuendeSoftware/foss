@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net.Http.Headers;
@@ -93,7 +93,7 @@ public class ProtocolRequest : HttpRequestMessage
     /// Clones this instance.
     /// </summary>
     public T Clone<T>()
-        where T: ProtocolRequest, new()
+        where T : ProtocolRequest, new()
     {
         var clone = new T
         {
@@ -129,15 +129,15 @@ public class ProtocolRequest : HttpRequestMessage
             {
                 clone.Options.TryAdd(property.Key, property.Value);
             }
-        }          
+        }
 #else
-            if (Properties != null && Properties.Any())
+        if (Properties != null && Properties.Any())
+        {
+            foreach (var property in Properties)
             {
-                foreach (var property in Properties)
-                {
-                    clone.Properties.Add(property);
-                }
+                clone.Properties.Add(property);
             }
+        }
 #endif
         return clone;
     }
@@ -182,7 +182,7 @@ public class ProtocolRequest : HttpRequestMessage
                 throw new InvalidOperationException(
                     "CredentialStyle.AuthorizationHeader and client assertions are not compatible");
             }
-            
+
             Parameters.AddOptional(OidcConstants.TokenRequest.ClientAssertionType, ClientAssertion.Type);
             Parameters.AddOptional(OidcConstants.TokenRequest.ClientAssertion, ClientAssertion.Value);
         }

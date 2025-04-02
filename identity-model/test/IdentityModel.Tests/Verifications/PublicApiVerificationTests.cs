@@ -1,13 +1,13 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+#if NET8_0
 using PublicApiGenerator;
-
 namespace Duende.IdentityModel.Verifications;
 
 public class PublicApiVerificationTests
 {
-#if NET8_0
+
     [Fact]
     public async Task VerifyPublicApi()
     {
@@ -19,5 +19,5 @@ public class PublicApiVerificationTests
         var settings = new VerifySettings();
         await Verify(publicApi, settings);
     }
-#endif
 }
+#endif

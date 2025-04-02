@@ -25,7 +25,7 @@ public static class Startup
         var config = new SampleConfiguration();
         builder.Services.Configure<SampleConfiguration>(builder.Configuration);
         builder.Configuration.Bind(config);
-        
+
         builder.Services.AddControllersWithViews();
 
         builder.Services.AddAuthentication(options =>
@@ -74,7 +74,7 @@ public static class Startup
         var jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(rsaKey);
         jsonWebKey.Alg = "PS256";
         var jwk = JsonSerializer.Serialize(jsonWebKey);
-        
+
         builder.Services.AddOpenIdConnectAccessTokenManagement(options =>
         {
             var useDPoP = builder.Configuration.GetValue<bool>("UseDPoP");
@@ -83,7 +83,8 @@ public static class Startup
 
         // registers HTTP client that uses the managed user access token
         builder.Services.AddUserAccessTokenHttpClient("user",
-            configureClient: client => {
+            configureClient: client =>
+            {
                 client.BaseAddress = new Uri(config.ApiBaseUrl);
             });
 
@@ -94,7 +95,8 @@ public static class Startup
             {
                 Resource = "urn:resource1"
             },
-            configureClient: client => {
+            configureClient: client =>
+            {
                 client.BaseAddress = new Uri(config.ApiBaseUrl);
             });
 
@@ -143,7 +145,7 @@ public static class Startup
 
         app.MapDefaultControllerRoute()
             .RequireAuthorization();
-        
+
         return app;
     }
 }

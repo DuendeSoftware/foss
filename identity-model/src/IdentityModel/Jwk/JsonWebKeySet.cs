@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
@@ -29,7 +29,7 @@ public class JsonWebKeySet
 
         var jwebKeys = JsonSerializer.Deserialize<JsonWebKeySet>(json, JwkSourceGenerationContext.Default.JsonWebKeySet);
         if (jwebKeys == null) throw new InvalidOperationException("invalid JSON web keys");
-        
+
         Keys = jwebKeys.Keys;
         RawData = json;
     }
@@ -39,7 +39,7 @@ public class JsonWebKeySet
     /// </summary>
     [JsonPropertyName("keys")]
     public List<JsonWebKey> Keys { get; set; } = new();
-    
+
     /// <summary>
     /// The JSON string used to deserialize this object
     /// </summary>

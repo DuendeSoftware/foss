@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics;
@@ -34,7 +34,7 @@ internal static class InternalStringExtensions
     public static string RemoveTrailingSlash(this string url)
     {
         if (url == null) throw new ArgumentNullException(nameof(url));
-        
+
         if (url.EndsWith("/"))
         {
             url = url.Substring(0, url.Length - 1);

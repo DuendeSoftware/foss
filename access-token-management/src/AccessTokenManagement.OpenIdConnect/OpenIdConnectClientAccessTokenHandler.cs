@@ -1,6 +1,7 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.AccessTokenManagement.OTel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -10,35 +11,21 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 /// <summary>
 /// Delegating handler that injects the current access token into an outgoing request
 /// </summary>
-public class OpenIdConnectClientAccessTokenHandler : AccessTokenHandler
+[Obsolete(Constants.AtmPublicSurfaceInternal, UrlFormat = Constants.AtmPublicSurfaceLink)]
+public class OpenIdConnectClientAccessTokenHandler(
+    AccessTokenManagementMetrics metrics,
+    IDPoPProofService dPoPProofService,
+    IDPoPNonceStore dPoPNonceStore,
+    IHttpContextAccessor httpContextAccessor,
+    ILogger<OpenIdConnectClientAccessTokenHandler> logger,
+    UserTokenRequestParameters? parameters = null) : AccessTokenHandler(metrics, dPoPProofService, dPoPNonceStore, logger)
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly UserTokenRequestParameters _parameters;
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    /// <param name="dPoPProofService"></param>
-    /// <param name="dPoPNonceStore"></param>
-    /// <param name="httpContextAccessor"></param>
-    /// <param name="logger"></param>
-    /// <param name="parameters"></param>
-    public OpenIdConnectClientAccessTokenHandler(
-        IDPoPProofService dPoPProofService,
-        IDPoPNonceStore dPoPNonceStore,
-        IHttpContextAccessor httpContextAccessor, 
-        ILogger<OpenIdConnectClientAccessTokenHandler> logger,
-        UserTokenRequestParameters? parameters = null)
-        : base(dPoPProofService, dPoPNonceStore, logger)
-    {
-        _httpContextAccessor = httpContextAccessor;
-        _parameters = parameters ?? new UserTokenRequestParameters();
-    }
+    private readonly UserTokenRequestParameters _parameters = parameters ?? new UserTokenRequestParameters();
 
     /// <inheritdoc/>
-    protected async override Task<ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, CancellationToken cancellationToken)
+    protected override async Task<ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, CancellationToken cancellationToken)
     {
-        var parameters = new UserTokenRequestParameters
+        var userTokenRequestParameters = new UserTokenRequestParameters
         {
             ChallengeScheme = _parameters.ChallengeScheme,
             Scope = _parameters.Scope,
@@ -49,6 +36,16 @@ public class OpenIdConnectClientAccessTokenHandler : AccessTokenHandler
             ForceRenewal = forceRenewal,
         };
 
-        return await _httpContextAccessor.HttpContext!.GetClientAccessTokenAsync(parameters).ConfigureAwait(false);
+        if (httpContextAccessor.HttpContext == null)
+        {
+            throw new InvalidOperationException("HttpContext is null");
+        }
+
+        return await httpContextAccessor.HttpContext.GetClientAccessTokenAsync(
+                userTokenRequestParameters,
+                cancellationToken)
+            .ConfigureAwait(false);
     }
+
+    protected override AccessTokenManagementMetrics.TokenRequestType TokenRequestType => AccessTokenManagementMetrics.TokenRequestType.ClientCredentials;
 }

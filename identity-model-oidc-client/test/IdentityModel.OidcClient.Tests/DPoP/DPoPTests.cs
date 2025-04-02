@@ -15,7 +15,7 @@ namespace Duende.IdentityModel.OidcClient.DPoP;
 
 public class DPoPTest : IntegrationTestBase
 {
-    
+
     private static readonly string _jwkJson;
     private readonly IdentityServer.Models.Client _client;
 
@@ -46,7 +46,7 @@ public class DPoPTest : IntegrationTestBase
     {
         var handler = new ProofTokenMessageHandler(_jwkJson, IdentityServerHost.Server.CreateHandler());
         var client = new HttpClient(handler);
-        
+
         var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
         {
             Address = IdentityServerHost.Url("/connect/token"),

@@ -15,7 +15,7 @@ public class UserTokenManagementOptions
     /// (will fall back to configured default challenge scheme if not set)
     /// </summary>
     public string? ChallengeScheme { get; set; }
-    
+
     /// <summary>
     /// Boolean to set whether tokens added to a session should be challenge-scheme-specific.
     /// The default is 'false'.

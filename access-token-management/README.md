@@ -14,7 +14,7 @@ The libraries in this directory are distributed as NuGet packages.
   acquired in user-centric flows in [ASP.NET Core](https://dotnet.microsoft.com/en-us/apps/aspnet) applications.
 
 ## Documentation
-Documentation is available [here]([https://github.com/DuendeSoftware/foss/wiki](https://docs.duendesoftware.com/foss/accesstokenmanagement/).
+Documentation is available [here](https://docs.duendesoftware.com/foss/accesstokenmanagement/).
 
 ## License and Feedback
 Duende.AccessTokenManagement is released as open source under the 

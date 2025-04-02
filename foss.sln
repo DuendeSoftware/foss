@@ -113,6 +113,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel.OidcClient.Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrimmableAnalysis", "identity-model-oidc-client\src\TrimmableAnalysis\TrimmableAnalysis.csproj", "{DB959C7D-0C67-435A-A0DB-CE6ED94DC72A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "perf", "perf", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perf.DevServer", "access-token-management\perf\Perf.DevServer\Perf.DevServer.csproj", "{01E2079B-91D4-43C8-A969-B1C4A9E57655}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perf.DevServer.ServiceDefaults", "access-token-management\perf\Perf.DevServer.ServiceDefaults\Perf.DevServer.ServiceDefaults.csproj", "{BBF617FC-F563-FF1C-96F2-ED3794CAADD8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perf.TokenEndpoint", "access-token-management\perf\Perf.TokenEndpoint\Perf.TokenEndpoint.csproj", "{1025AC93-F1AD-C2BA-BB8E-13ACC1EC74A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perf.IdentityServer", "access-token-management\perf\Perf.IdentityServer\Perf.IdentityServer.csproj", "{6E697CE1-145C-448A-A2BC-CF28A75909F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +217,22 @@ Global
 		{DB959C7D-0C67-435A-A0DB-CE6ED94DC72A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB959C7D-0C67-435A-A0DB-CE6ED94DC72A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB959C7D-0C67-435A-A0DB-CE6ED94DC72A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01E2079B-91D4-43C8-A969-B1C4A9E57655}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01E2079B-91D4-43C8-A969-B1C4A9E57655}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01E2079B-91D4-43C8-A969-B1C4A9E57655}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01E2079B-91D4-43C8-A969-B1C4A9E57655}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBF617FC-F563-FF1C-96F2-ED3794CAADD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBF617FC-F563-FF1C-96F2-ED3794CAADD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBF617FC-F563-FF1C-96F2-ED3794CAADD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBF617FC-F563-FF1C-96F2-ED3794CAADD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1025AC93-F1AD-C2BA-BB8E-13ACC1EC74A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1025AC93-F1AD-C2BA-BB8E-13ACC1EC74A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1025AC93-F1AD-C2BA-BB8E-13ACC1EC74A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1025AC93-F1AD-C2BA-BB8E-13ACC1EC74A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E697CE1-145C-448A-A2BC-CF28A75909F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E697CE1-145C-448A-A2BC-CF28A75909F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E697CE1-145C-448A-A2BC-CF28A75909F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E697CE1-145C-448A-A2BC-CF28A75909F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -245,6 +271,11 @@ Global
 		{79FA307B-8362-448B-8ED3-A8E60700B04C} = {F3E00123-AE97-4BF4-8868-E078B59691C8}
 		{71943026-C895-4C39-953E-3F02519EFDA7} = {93313B63-592B-41AA-B122-BE6DED75B198}
 		{DB959C7D-0C67-435A-A0DB-CE6ED94DC72A} = {93313B63-592B-41AA-B122-BE6DED75B198}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {40E4A188-F989-487A-9E7A-F0315CE9A9BC}
+		{01E2079B-91D4-43C8-A969-B1C4A9E57655} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{BBF617FC-F563-FF1C-96F2-ED3794CAADD8} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{1025AC93-F1AD-C2BA-BB8E-13ACC1EC74A7} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{6E697CE1-145C-448A-A2BC-CF28A75909F6} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {198D25AC-7BC4-48D6-BF04-37AF59E0648D}

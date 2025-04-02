@@ -12,7 +12,7 @@ public class OpenIdConnectClientConfiguration
     /// The authority
     /// </summary>
     public string? Authority { get; set; }
-    
+
     /// <summary>
     /// The token endpoint address
     /// </summary>
@@ -27,17 +27,17 @@ public class OpenIdConnectClientConfiguration
     /// The client ID
     /// </summary>
     public string? ClientId { get; set; }
-    
+
     /// <summary>
     /// The client secret
     /// </summary>
     public string? ClientSecret { get; set; }
-    
+
     /// <summary>
     /// The HTTP client associated with the OIDC handler (if based on scheme configuration)
     /// </summary>
     public HttpClient? HttpClient { get; set; }
-    
+
     /// <summary>
     /// The scheme name of the OIDC handler
     /// </summary>

@@ -54,7 +54,7 @@ public static class HostingExtensions
         // adds access token management
         builder.Services.AddOpenIdConnectAccessTokenManagement()
             .AddBlazorServerAccessTokenManagement<ServerSideTokenStore>();
-        
+
         // register events to customize authentication handlers
         builder.Services.AddTransient<CookieEvents>();
         builder.Services.AddTransient<OidcEvents>();
@@ -72,14 +72,14 @@ public static class HostingExtensions
             .AddInteractiveServerComponents();
 
         builder.Services.AddSingleton<WeatherForecastService>();
-        
+
         return builder.Build();
     }
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseSerilogRequestLogging();
-        
+
         app.UseStaticFiles();
 
         app.UseRouting();
@@ -91,7 +91,7 @@ public static class HostingExtensions
         app.MapDefaultControllerRoute();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
-        
+
         return app;
     }
 }

@@ -1,10 +1,10 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using System.Net;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect;
 
@@ -29,32 +29,21 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 ///    header. When it does, this handler retries those code exchange requests.
 ///
 /// </summary>
-internal class AuthorizationServerDPoPHandler : DelegatingHandler
+internal class AuthorizationServerDPoPHandler(
+    IDPoPProofService dPoPProofService,
+    IDPoPNonceStore dPoPNonceStore,
+    IHttpContextAccessor httpContextAccessor,
+    ILoggerFactory loggerFactory) : DelegatingHandler
 {
-    private readonly IDPoPProofService _dPoPProofService;
-    private readonly IDPoPNonceStore _dPoPNonceStore;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<AuthorizationServerDPoPHandler> _logger;
-
-    internal AuthorizationServerDPoPHandler(
-        IDPoPProofService dPoPProofService,
-        IDPoPNonceStore dPoPNonceStore,
-        IHttpContextAccessor httpContextAccessor,
-        ILoggerFactory loggerFactory)
-    {
-        _dPoPProofService = dPoPProofService;
-        _dPoPNonceStore = dPoPNonceStore;
-        _httpContextAccessor = httpContextAccessor;
-        // We depend on the logger factory, rather than the logger itself, since
-        // the type parameter of the logger (referencing this class) will not
-        // always be accessible.
-        _logger = loggerFactory.CreateLogger<AuthorizationServerDPoPHandler>();
-    }
+    // We depend on the logger factory, rather than the logger itself, since
+    // the type parameter of the logger (referencing this class) will not
+    // always be accessible.
+    private readonly ILogger<AuthorizationServerDPoPHandler> _logger = loggerFactory.CreateLogger<AuthorizationServerDPoPHandler>();
 
     /// <inheritdoc/>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var codeExchangeJwk = _httpContextAccessor.HttpContext?.GetCodeExchangeDPoPKey();
+        var codeExchangeJwk = httpContextAccessor.HttpContext?.GetCodeExchangeDPoPKey();
         if (codeExchangeJwk != null)
         {
             await SetDPoPProofTokenForCodeExchangeAsync(request, jwk: codeExchangeJwk).ConfigureAwait(false);
@@ -65,48 +54,53 @@ internal class AuthorizationServerDPoPHandler : DelegatingHandler
         // The authorization server might send us a new nonce on either a success or failure
         var dPoPNonce = response.GetDPoPNonce();
 
-        if (dPoPNonce != null)
+        if (dPoPNonce == null)
         {
-            // This handler contains specialized logic to create the new proof
-            // token using the proof key that was associated with a code flow
-            // using a dpop_jkt parameter on the authorize call. Other flows
-            // (such as refresh), are separately responsible for retrying with a
-            // server-issued nonce. So, we ONLY do the retry logic when we have
-            // the dpop_jkt's jwk
-            if (codeExchangeJwk != null)
-            {
-                // If the http response code indicates a bad request, we can infer
-                // that we should retry with the new nonce. 
-                //
-                // The server should have also set the error: use_dpop_nonce, but
-                // there's no need to incur the cost of parsing the json and
-                // checking for that, as we would only receive the nonce http header
-                // when that error was set. Authorization servers might preemptively
-                // send a new nonce, but the spec specifically says to do that on a
-                // success (and we handle that case in the else block). 
-                //
-                // TL;DR - presence of nonce and 400 response code is enough to
-                // trigger a retry during code exchange
-                if (response.StatusCode == HttpStatusCode.BadRequest)
-                {
-                    _logger.LogDebug("Token request failed with DPoP nonce error. Retrying with new nonce.");
-                    response.Dispose();
-                    await SetDPoPProofTokenForCodeExchangeAsync(request, dPoPNonce, codeExchangeJwk).ConfigureAwait(false);
-                    return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                _logger.LogDebug("The authorization server has supplied a new nonce on a successful response, which will be stored and used in future requests to the authorization server");
+            return response;
+        }
 
-                await _dPoPNonceStore.StoreNonceAsync(new DPoPNonceContext
-                {
-                    Url = request.GetDPoPUrl(),
-                    Method = request.Method.ToString(),
-                }, dPoPNonce);
+        // This handler contains specialized logic to create the new proof
+        // token using the proof key that was associated with a code flow
+        // using a dpop_jkt parameter on the authorize call. Other flows
+        // (such as refresh), are separately responsible for retrying with a
+        // server-issued nonce. So, we ONLY do the retry logic when we have
+        // the dpop_jkt's jwk
+        if (codeExchangeJwk != null)
+        {
+            // If the http response code indicates a bad request, we can infer
+            // that we should retry with the new nonce. 
+            //
+            // The server should have also set the error: use_dpop_nonce, but
+            // there's no need to incur the cost of parsing the json and
+            // checking for that, as we would only receive the nonce http header
+            // when that error was set. Authorization servers might preemptively
+            // send a new nonce, but the spec specifically says to do that on a
+            // success (and we handle that case in the else block). 
+            //
+            // TL;DR - presence of nonce and 400 response code is enough to
+            // trigger a retry during code exchange
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                _logger.DPoPErrorDuringTokenRefreshWillRetryWithServerNonce(response.GetDPoPError());
+                response.Dispose();
+                await SetDPoPProofTokenForCodeExchangeAsync(request, dPoPNonce, codeExchangeJwk).ConfigureAwait(false);
+                return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
             }
         }
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            _logger.FailedToGetDPoPNonce(response.StatusCode);
+            return response;
+        }
+
+        _logger.AuthorizationServerSuppliedNewNonce();
+
+        await dPoPNonceStore.StoreNonceAsync(new DPoPNonceContext
+        {
+            Url = request.GetDPoPUrl(),
+            Method = request.Method.ToString(),
+        }, dPoPNonce, cancellationToken);
 
         return response;
     }
@@ -116,31 +110,29 @@ internal class AuthorizationServerDPoPHandler : DelegatingHandler
     /// </summary>
     internal async Task SetDPoPProofTokenForCodeExchangeAsync(HttpRequestMessage request, string? dpopNonce = null, string? jwk = null)
     {
-        if (!string.IsNullOrEmpty(jwk))
+        if (string.IsNullOrEmpty(jwk))
         {
-            // remove any old headers
-            request.ClearDPoPProofToken();
+            return;
+        }
 
-            // create proof
-            var proofToken = await _dPoPProofService.CreateProofTokenAsync(new DPoPProofRequest
-            {
-                Url = request.GetDPoPUrl(),
-                Method = request.Method.ToString(),
-                DPoPJsonWebKey = jwk,
-                DPoPNonce = dpopNonce,
-            });
+        request.ClearDPoPProofToken();
 
-            if (proofToken != null)
-            {
-                _logger.LogDebug("Sending DPoP proof token in request to endpoint: {url}",
-                    request.RequestUri?.GetLeftPart(System.UriPartial.Path));
-                request.SetDPoPProofToken(proofToken.ProofToken);
-            }
-            else
-            {
-                _logger.LogDebug("No DPoP proof token in request to endpoint: {url}",
-                    request.RequestUri?.GetLeftPart(System.UriPartial.Path));
-            }
+        var proofToken = await dPoPProofService.CreateProofTokenAsync(new DPoPProofRequest
+        {
+            Url = request.GetDPoPUrl(),
+            Method = request.Method.ToString(),
+            DPoPJsonWebKey = jwk,
+            DPoPNonce = dpopNonce,
+        });
+
+        if (proofToken != null)
+        {
+            _logger.SendingDPoPProofToken(request.RequestUri?.GetLeftPart(UriPartial.Path));
+            request.SetDPoPProofToken(proofToken.ProofToken);
+        }
+        else
+        {
+            _logger.FailedToCreateDPopProofToken(request.RequestUri?.GetLeftPart(UriPartial.Path));
         }
     }
 }

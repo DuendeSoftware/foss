@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 namespace Duende.IdentityModel;
@@ -180,7 +180,7 @@ public static class JwtClaimTypes
     /// JSON web key
     /// </summary>
     public const string JsonWebKey = "jwk";
-    
+
     /// <summary>
     /// The token type
     /// </summary>
@@ -190,17 +190,17 @@ public static class JwtClaimTypes
     /// DPoP HTTP method
     /// </summary>
     public const string DPoPHttpMethod = "htm";
-    
+
     /// <summary>
     /// DPoP HTTP URL
     /// </summary>
     public const string DPoPHttpUrl = "htu";
-    
+
     /// <summary>
     /// DPoP access token hash
     /// </summary>
     public const string DPoPAccessTokenHash = "ath";
-    
+
     /// <summary>
     /// Values for strongly typed JWTs
     /// </summary>
@@ -215,11 +215,16 @@ public static class JwtClaimTypes
         /// JWT secured authorization request
         /// </summary>
         public const string AuthorizationRequest = "oauth-authz-req+jwt";
-        
+
         /// <summary>
         /// DPoP proof token
         /// </summary>
         public const string DPoPProofToken = "dpop+jwt";
+
+        /// <summary>
+        /// Token introspection JWT response
+        /// </summary>
+        public const string IntrospectionJwtResponse = "token-introspection+jwt";
     }
 
     /// <summary>
@@ -231,12 +236,12 @@ public static class JwtClaimTypes
         /// JSON web key
         /// </summary>
         public const string JsonWebKey = "jwk";
-        
+
         /// <summary>
         /// JSON web key thumbprint
         /// </summary>
         public const string JwkThumbprint = "jkt";
-            
+
         /// <summary>
         /// X.509 certificate thumbprint using SHA256
         /// </summary>

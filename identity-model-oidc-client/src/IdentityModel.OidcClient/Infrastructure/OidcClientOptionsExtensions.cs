@@ -1,30 +1,29 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-namespace Duende.IdentityModel.OidcClient.Infrastructure
+namespace Duende.IdentityModel.OidcClient.Infrastructure;
+
+internal static class OidcClientOptionsExtensions
 {
-    internal static class OidcClientOptionsExtensions
+    public static HttpClient CreateClient(this OidcClientOptions options)
     {
-        public static HttpClient CreateClient(this OidcClientOptions options)
+        if (options.HttpClientFactory != null)
         {
-            if (options.HttpClientFactory != null)
-            {
-                return options.HttpClientFactory(options);
-            }
-            
-            HttpClient client;
-
-            if (options.BackchannelHandler != null)
-            {
-                client = new HttpClient(options.BackchannelHandler);
-            }
-            else
-            {
-                client = new HttpClient();
-            }
-
-            client.Timeout = options.BackchannelTimeout;
-            return client;
+            return options.HttpClientFactory(options);
         }
+
+        HttpClient client;
+
+        if (options.BackchannelHandler != null)
+        {
+            client = new HttpClient(options.BackchannelHandler);
+        }
+        else
+        {
+            client = new HttpClient();
+        }
+
+        client.Timeout = options.BackchannelTimeout;
+        return client;
     }
 }

@@ -10,14 +10,12 @@ using RichardSzalay.MockHttp;
 
 namespace Duende.AccessTokenManagement.Tests;
 
-public class UserTokenManagementTests : IntegrationTestBase
+public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output, "web")
 {
-    public UserTokenManagementTests() : base("web")
-    { }
-
     [Fact]
     public async Task Anonymous_user_should_return_user_token_error()
     {
+        await InitializeAsync();
         var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"));
         var token = await response.Content.ReadFromJsonAsync<UserToken>();
 
@@ -27,6 +25,7 @@ public class UserTokenManagementTests : IntegrationTestBase
     [Fact]
     public async Task Anonymous_user_should_return_client_token()
     {
+        await InitializeAsync();
         var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/client_token"));
         var token = await response.Content.ReadFromJsonAsync<ClientCredentialsToken>();
 
@@ -57,7 +56,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .WithFormData("grant_type", "authorization_code")
             .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
 
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         // 1st request
@@ -102,7 +101,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .WithFormData("grant_type", "authorization_code")
             .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
 
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
@@ -135,7 +134,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .WithFormData("grant_type", "authorization_code")
             .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
 
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
@@ -168,7 +167,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .WithFormData("grant_type", "authorization_code")
             .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
 
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
@@ -212,6 +211,7 @@ public class UserTokenManagementTests : IntegrationTestBase
         // Respond to refresh with a short token lifetime so that we trigger another refresh on 2nd use
         var refreshTokenResponse = new
         {
+            id_token = "refreshed1_id_token",
             access_token = "refreshed1_access_token",
             token_type = "token_type1",
             expires_in = 10,
@@ -225,6 +225,7 @@ public class UserTokenManagementTests : IntegrationTestBase
         // Respond to second refresh with a long token lifetime so that we don't trigger another refresh on 3rd use
         var refreshTokenResponse2 = new
         {
+            id_token = "refreshed2_id_token",
             access_token = "refreshed2_access_token",
             token_type = "token_type2",
             expires_in = 3600,
@@ -236,7 +237,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse2));
 
         // setup host
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         // first request should trigger refresh
@@ -245,6 +246,7 @@ public class UserTokenManagementTests : IntegrationTestBase
 
         token.ShouldNotBeNull();
         token.IsError.ShouldBeFalse();
+        token.IdentityToken.ShouldBe("refreshed1_id_token");
         token.AccessToken.ShouldBe("refreshed1_access_token");
         token.AccessTokenType.ShouldBe("token_type1");
         token.RefreshToken.ShouldBe("refreshed1_refresh_token");
@@ -256,6 +258,7 @@ public class UserTokenManagementTests : IntegrationTestBase
 
         token.ShouldNotBeNull();
         token.IsError.ShouldBeFalse();
+        token.IdentityToken.ShouldBe("refreshed2_id_token");
         token.AccessToken.ShouldBe("refreshed2_access_token");
         token.AccessTokenType.ShouldBe("token_type2");
         token.RefreshToken.ShouldBe("refreshed2_refresh_token");
@@ -319,7 +322,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .Respond("application/json", JsonSerializer.Serialize(resource2TokenResponse));
 
         // setup host
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         // first request - no resource
@@ -389,7 +392,7 @@ public class UserTokenManagementTests : IntegrationTestBase
             .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse));
 
         // setup host
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         // first request should trigger refresh
@@ -406,7 +409,7 @@ public class UserTokenManagementTests : IntegrationTestBase
     {
         // setup host
         AppHost.ClientId = "web.short";
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
         var firstResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
         var firstToken = await firstResponse.Content.ReadFromJsonAsync<TokenEchoResponse>();
@@ -423,18 +426,18 @@ public class UserTokenManagementTests : IntegrationTestBase
         thirdToken.sub.ShouldNotBe(secondToken.sub);
         thirdToken.token.ShouldNotBe(firstToken.token);
     }
-    
-    
+
+
     [Fact]
     public async Task Logout_should_revoke_refresh_tokens()
     {
-        await AppHost.InitializeAsync();
+        await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
         var token = await response.Content.ReadFromJsonAsync<UserToken>();
         var refreshToken = token?.RefreshToken;
-     
+
         refreshToken.ShouldNotBeNull();
 
         var introspectionParams = new TokenIntrospectionRequest
@@ -445,18 +448,18 @@ public class UserTokenManagementTests : IntegrationTestBase
             ClientSecret = "secret",
             Address = IdentityServerHost.Url("/connect/introspect")
         };
-        
+
         var introspectionResponse = await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams);
         introspectionResponse.ShouldNotBeNull();
         introspectionResponse.IsError.ShouldBeFalse(introspectionResponse.Error);
         introspectionResponse.IsActive.ShouldBeTrue();
-        
+
         await AppHost.BrowserClient.GetAsync(AppHost.Url("/logout"));
 
         var postLogoutIntrospectionResponse = await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams);
         postLogoutIntrospectionResponse.ShouldNotBeNull();
         postLogoutIntrospectionResponse.IsError.ShouldBeFalse(introspectionResponse.Error);
         postLogoutIntrospectionResponse.IsActive.ShouldBeFalse();
-        
+
     }
 }

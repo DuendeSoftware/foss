@@ -3,7 +3,6 @@
 
 using System.Security.Cryptography;
 using System.Text.Json;
-using Duende.IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Duende.IdentityModel.OidcClient.DPoP;
@@ -19,13 +18,13 @@ public static class JsonWebKeys
     public static JsonWebKey CreateRsa(string algorithm = OidcConstants.Algorithms.Asymmetric.PS256)
     {
         var rsaKey = new RsaSecurityKey(RSA.Create());
-    
+
         var jwk = JsonWebKeyConverter.ConvertFromSecurityKey(rsaKey);
         jwk.Alg = algorithm;
-    
+
         return jwk;
     }
-    
+
     /// <summary>
     /// Creates a new RSA JWK string.
     /// </summary>
@@ -33,7 +32,7 @@ public static class JsonWebKeys
     {
         return JsonSerializer.Serialize(CreateRsa(algorithm), SourceGenerationContext.Default.JsonWebKey);
     }
-    
+
     /// <summary>
     /// Creates a new ECDSA JWK.
     /// </summary>
@@ -44,10 +43,10 @@ public static class JsonWebKeys
 
         var jwk = JsonWebKeyConverter.ConvertFromSecurityKey(ecKey);
         jwk.Alg = algorithm;
-    
+
         return jwk;
     }
-    
+
     /// <summary>
     /// Creates a new ECDSA JWK string.
     /// </summary>
@@ -55,7 +54,7 @@ public static class JsonWebKeys
     {
         return JsonSerializer.Serialize(CreateECDsa(algorithm), SourceGenerationContext.Default.JsonWebKey);
     }
-    
+
     internal static string GetCurveNameFromSigningAlgorithm(string alg)
     {
         return alg switch
@@ -66,7 +65,7 @@ public static class JsonWebKeys
             _ => throw new InvalidOperationException($"Unsupported alg type of {alg}"),
         };
     }
-    
+
     /// <summary>
     /// Returns the matching named curve for RFC 7518 crv value
     /// </summary>

@@ -28,20 +28,20 @@ public class MtlsEndpointAliases
     /// Returns the token endpoint address
     /// </summary>
     public string? TokenEndpoint => Json?.TryGetString(OidcConstants.Discovery.TokenEndpoint);
-        
+
     /// <summary>
     /// Returns the revocation endpoint address
     /// </summary>
     public string? RevocationEndpoint => Json?.TryGetString(OidcConstants.Discovery.RevocationEndpoint);
-        
+
     /// <summary>
     /// Returns the device authorization endpoint address
     /// </summary>
     public string? DeviceAuthorizationEndpoint => Json?.TryGetString(OidcConstants.Discovery.DeviceAuthorizationEndpoint);
-        
+
     /// <summary>
     /// Returns the introspection endpoint address
     /// </summary>
     public string? IntrospectionEndpoint => Json?.TryGetString(OidcConstants.Discovery.IntrospectionEndpoint);
-        
+
 }

@@ -17,7 +17,7 @@ public class TestClientAssertionService : IClientAssertionService
         _assertionType = assertionType;
         _assertionValue = assertionValue;
     }
-    
+
     public Task<ClientAssertion?> GetClientAssertionAsync(string? clientName = null, TokenRequestParameters? parameters = null)
     {
         if (clientName == _clientName)

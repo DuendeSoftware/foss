@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
@@ -49,7 +49,7 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     /// The key set.
     /// </value>
     public JsonWebKeySet? KeySet { get; set; }
-        
+
     /// <summary>
     /// Gets the MTLS endpoint aliases
     /// </summary>
@@ -57,7 +57,7 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     /// The key set.
     /// </value>
     public MtlsEndpointAliases? MtlsEndpointAliases { get; internal set; }
-        
+
     // strongly typed
     public string? Issuer => TryGetString(OidcConstants.Discovery.Issuer);
     public string? AuthorizeEndpoint => TryGetString(OidcConstants.Discovery.AuthorizationEndpoint);
@@ -67,7 +67,7 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     public string? RevocationEndpoint => TryGetString(OidcConstants.Discovery.RevocationEndpoint);
     public string? DeviceAuthorizationEndpoint => TryGetString(OidcConstants.Discovery.DeviceAuthorizationEndpoint);
     public string? BackchannelAuthenticationEndpoint => TryGetString(OidcConstants.Discovery.BackchannelAuthenticationEndpoint);
-    
+
     public string? JwksUri => TryGetString(OidcConstants.Discovery.JwksUri);
     public string? EndSessionEndpoint => TryGetString(OidcConstants.Discovery.EndSessionEndpoint);
     public string? CheckSessionIframe => TryGetString(OidcConstants.Discovery.CheckSessionIframe);
@@ -86,6 +86,12 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     public IEnumerable<string> BackchannelTokenDeliveryModesSupported => TryGetStringArray(OidcConstants.Discovery.BackchannelTokenDeliveryModesSupported);
     public bool? BackchannelUserCodeParameterSupported => TryGetBoolean(OidcConstants.Discovery.BackchannelUserCodeParameterSupported);
     public bool? RequirePushedAuthorizationRequests => TryGetBoolean(OidcConstants.Discovery.RequirePushedAuthorizationRequests);
+    public IEnumerable<string> IntrospectionSigningAlgorithmsSupported =>
+        TryGetStringArray(OidcConstants.Discovery.IntrospectionSigningAlgorithmsSupported);
+    public IEnumerable<string> IntrospectionEncryptionAlgorithmsSupported =>
+        TryGetStringArray(OidcConstants.Discovery.IntrospectionEncryptionAlgorithmsSupported);
+    public IEnumerable<string> IntrospectionEncryptionEncValuesSupported =>
+        TryGetStringArray(OidcConstants.Discovery.IntrospectionEncryptionEncValuesSupported);
 
     // generic
     public JsonElement? TryGetValue(string name) => Json?.TryGetValue(name);
@@ -97,9 +103,9 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     {
         if (policy.ValidateIssuerName)
         {
-            IAuthorityValidationStrategy strategy = policy.AuthorityValidationStrategy ?? DiscoveryPolicy.DefaultAuthorityValidationStrategy;
+            var strategy = policy.AuthorityValidationStrategy ?? DiscoveryPolicy.DefaultAuthorityValidationStrategy;
 
-            AuthorityValidationResult issuerValidationResult = strategy.IsIssuerNameValid(Issuer!, policy.Authority);
+            var issuerValidationResult = strategy.IsIssuerNameValid(Issuer!, policy.Authority);
 
             if (!issuerValidationResult.Success)
             {
@@ -150,7 +156,7 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     {
         return validationStrategy.IsIssuerNameValid(issuer, authority).Success;
     }
-    
+
     /// <summary>
     /// Validates the endoints and jwks_uri according to the security policy.
     /// </summary>
@@ -159,7 +165,7 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     /// <returns></returns>
     public string ValidateEndpoints(JsonElement? json, DiscoveryPolicy policy)
     {
-        if(json == null)
+        if (json == null)
         {
             throw new ArgumentNullException(nameof(json));
         }
@@ -175,32 +181,32 @@ public class DiscoveryDocumentResponse : ProtocolResponse
         {
             policy.Authority
         };
-            
+
         // Can't actually be null, because we check that and throw at the beginning of the method
-        foreach (var element in json?.EnumerateObject()!) 
+        foreach (var element in json?.EnumerateObject()!)
         {
             if (element.Name.EndsWith("endpoint", StringComparison.OrdinalIgnoreCase) ||
                 element.Name.Equals(OidcConstants.Discovery.JwksUri, StringComparison.OrdinalIgnoreCase) ||
                 element.Name.Equals(OidcConstants.Discovery.CheckSessionIframe, StringComparison.OrdinalIgnoreCase))
             {
                 var endpoint = element.Value.ToString();
-            
+
                 var isValidUri = Uri.TryCreate(endpoint, UriKind.Absolute, out var uri);
                 if (!isValidUri)
                 {
                     return $"Malformed endpoint: {endpoint}";
                 }
-            
+
                 if (!DiscoveryEndpoint.IsValidScheme(uri!))
                 {
                     return $"Malformed endpoint: {endpoint}";
                 }
-            
+
                 if (!DiscoveryEndpoint.IsSecureScheme(uri!, policy))
                 {
                     return $"Endpoint does not use HTTPS: {endpoint}";
                 }
-            
+
                 if (policy.ValidateEndpoints)
                 {
                     // if endpoint is on exclude list, don't validate
@@ -208,8 +214,8 @@ public class DiscoveryDocumentResponse : ProtocolResponse
                     {
                         continue;
                     }
-            
-                    bool isAllowed = false;
+
+                    var isAllowed = false;
                     foreach (var host in allowedHosts)
                     {
                         if (string.Equals(host, uri!.Authority))
@@ -217,14 +223,14 @@ public class DiscoveryDocumentResponse : ProtocolResponse
                             isAllowed = true;
                         }
                     }
-            
+
                     if (!isAllowed)
                     {
                         return $"Endpoint is on a different host than authority: {endpoint}";
                     }
-            
-                    IAuthorityValidationStrategy strategy = policy.AuthorityValidationStrategy ?? DiscoveryPolicy.DefaultAuthorityValidationStrategy;
-                    AuthorityValidationResult endpointValidationResult = strategy.IsEndpointValid(endpoint, allowedAuthorities);
+
+                    var strategy = policy.AuthorityValidationStrategy ?? DiscoveryPolicy.DefaultAuthorityValidationStrategy;
+                    var endpointValidationResult = strategy.IsEndpointValid(endpoint, allowedAuthorities);
                     if (!endpointValidationResult.Success)
                     {
                         return endpointValidationResult.ErrorMessage;

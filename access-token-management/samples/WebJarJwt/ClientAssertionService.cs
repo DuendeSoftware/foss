@@ -1,9 +1,6 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
@@ -50,7 +47,7 @@ public class ClientAssertionService : IClientAssertionService
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = config.ClientId,
-            Audience = config.TokenEndpoint,
+            Audience = config.Authority,
             Expires = DateTime.UtcNow.AddMinutes(1),
             SigningCredentials = Credential,
 
@@ -59,6 +56,11 @@ public class ClientAssertionService : IClientAssertionService
                 { JwtClaimTypes.JwtId, Guid.NewGuid().ToString() },
                 { JwtClaimTypes.Subject, config.ClientId! },
                 { JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime() }
+            },
+
+            AdditionalHeaderClaims = new Dictionary<string, object>
+            {
+                { JwtClaimTypes.TokenType, "client-authentication+jwt" }
             }
         };
 
@@ -71,17 +73,17 @@ public class ClientAssertionService : IClientAssertionService
             Value = jwt
         };
     }
-    
+
     public async Task<string> SignAuthorizeRequest(OpenIdConnectMessage message)
     {
         var config = await _configurationService.GetOpenIdConnectConfigurationAsync();
-        
+
         var parameters = new Dictionary<string, object>();
         foreach (var parameter in message.Parameters)
         {
             parameters.Add(parameter.Key, parameter.Value);
         }
-        
+
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = config.ClientId,

@@ -1,13 +1,18 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement.Tests;
-
-public class TestLoggerProvider : ILoggerProvider
+public class TestLoggerProvider(WriteTestOutput writeOutput, string name) : ILoggerProvider
 {
-    public class DebugLogger : ILogger, IDisposable
+    Stopwatch _watch = Stopwatch.StartNew();
+
+    private readonly WriteTestOutput _writeOutput = writeOutput ?? throw new ArgumentNullException(nameof(writeOutput));
+    private readonly string _name = name ?? throw new ArgumentNullException(nameof(name));
+
+    private class DebugLogger : ILogger, IDisposable
     {
         private readonly TestLoggerProvider _parent;
         private readonly string _category;
@@ -22,8 +27,7 @@ public class TestLoggerProvider : ILoggerProvider
         {
         }
 
-        public IDisposable BeginScope<TState>(TState state)
-            where TState : notnull
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull
         {
             return this;
         }
@@ -40,10 +44,23 @@ public class TestLoggerProvider : ILoggerProvider
         }
     }
 
-    public List<string> LogEntries = new List<string>();
+    public List<string> LogEntries { get; } = new();
 
     private void Log(string msg)
     {
+        try
+        {
+            var message = _watch.Elapsed.TotalMilliseconds.ToString("0000") + "ms - " + _name + msg;
+#if NCRUNCH
+            Console.WriteLine(message);
+#else
+            _writeOutput?.Invoke(message);
+#endif
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Logging Failed: " + msg);
+        }
         LogEntries.Add(msg);
     }
 
@@ -56,3 +73,5 @@ public class TestLoggerProvider : ILoggerProvider
     {
     }
 }
+
+public delegate void WriteTestOutput(string message);

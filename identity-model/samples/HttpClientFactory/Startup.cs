@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System;
@@ -9,61 +9,60 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
 
-namespace WebApplication1
+namespace WebApplication1;
+
+public class Startup
 {
-    public class Startup
+    public Startup(IConfiguration configuration)
     {
-        public Startup(IConfiguration configuration)
+        Configuration = configuration;
+    }
+
+    public IConfiguration Configuration { get; }
+
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddControllersWithViews();
+
+        services.AddHttpClient();
+        services.AddHttpClient("token_client",
+            client => client.BaseAddress = new Uri("https://demo.identityserver.io/connect/token"));
+
+        services.Configure<TokenClientOptions>(options =>
         {
-            Configuration = configuration;
-        }
+            options.Address = "https://demo.identityserver.io/connect/token";
+            options.ClientId = "client";
+            options.ClientSecret = "secret";
+        });
 
-        public IConfiguration Configuration { get; }
+        services.AddTransient(sp => sp.GetRequiredService<IOptions<TokenClientOptions>>().Value);
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllersWithViews();
-
-            services.AddHttpClient();
-            services.AddHttpClient("token_client",
-                client => client.BaseAddress = new Uri("https://demo.identityserver.io/connect/token"));
-
-            services.Configure<TokenClientOptions>(options =>
+        services.AddHttpClient<TokenClient>()
+            .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(new[]
             {
-                options.Address = "https://demo.identityserver.io/connect/token";
-                options.ClientId = "client";
-                options.ClientSecret = "secret";
-            });
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(3)
+            }));
+    }
 
-            services.AddTransient(sp => sp.GetRequiredService<IOptions<TokenClientOptions>>().Value);
+    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app)
+    {
 
-            services.AddHttpClient<TokenClient>()
-                .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(new[]
-                {
-                    TimeSpan.FromSeconds(1),
-                    TimeSpan.FromSeconds(2),
-                    TimeSpan.FromSeconds(3)
-                }));
-        }
+        app.UseDeveloperExceptionPage();
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app)
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseEndpoints(e =>
         {
-
-            app.UseDeveloperExceptionPage();
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(e =>
-            {
-                e.MapDefaultControllerRoute();
-            });
-        }
+            e.MapDefaultControllerRoute();
+        });
     }
 }

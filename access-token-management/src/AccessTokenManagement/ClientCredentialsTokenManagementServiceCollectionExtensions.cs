@@ -1,10 +1,14 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement;
+using Duende.AccessTokenManagement.Implementation;
+using Duende.AccessTokenManagement.OTel;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -22,8 +26,6 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
         this IServiceCollection services,
         Action<ClientCredentialsTokenManagementOptions> options)
     {
-        ArgumentNullException.ThrowIfNull(options);
-
         services.Configure(options);
         return services.AddClientCredentialsTokenManagement();
     }
@@ -37,33 +39,37 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
     {
         services.TryAddSingleton<ITokenRequestSynchronization, TokenRequestSynchronization>();
 
+#pragma warning disable CS0618 // Type or member is obsolete
         services.TryAddTransient<IClientCredentialsTokenManagementService, ClientCredentialsTokenManagementService>();
+
+
+        // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
+        // without key. If desired, a consumers can register the distributed cache with a key
+        services.TryAddKeyedSingleton<IDistributedCache>(ServiceProviderKeys.ClientCredentialsTokenCache, (sp, _) => sp.GetRequiredService<IDistributedCache>());
         services.TryAddTransient<IClientCredentialsTokenCache, DistributedClientCredentialsTokenCache>();
         services.TryAddTransient<IClientCredentialsTokenEndpointService, ClientCredentialsTokenEndpointService>();
         services.TryAddTransient<IClientAssertionService, DefaultClientAssertionService>();
 
         services.TryAddTransient<IDPoPProofService, DefaultDPoPProofService>();
         services.TryAddTransient<IDPoPKeyStore, DefaultDPoPKeyStore>();
+
+        // ** DistributedDPoPNonceStore **
+        // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
+        // without key. If desired, a consumers can register the distributed cache with a key
+        services.TryAddKeyedSingleton<IDistributedCache>(ServiceProviderKeys.DPoPNonceStore, (sp, _) => sp.GetRequiredService<IDistributedCache>());
         services.TryAddTransient<IDPoPNonceStore, DistributedDPoPNonceStore>();
+
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        services.TryAddSingleton(TimeProvider.System);
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
 
-        return new ClientCredentialsTokenManagementBuilder(services);
-    }
+        services.TryAddTransient<IClientCredentialsCacheKeyGenerator, DefaultClientCredentialsCacheKeyGenerator>();
+        services.TryAddTransient<IDPoPNonceStoreKeyGenerator, DPoPNonceStoreKeyGenerator>();
+        services.AddSingleton<AccessTokenManagementMetrics>();
 
-    /// <summary>
-    /// Adds a named HTTP client for the factory that automatically sends a client access token
-    /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-    /// <param name="httpClientName">The name of the client.</param>
-    /// <param name="tokenClientName">The name of the token client.</param>
-    /// <returns></returns>
-    public static IHttpClientBuilder AddClientCredentialsHttpClient(
-        this IServiceCollection services,
-        string httpClientName,
-        string tokenClientName)
-    {
-        return services.AddClientCredentialsHttpClient(httpClientName, tokenClientName, (Action<HttpClient>)null!);
+        return new ClientCredentialsTokenManagementBuilder(services);
     }
 
     /// <summary>
@@ -80,9 +86,6 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
     string tokenClientName,
     Action<HttpClient>? configureClient = null)
     {
-        ArgumentNullException.ThrowIfNull(httpClientName);
-        ArgumentNullException.ThrowIfNull(tokenClientName);
-
         if (configureClient != null)
         {
             return services.AddHttpClient(httpClientName, configureClient)
@@ -105,18 +108,9 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
         this IServiceCollection services,
         string httpClientName,
         string tokenClientName,
-        Action<IServiceProvider, HttpClient>? configureClient = null)
+        Action<IServiceProvider, HttpClient> configureClient)
     {
-        ArgumentNullException.ThrowIfNull(httpClientName);
-        ArgumentNullException.ThrowIfNull(tokenClientName);
-
-        if (configureClient != null)
-        {
-            return services.AddHttpClient(httpClientName, configureClient)
-                .AddClientCredentialsTokenHandler(tokenClientName);
-        }
-
-        return services.AddHttpClient(httpClientName)
+        return services.AddHttpClient(httpClientName, configureClient)
             .AddClientCredentialsTokenHandler(tokenClientName);
     }
 
@@ -134,12 +128,23 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 
         return httpClientBuilder.AddHttpMessageHandler(provider =>
         {
+            var metrics = provider.GetRequiredService<AccessTokenManagementMetrics>();
             var dpopService = provider.GetRequiredService<IDPoPProofService>();
             var dpopNonceStore = provider.GetRequiredService<IDPoPNonceStore>();
             var accessTokenManagementService = provider.GetRequiredService<IClientCredentialsTokenManagementService>();
+#pragma warning disable CS0618 // Type or member is obsolete
             var logger = provider.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>();
 
-            return new ClientCredentialsTokenHandler(dpopService, dpopNonceStore, accessTokenManagementService, logger, tokenClientName);
+            return new ClientCredentialsTokenHandler(
+                metrics: metrics,
+                dPoPProofService: dpopService,
+                dPoPNonceStore: dpopNonceStore,
+                accessTokenManagementService: accessTokenManagementService,
+                logger: logger,
+                tokenClientName: tokenClientName);
         });
+
+#pragma warning restore CS0618 // Type or member is obsolete
+
     }
 }

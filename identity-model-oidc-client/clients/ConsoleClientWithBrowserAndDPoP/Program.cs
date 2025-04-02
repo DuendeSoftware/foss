@@ -1,168 +1,167 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Serilog;
 using System.Text.Json;
 using Duende.IdentityModel.OidcClient;
 using Duende.IdentityModel.OidcClient.DPoP;
-using Serilog.Sinks.SystemConsole.Themes;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
-namespace ConsoleClientWithBrowserAndDPoP
+namespace ConsoleClientWithBrowserAndDPoP;
+
+public class Program
 {
-    public class Program
+    static readonly string Api = "https://demo.duendesoftware.com/api/dpop/test";
+    static readonly string Authority = "https://demo.duendesoftware.com";
+
+    private static HttpClient _apiClient = new HttpClient { BaseAddress = new Uri(Api) };
+
+    public static async Task Main()
     {
-        static readonly string Api = "https://demo.duendesoftware.com/api/dpop/test";
-        static readonly string Authority = "https://demo.duendesoftware.com";
+        Console.WriteLine("+-----------------------+");
+        Console.WriteLine("|  Sign in with OIDC    |");
+        Console.WriteLine("+-----------------------+");
+        Console.WriteLine("");
+        Console.WriteLine("Press any key to start...");
+        Console.ReadKey();
 
-        private static HttpClient _apiClient = new HttpClient { BaseAddress = new Uri(Api) };
+        await SignIn();
+    }
 
-        public static async Task Main()
+    private static async Task SignIn()
+    {
+        var browser = new SystemBrowser();
+        var redirectUri = string.Format($"http://127.0.0.1:{browser.Port}");
+
+        // create or retrieve stored proof key
+        var proofKey = GetProofKey();
+
+        var options = new OidcClientOptions
         {
-            Console.WriteLine("+-----------------------+");
-            Console.WriteLine("|  Sign in with OIDC    |");
-            Console.WriteLine("+-----------------------+");
-            Console.WriteLine("");
-            Console.WriteLine("Press any key to start...");
-            Console.ReadKey();
+            Authority = Authority,
+            ClientId = "native.dpop",
+            RedirectUri = redirectUri,
+            Scope = "openid profile api offline_access",
+            FilterClaims = false,
+            Browser = browser
+        };
 
-            await SignIn();
-        }
+        options.ConfigureDPoP(proofKey);
 
-        private static async Task SignIn()
+        var serilog = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .Enrich.FromLogContext()
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Code)
+            .CreateLogger();
+
+        options.LoggerFactory = new LoggerFactory().AddSerilog(serilog);
+
+        var oidcClient = new OidcClient(options);
+
+        LoginResult? result = null;
+        if (File.Exists("refresh_token"))
         {
-            var browser = new SystemBrowser();
-            string redirectUri = string.Format($"http://127.0.0.1:{browser.Port}");
+            Console.WriteLine("using stored refresh token");
 
-            // create or retrieve stored proof key
-            var proofKey = GetProofKey();
-            
-            var options = new OidcClientOptions
+            var refreshToken = File.ReadAllText("refresh_token");
+            var handler = oidcClient.CreateDPoPHandler(proofKey, refreshToken);
+
+            _apiClient = new HttpClient(handler)
             {
-                Authority = Authority,
-                ClientId = "native.dpop",
-                RedirectUri = redirectUri,
-                Scope = "openid profile api offline_access",
-                FilterClaims = false,
-                Browser = browser
+                BaseAddress = new Uri(Api)
             };
 
-            options.ConfigureDPoP(proofKey); 
-            
-            var serilog = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .Enrich.FromLogContext()
-                .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Code)
-                .CreateLogger();
-
-            options.LoggerFactory = new LoggerFactory().AddSerilog(serilog);
-
-            var oidcClient = new OidcClient(options);
-
-            LoginResult? result = null;
-            if (File.Exists("refresh_token"))
-            {
-                Console.WriteLine("using stored refresh token");
-                
-                var refreshToken = File.ReadAllText("refresh_token");
-                var handler = oidcClient.CreateDPoPHandler(proofKey, refreshToken);
-                
-                _apiClient = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(Api)
-                };
-                
-                await NextSteps();
-            }
-            else
-            {
-                 result = await oidcClient.LoginAsync(new LoginRequest());
-                 
-                 Console.WriteLine("store refresh token");
-                 File.WriteAllText("refresh_token", result.TokenResponse.RefreshToken);
-
-                _apiClient = new HttpClient(result.RefreshTokenHandler)
-                {
-                    BaseAddress = new Uri(Api)
-                };
-            }
-
-            ShowResult(result);
             await NextSteps();
         }
-
-        private static string GetProofKey()
+        else
         {
-            if (File.Exists("proofkey"))
+            result = await oidcClient.LoginAsync(new LoginRequest());
+
+            Console.WriteLine("store refresh token");
+            File.WriteAllText("refresh_token", result.TokenResponse.RefreshToken);
+
+            _apiClient = new HttpClient(result.RefreshTokenHandler)
             {
-                Console.WriteLine("using stored proof key");
-                return File.ReadAllText("proofkey");
-            }
-            
-            Console.WriteLine("creating and storing proof key");
-            var proofKey = JsonWebKeys.CreateRsaJson();
-            File.WriteAllText("proofkey", proofKey);
-            return proofKey;
+                BaseAddress = new Uri(Api)
+            };
         }
 
-        private static void ShowResult(LoginResult? result)
-        {
-            if (result == null) return;
-            
-            if (result.IsError)
-            {
-                Console.WriteLine("\n\nError:\n{0}", result.Error);
-                return;
-            }
-
-            Console.WriteLine("\n\nClaims:");
-            foreach (var claim in result.User.Claims)
-            {
-                Console.WriteLine("{0}: {1}", claim.Type, claim.Value);
-            }
-
-            var raw = result.TokenResponse.Raw ?? throw new InvalidOperationException("Unexpected null token response");
-            var values = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(raw);
-
-            Console.WriteLine($"token response...");
-            foreach (var item in values ?? [])
-            {
-                Console.WriteLine($"{item.Key}: {item.Value}");
-            }
-        }
-
-        private static async Task NextSteps()
-        {
-            var menu = "  x...exit  c...call api   ";
-            
-            while (true)
-            {
-                Console.WriteLine("\n\n");
-
-                Console.Write(menu);
-                var key = Console.ReadKey();
-
-                if (key.Key == ConsoleKey.X) return;
-                if (key.Key == ConsoleKey.C) await CallApi();
-            }
-        }
-
-        private static async Task CallApi()
-        {
-            var response = await _apiClient.GetAsync("");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                Console.WriteLine("\n\n");
-                Console.WriteLine(json.RootElement);
-            }
-            else
-            {
-                Console.WriteLine($"Error: {response.ReasonPhrase}");
-            }
-        }
-
-
+        ShowResult(result);
+        await NextSteps();
     }
+
+    private static string GetProofKey()
+    {
+        if (File.Exists("proofkey"))
+        {
+            Console.WriteLine("using stored proof key");
+            return File.ReadAllText("proofkey");
+        }
+
+        Console.WriteLine("creating and storing proof key");
+        var proofKey = JsonWebKeys.CreateRsaJson();
+        File.WriteAllText("proofkey", proofKey);
+        return proofKey;
+    }
+
+    private static void ShowResult(LoginResult? result)
+    {
+        if (result == null) return;
+
+        if (result.IsError)
+        {
+            Console.WriteLine("\n\nError:\n{0}", result.Error);
+            return;
+        }
+
+        Console.WriteLine("\n\nClaims:");
+        foreach (var claim in result.User.Claims)
+        {
+            Console.WriteLine("{0}: {1}", claim.Type, claim.Value);
+        }
+
+        var raw = result.TokenResponse.Raw ?? throw new InvalidOperationException("Unexpected null token response");
+        var values = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(raw);
+
+        Console.WriteLine($"token response...");
+        foreach (var item in values ?? [])
+        {
+            Console.WriteLine($"{item.Key}: {item.Value}");
+        }
+    }
+
+    private static async Task NextSteps()
+    {
+        var menu = "  x...exit  c...call api   ";
+
+        while (true)
+        {
+            Console.WriteLine("\n\n");
+
+            Console.Write(menu);
+            var key = Console.ReadKey();
+
+            if (key.Key == ConsoleKey.X) return;
+            if (key.Key == ConsoleKey.C) await CallApi();
+        }
+    }
+
+    private static async Task CallApi()
+    {
+        var response = await _apiClient.GetAsync("");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            Console.WriteLine("\n\n");
+            Console.WriteLine(json.RootElement);
+        }
+        else
+        {
+            Console.WriteLine($"Error: {response.ReasonPhrase}");
+        }
+    }
+
+
 }

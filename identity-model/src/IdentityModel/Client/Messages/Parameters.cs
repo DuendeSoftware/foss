@@ -1,10 +1,10 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Duende.IdentityModel.Internal;
 #if NET6_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
 #endif
 
 namespace Duende.IdentityModel.Client;
@@ -47,7 +47,7 @@ public class Parameters : List<KeyValuePair<string, string>>
 
         return new Parameters(dictionary);
     }
-        
+
     /// <summary>
     /// ctor
     /// </summary>
@@ -61,7 +61,7 @@ public class Parameters : List<KeyValuePair<string, string>>
     public Parameters(IEnumerable<KeyValuePair<string, string>> values)
         : base(values)
     { }
-        
+
     /// <summary>
     /// Adds a key/value to the list
     /// </summary>
@@ -84,11 +84,11 @@ public class Parameters : List<KeyValuePair<string, string>>
             throw new InvalidOperationException("More than one item found to replace.");
         }
 
-        existingItems.ForEach(item => this.Remove(item));
-            
+        existingItems.ForEach(item => Remove(item));
+
         Add(new KeyValuePair<string, string>(key, value));
     }
-        
+
     /// <summary>
     /// Get parameter value(s) based on name
     /// </summary>
@@ -97,7 +97,7 @@ public class Parameters : List<KeyValuePair<string, string>>
     {
         get { return this.Where(i => i.Key.Equals(index)).Select(i => i.Value); }
     }
-        
+
     /// <summary>
     /// Get parameter values based on name
     /// </summary>
@@ -107,7 +107,7 @@ public class Parameters : List<KeyValuePair<string, string>>
     {
         return this[name];
     }
-        
+
     /// <summary>
     /// Checks the existence of a parameter
     /// </summary>
@@ -158,7 +158,7 @@ public class Parameters : List<KeyValuePair<string, string>>
         var valuePresent = value.IsPresent();
         var parameterPresent = ContainsKey(key);
 
-        if(!valuePresent && !parameterPresent && !allowEmptyValue)
+        if (!valuePresent && !parameterPresent && !allowEmptyValue)
         {
             // Don't throw if we have a value already in the parameters
             // to make it more convenient for callers.
@@ -166,7 +166,7 @@ public class Parameters : List<KeyValuePair<string, string>>
         }
         else if (valuePresent && parameterPresent && !allowDuplicates)
         {
-            if(this[key].Contains(value))
+            if (this[key].Contains(value))
             {
                 // The parameters are already in the desired state (the required
                 // parameter key already has the specified value), so we don't
@@ -181,7 +181,7 @@ public class Parameters : List<KeyValuePair<string, string>>
             Add(key, value!);
         }
     }
-        
+
     /// <summary>
     /// Merge two parameter sets
     /// </summary>
@@ -192,9 +192,9 @@ public class Parameters : List<KeyValuePair<string, string>>
         if (additionalValues != null)
         {
             var merged =
-                this.Concat(additionalValues.Where(add => !this.ContainsKey(add.Key)))
+                this.Concat(additionalValues.Where(add => !ContainsKey(add.Key)))
                     .Select(s => new KeyValuePair<string, string>(s.Key, s.Value));
-            
+
             return new Parameters(merged.ToList());
         }
 

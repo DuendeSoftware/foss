@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 namespace Duende.IdentityModel.Client;
@@ -32,7 +32,7 @@ public class TokenResponse : ProtocolResponse
     /// The scope.
     /// </value>
     public string? Scope => TryGet(OidcConstants.TokenResponse.Scope);
-        
+
     /// <summary>
     /// Gets the issued token type.
     /// </summary>
@@ -40,7 +40,7 @@ public class TokenResponse : ProtocolResponse
     /// The issued token type.
     /// </value>
     public string? IssuedTokenType => TryGet(OidcConstants.TokenResponse.IssuedTokenType);
-        
+
     /// <summary>
     /// Gets the type of the token.
     /// </summary>

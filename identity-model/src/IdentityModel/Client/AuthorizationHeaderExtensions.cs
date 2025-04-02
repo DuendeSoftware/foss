@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net.Http.Headers;
@@ -64,7 +64,7 @@ public static class AuthorizationHeaderExtensions
     {
         request.Headers.Authorization = new BasicAuthenticationHeaderValue(userName, password);
     }
-        
+
     /// <summary>
     /// Sets a basic authentication header for RFC6749 client authentication.
     /// </summary>

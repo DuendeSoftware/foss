@@ -1,46 +1,45 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.IdentityModel.OidcClient.Browser;
 using Duende.IdentityModel.Client;
+using Duende.IdentityModel.OidcClient.Browser;
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+/// <summary>
+/// A login request.
+/// </summary>
+public class LoginRequest
 {
     /// <summary>
-    /// A login request.
+    /// Gets or sets the browser display mode.
     /// </summary>
-    public class LoginRequest
-    {
-        /// <summary>
-        /// Gets or sets the browser display mode.
-        /// </summary>
-        /// <value>
-        /// The browser display mode.
-        /// </value>
-        public DisplayMode BrowserDisplayMode { get; set; } = DisplayMode.Visible;
+    /// <value>
+    /// The browser display mode.
+    /// </value>
+    public DisplayMode BrowserDisplayMode { get; set; } = DisplayMode.Visible;
 
-        /// <summary>
-        /// Gets or sets the browser timeout.
-        /// </summary>
-        /// <value>
-        /// The browser timeout.
-        /// </value>
-        public int BrowserTimeout { get; set; } = 300;
-        
-        /// <summary>
-        /// Gets or sets extra parameters for the front-channel request.
-        /// </summary>
-        /// <value>
-        /// The extra parameters.
-        /// </value>
-        public Parameters FrontChannelExtraParameters { get; set; } = new Parameters();
-        
-        /// <summary>
-        /// Gets or sets extra parameters for the back-channel request.
-        /// </summary>
-        /// <value>
-        /// The extra parameters.
-        /// </value>
-        public Parameters BackChannelExtraParameters { get; set; } = new Parameters();
-    }
+    /// <summary>
+    /// Gets or sets the browser timeout.
+    /// </summary>
+    /// <value>
+    /// The browser timeout.
+    /// </value>
+    public int BrowserTimeout { get; set; } = 300;
+
+    /// <summary>
+    /// Gets or sets extra parameters for the front-channel request.
+    /// </summary>
+    /// <value>
+    /// The extra parameters.
+    /// </value>
+    public Parameters FrontChannelExtraParameters { get; set; } = new Parameters();
+
+    /// <summary>
+    /// Gets or sets extra parameters for the back-channel request.
+    /// </summary>
+    /// <value>
+    /// The extra parameters.
+    /// </value>
+    public Parameters BackChannelExtraParameters { get; set; } = new Parameters();
 }

@@ -480,7 +480,7 @@ public class ClientTokenManagementTests
         token.AccessTokenType.ShouldBe("token_type");
         mockHttp.GetMatchCount(mockedRequest).ShouldBe(1);
     }
-    
+
     [Fact]
     public async Task Service_should_hit_network_when_cache_throws_exception()
     {
@@ -644,11 +644,11 @@ public class ClientTokenManagementTests
 
         mockHttp.Expect("/connect/token")
             .With(m => m.Headers.Any(h => h.Key == "DPoP" && h.Value.FirstOrDefault() == "proof_token"))
-            .Respond(HttpStatusCode.BadRequest, 
-                new[] { new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce") }, 
-                "application/json", 
+            .Respond(HttpStatusCode.BadRequest,
+                new[] { new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce") },
+                "application/json",
                 JsonSerializer.Serialize(new { error = "use_dpop_nonce" }));
-        
+
         mockHttp.Expect("/connect/token")
             .With(m => m.Headers.Any(h => h.Key == "DPoP" && h.Value.First() == ("proof_tokensome_nonce")))
             .Respond("application/json", JsonSerializer.Serialize(expectedResponse));

@@ -13,8 +13,11 @@ public class ClientCredentialsTokenManagementOptions
     /// </summary>
     public string CacheKeyPrefix { get; set; } = "Duende.AccessTokenManagement.Cache::";
 
+    public string NonceStoreKeyPrefix { get; set; } = "Duende.AccessTokenManagement.DPoPNonceStore::";
+
     /// <summary>
     /// Value to subtract from token lifetime for the cache entry lifetime (defaults to 60 seconds)
     /// </summary>
     public int CacheLifetimeBuffer { get; set; } = 60;
+
 }

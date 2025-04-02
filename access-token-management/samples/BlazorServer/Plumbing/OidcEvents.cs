@@ -14,10 +14,10 @@ public class OidcEvents : OpenIdConnectEvents
     {
         _store = store;
     }
-    
+
     public override async Task TokenValidated(TokenValidatedContext context)
     {
-        var exp = DateTimeOffset.UtcNow.AddSeconds(Double.Parse(context.TokenEndpointResponse!.ExpiresIn));
+        var exp = DateTimeOffset.UtcNow.AddSeconds(double.Parse(context.TokenEndpointResponse!.ExpiresIn));
 
         await _store.StoreTokenAsync(context.Principal!, new UserToken
         {
@@ -27,7 +27,7 @@ public class OidcEvents : OpenIdConnectEvents
             RefreshToken = context.TokenEndpointResponse.RefreshToken,
             Scope = context.TokenEndpointResponse.Scope
         });
-        
+
         await base.TokenValidated(context);
     }
 }

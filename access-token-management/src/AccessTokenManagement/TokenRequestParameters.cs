@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Client;
@@ -19,7 +19,7 @@ public class TokenRequestParameters
     /// Override the statically configured scope parameter.
     /// </summary>
     public string? Scope { get; set; }
-    
+
     /// <summary>
     /// Override the statically configured resource parameter.
     /// </summary>
@@ -28,8 +28,8 @@ public class TokenRequestParameters
     /// <summary>
     /// Additional parameters to send.
     /// </summary>
-    public Parameters Parameters { get; set; } = new Parameters();
-    
+    public Parameters Parameters { get; set; } = [];
+
     /// <summary>
     /// Specifies the client assertion.
     /// </summary>
@@ -38,5 +38,5 @@ public class TokenRequestParameters
     /// <summary>
     /// Additional context that might be relevant in the pipeline
     /// </summary>
-    public Parameters Context { get; set; } = new();
+    public Parameters Context { get; set; } = [];
 }

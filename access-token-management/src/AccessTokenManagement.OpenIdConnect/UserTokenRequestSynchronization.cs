@@ -18,10 +18,7 @@ internal class UserTokenRequestSynchronization : IUserTokenRequestSynchronizatio
     {
         try
         {
-            return await _dictionary.GetOrAdd(name, _ =>
-            {
-                return new Lazy<Task<UserToken>>(func);
-            }).Value.ConfigureAwait(false);
+            return await _dictionary.GetOrAdd(name, _ => new Lazy<Task<UserToken>>(func)).Value.ConfigureAwait(false);
         }
         finally
         {

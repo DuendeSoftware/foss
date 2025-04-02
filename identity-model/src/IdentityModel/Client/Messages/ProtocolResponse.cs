@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net;
@@ -20,7 +20,7 @@ public class ProtocolResponse
     /// <param name="initializationData">The initialization data.</param>
     /// <param name="skipJson">Disables parsing of json</param>
     /// <returns></returns>
-    public static async Task<T> FromHttpResponseAsync<T>(HttpResponseMessage httpResponse, object? initializationData = null, bool skipJson = false) where T: ProtocolResponse, new()
+    public static async Task<T> FromHttpResponseAsync<T>(HttpResponseMessage httpResponse, object? initializationData = null, bool skipJson = false) where T : ProtocolResponse, new()
     {
         var response = new T
         {
@@ -66,7 +66,7 @@ public class ProtocolResponse
             await response.InitializeAsync(initializationData).ConfigureAwait();
             return response;
         }
-            
+
         if (httpResponse.StatusCode == HttpStatusCode.BadRequest)
         {
             response.ErrorType = ResponseErrorType.Protocol;
@@ -137,7 +137,7 @@ public class ProtocolResponse
     /// The HTTP response.
     /// </value>
     public HttpResponseMessage? HttpResponse { get; protected set; }
-        
+
     /// <summary>
     /// Gets the raw protocol response (if present).
     /// </summary>
@@ -192,7 +192,7 @@ public class ProtocolResponse
     /// <value>
     /// The HTTP status code.
     /// </value>
-    public HttpStatusCode HttpStatusCode => this.HttpResponse?.StatusCode ?? default(HttpStatusCode);
+    public HttpStatusCode HttpStatusCode => HttpResponse?.StatusCode ?? default(HttpStatusCode);
 
     /// <summary>
     /// Gets the HTTP error reason - or <see langword="null"/> when <see cref="HttpResponse" /> is <see langword="null"/>.
@@ -200,7 +200,7 @@ public class ProtocolResponse
     /// <value>
     /// The HTTP error reason.
     /// </value>
-    public string? HttpErrorReason => this.HttpResponse?.ReasonPhrase ?? default;
+    public string? HttpErrorReason => HttpResponse?.ReasonPhrase ?? default;
 
     /// <summary>
     /// Gets the error.

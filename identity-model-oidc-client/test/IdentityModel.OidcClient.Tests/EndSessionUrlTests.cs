@@ -1,60 +1,59 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+public class EndSessionUrlTests
 {
-    public class EndSessionUrlTests
+    [Fact]
+    public void Default_parameters_should_create_expected_end_session_url()
     {
-        [Fact]
-        public void Default_parameters_should_create_expected_end_session_url()
+        var options = new OidcClientOptions();
+        var client = new AuthorizeClient(options);
+
+        var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest());
+
+        url.ShouldBe("https://server/end_session");
+    }
+
+    [Fact]
+    public void Post_logout_redirect_parameter_should_create_expected_end_session_url()
+    {
+        var options = new OidcClientOptions
         {
-            var options = new OidcClientOptions();
-            var client = new AuthorizeClient(options);
+            PostLogoutRedirectUri = "https://client.com/page"
+        };
 
-            var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest());
+        var client = new AuthorizeClient(options);
+        var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest());
 
-            url.ShouldBe("https://server/end_session");
-        }
+        url.ShouldBe("https://server/end_session?post_logout_redirect_uri=https%3A%2F%2Fclient.com%2Fpage");
+    }
 
-        [Fact]
-        public void Post_logout_redirect_parameter_should_create_expected_end_session_url()
+    [Fact]
+    public void Post_logout_redirect_parameter_and_id_token_hint_should_create_expected_end_session_url()
+    {
+        var options = new OidcClientOptions
         {
-            var options = new OidcClientOptions
-            {
-                PostLogoutRedirectUri = "https://client.com/page"
-            };
+            PostLogoutRedirectUri = "https://client.com/page"
+        };
 
-            var client = new AuthorizeClient(options);
-            var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest());
+        var client = new AuthorizeClient(options);
+        var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest { IdTokenHint = "id_token" });
 
-            url.ShouldBe("https://server/end_session?post_logout_redirect_uri=https%3A%2F%2Fclient.com%2Fpage");
-        }
+        url.ShouldBe("https://server/end_session?id_token_hint=id_token&post_logout_redirect_uri=https%3A%2F%2Fclient.com%2Fpage");
+    }
 
-        [Fact]
-        public void Post_logout_redirect_parameter_and_id_token_hint_should_create_expected_end_session_url()
-        {
-            var options = new OidcClientOptions
-            {
-                PostLogoutRedirectUri = "https://client.com/page"
-            };
+    [Fact]
+    public void Id_token_hint_should_create_expected_end_session_url()
+    {
+        var options = new OidcClientOptions();
+        var client = new AuthorizeClient(options);
 
-            var client = new AuthorizeClient(options);
-            var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest { IdTokenHint = "id_token" });
+        var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest { IdTokenHint = "id_token" });
 
-            url.ShouldBe("https://server/end_session?id_token_hint=id_token&post_logout_redirect_uri=https%3A%2F%2Fclient.com%2Fpage");
-        }
-
-        [Fact]
-        public void Id_token_hint_should_create_expected_end_session_url()
-        {
-            var options = new OidcClientOptions();
-            var client = new AuthorizeClient(options);
-
-            var url = client.CreateEndSessionUrl("https://server/end_session", new LogoutRequest { IdTokenHint = "id_token" });
-
-            url.ShouldBe("https://server/end_session?id_token_hint=id_token");
-        }
+        url.ShouldBe("https://server/end_session?id_token_hint=id_token");
     }
 }

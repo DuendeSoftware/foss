@@ -11,7 +11,7 @@ namespace Duende.AccessTokenManagement.Tests;
 public class StoreTokensInAuthenticationPropertiesTests
 {
     [Fact]
-    public void Should_be_able_to_store_and_retrieve_tokens()
+    public async Task Should_be_able_to_store_and_retrieve_tokens()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -23,14 +23,14 @@ public class StoreTokensInAuthenticationPropertiesTests
 
         var userToken = GenerateRandomUserToken();
 
-        sut.SetUserToken(userToken, authenticationProperties);
+        await sut.SetUserToken(userToken, authenticationProperties);
         var result = sut.GetUserToken(authenticationProperties);
 
         result.ShouldBeEquivalentTo(userToken);
     }
 
     [Fact]
-    public void Should_be_able_to_store_and_retrieve_tokens_for_multiple_challenge_schemes()
+    public async Task Should_be_able_to_store_and_retrieve_tokens_for_multiple_challenge_schemes()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -55,8 +55,8 @@ public class StoreTokensInAuthenticationPropertiesTests
             ChallengeScheme = "scheme2"
         };
 
-        sut.SetUserToken(tokenForScheme1, authenticationProperties, scheme1RequestParameters);
-        sut.SetUserToken(tokenForScheme2, authenticationProperties, scheme2RequestParameters);
+        await sut.SetUserToken(tokenForScheme1, authenticationProperties, scheme1RequestParameters);
+        await sut.SetUserToken(tokenForScheme2, authenticationProperties, scheme2RequestParameters);
 
         var resultScheme1 = sut.GetUserToken(authenticationProperties, scheme1RequestParameters);
         var resultScheme2 = sut.GetUserToken(authenticationProperties, scheme2RequestParameters);
@@ -66,7 +66,7 @@ public class StoreTokensInAuthenticationPropertiesTests
     }
 
     [Fact]
-    public void Should_be_able_to_store_and_retrieve_tokens_for_multiple_resources()
+    public async Task Should_be_able_to_store_and_retrieve_tokens_for_multiple_resources()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -88,8 +88,8 @@ public class StoreTokensInAuthenticationPropertiesTests
             Resource = "resource2",
         };
 
-        sut.SetUserToken(tokenForResource1, authenticationProperties, resource1RequestParameters);
-        sut.SetUserToken(tokenForResource2, authenticationProperties, resource2RequestParameters);
+        await sut.SetUserToken(tokenForResource1, authenticationProperties, resource1RequestParameters);
+        await sut.SetUserToken(tokenForResource2, authenticationProperties, resource2RequestParameters);
 
         var resultForResource1 = sut.GetUserToken(authenticationProperties, resource1RequestParameters);
         var resultForResource2 = sut.GetUserToken(authenticationProperties, resource2RequestParameters);
@@ -99,7 +99,7 @@ public class StoreTokensInAuthenticationPropertiesTests
     }
 
     [Fact]
-    public void Should_be_able_to_store_and_retrieve_tokens_for_multiple_schemes_and_resources_at_the_same_time()
+    public async Task Should_be_able_to_store_and_retrieve_tokens_for_multiple_schemes_and_resources_at_the_same_time()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -141,10 +141,10 @@ public class StoreTokensInAuthenticationPropertiesTests
             ChallengeScheme = "scheme2"
         };
 
-        sut.SetUserToken(tokenForResource1Scheme1, authenticationProperties, resource1Scheme1);
-        sut.SetUserToken(tokenForResource1Scheme2, authenticationProperties, resource1Scheme2);
-        sut.SetUserToken(tokenForResource2Scheme1, authenticationProperties, resource2Scheme1);
-        sut.SetUserToken(tokenForResource2Scheme2, authenticationProperties, resource2Scheme2);
+        await sut.SetUserToken(tokenForResource1Scheme1, authenticationProperties, resource1Scheme1);
+        await sut.SetUserToken(tokenForResource1Scheme2, authenticationProperties, resource1Scheme2);
+        await sut.SetUserToken(tokenForResource2Scheme1, authenticationProperties, resource2Scheme1);
+        await sut.SetUserToken(tokenForResource2Scheme2, authenticationProperties, resource2Scheme2);
 
         var resultForResource1Scheme1 = sut.GetUserToken(authenticationProperties, resource1Scheme1);
         var resultForResource1Scheme2 = sut.GetUserToken(authenticationProperties, resource1Scheme2);
@@ -158,7 +158,7 @@ public class StoreTokensInAuthenticationPropertiesTests
     }
 
     [Fact]
-    public void Should_be_able_to_remove_tokens()
+    public async Task Should_be_able_to_remove_tokens()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -170,7 +170,7 @@ public class StoreTokensInAuthenticationPropertiesTests
 
         var userToken = GenerateRandomUserToken();
 
-        sut.SetUserToken(userToken, authenticationProperties);
+        await sut.SetUserToken(userToken, authenticationProperties);
         sut.RemoveUserToken(authenticationProperties);
         var result = sut.GetUserToken(authenticationProperties);
 
@@ -183,7 +183,7 @@ public class StoreTokensInAuthenticationPropertiesTests
 
 
     [Fact]
-    public void Should_be_able_to_remove_tokens_for_multiple_schemes_and_resources_at_the_same_time()
+    public async Task Should_be_able_to_remove_tokens_for_multiple_schemes_and_resources_at_the_same_time()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -225,10 +225,10 @@ public class StoreTokensInAuthenticationPropertiesTests
             ChallengeScheme = "scheme2"
         };
 
-        sut.SetUserToken(tokenForResource1Scheme1, authenticationProperties, resource1Scheme1);
-        sut.SetUserToken(tokenForResource1Scheme2, authenticationProperties, resource1Scheme2);
-        sut.SetUserToken(tokenForResource2Scheme1, authenticationProperties, resource2Scheme1);
-        sut.SetUserToken(tokenForResource2Scheme2, authenticationProperties, resource2Scheme2);
+        await sut.SetUserToken(tokenForResource1Scheme1, authenticationProperties, resource1Scheme1);
+        await sut.SetUserToken(tokenForResource1Scheme2, authenticationProperties, resource1Scheme2);
+        await sut.SetUserToken(tokenForResource2Scheme1, authenticationProperties, resource2Scheme1);
+        await sut.SetUserToken(tokenForResource2Scheme2, authenticationProperties, resource2Scheme2);
 
         sut.RemoveUserToken(authenticationProperties, resource1Scheme1);
         sut.RemoveUserToken(authenticationProperties, resource2Scheme2);
@@ -246,7 +246,7 @@ public class StoreTokensInAuthenticationPropertiesTests
 
 
     [Fact]
-    public void Removing_all_tokens_in_a_challenge_scheme_should_remove_items_shared_in_that_scheme()
+    public async Task Removing_all_tokens_in_a_challenge_scheme_should_remove_items_shared_in_that_scheme()
     {
         var authenticationProperties = new AuthenticationProperties();
         var sut = new StoreTokensInAuthenticationProperties(
@@ -288,10 +288,10 @@ public class StoreTokensInAuthenticationPropertiesTests
             ChallengeScheme = "scheme2"
         };
 
-        sut.SetUserToken(tokenForResource1Scheme1, authenticationProperties, resource1Scheme1);
-        sut.SetUserToken(tokenForResource1Scheme2, authenticationProperties, resource1Scheme2);
-        sut.SetUserToken(tokenForResource2Scheme1, authenticationProperties, resource2Scheme1);
-        sut.SetUserToken(tokenForResource2Scheme2, authenticationProperties, resource2Scheme2);
+        await sut.SetUserToken(tokenForResource1Scheme1, authenticationProperties, resource1Scheme1);
+        await sut.SetUserToken(tokenForResource1Scheme2, authenticationProperties, resource1Scheme2);
+        await sut.SetUserToken(tokenForResource2Scheme1, authenticationProperties, resource2Scheme1);
+        await sut.SetUserToken(tokenForResource2Scheme2, authenticationProperties, resource2Scheme2);
 
         sut.RemoveUserToken(authenticationProperties, resource1Scheme1);
         sut.RemoveUserToken(authenticationProperties, resource1Scheme2);
@@ -310,6 +310,7 @@ public class StoreTokensInAuthenticationPropertiesTests
         RefreshToken = Guid.NewGuid().ToString(),
         Expiration = new DateTimeOffset(new DateTime(DateTime.Now.Ticks + Random.Shared.Next())),
         DPoPJsonWebKey = Guid.NewGuid().ToString()
+
     };
 
     private UserToken GenerateAnotherTokenForADifferentResource(UserToken previousToken) => new UserToken
@@ -320,6 +321,6 @@ public class StoreTokensInAuthenticationPropertiesTests
 
         // These two values don't change when we switch resources
         RefreshToken = previousToken.RefreshToken,
-        DPoPJsonWebKey = previousToken.DPoPJsonWebKey,
+        DPoPJsonWebKey = previousToken.DPoPJsonWebKey
     };
 }

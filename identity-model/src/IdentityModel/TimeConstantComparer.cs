@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Runtime.CompilerServices;
@@ -39,8 +39,8 @@ public static class TimeConstantComparer
         var s1chars = s1.ToCharArray();
         var s2chars = s2.ToCharArray();
 
-        int hits = 0;
-        for (int i = 0; i < s1.Length; i++)
+        var hits = 0;
+        for (var i = 0; i < s1.Length; i++)
         {
             if (s1chars[i].Equals(s2chars[i]))
             {
@@ -52,7 +52,7 @@ public static class TimeConstantComparer
             }
         }
 
-        bool same = (hits == s1.Length * 2);
+        var same = (hits == s1.Length * 2);
 
         return same;
     }

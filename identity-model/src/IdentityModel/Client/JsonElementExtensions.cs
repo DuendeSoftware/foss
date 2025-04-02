@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
@@ -27,8 +27,8 @@ public static class JsonElementExtensions
         foreach (var x in json.EnumerateObject())
         {
             if (excludeList.Contains(x.Name)) continue;
-                
-            if (x.Value.ValueKind  == JsonValueKind.Array)
+
+            if (x.Value.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in x.Value.EnumerateArray())
                 {
@@ -68,7 +68,7 @@ public static class JsonElementExtensions
             return default;
         }
 
-        return json.TryGetProperty(name, out JsonElement value) ? value : default;
+        return json.TryGetProperty(name, out var value) ? value : default;
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public static class JsonElementExtensions
 
         if (value != null)
         {
-            if (int.TryParse(value, out int intValue))
+            if (int.TryParse(value, out var intValue))
             {
                 return intValue;
             }
@@ -100,7 +100,7 @@ public static class JsonElementExtensions
     /// <returns></returns>
     public static string? TryGetString(this JsonElement json, string name)
     {
-        JsonElement value = json.TryGetValue(name);
+        var value = json.TryGetValue(name);
         return value.ValueKind == JsonValueKind.Undefined ? null : value.ToString();
     }
 
@@ -114,7 +114,7 @@ public static class JsonElementExtensions
     {
         var value = json.TryGetString(name);
 
-        if (bool.TryParse(value, out bool result))
+        if (bool.TryParse(value, out var result))
         {
             return result;
         }

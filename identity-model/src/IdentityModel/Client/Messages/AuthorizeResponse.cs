@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net;
@@ -92,7 +92,7 @@ public class AuthorizeResponse
     /// The state.
     /// </value>
     public string? State => TryGet(OidcConstants.AuthorizeResponse.State);
-        
+
     /// <summary>
     /// Gets the session state.
     /// </summary>
@@ -100,7 +100,7 @@ public class AuthorizeResponse
     /// The session state.
     /// </value>
     public string? SessionState => TryGet(OidcConstants.AuthorizeResponse.SessionState);
-        
+
     /// <summary>
     /// Gets the issuer name.
     /// </summary>

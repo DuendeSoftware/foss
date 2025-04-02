@@ -54,7 +54,7 @@ public class CryptoRandom : Random
     public static string CreateUniqueId(int length = 32, OutputFormat format = OutputFormat.Base64Url)
     {
         var bytes = CreateRandomKey(length);
-            
+
         switch (format)
         {
             case OutputFormat.Base64Url:
@@ -77,7 +77,7 @@ public class CryptoRandom : Random
     /// Initializes a new instance of the <see cref="CryptoRandom"/> class.
     /// </summary>
     /// <param name="ignoredSeed">seed (ignored)</param>
-    public CryptoRandom(Int32 ignoredSeed) { }
+    public CryptoRandom(int ignoredSeed) { }
 
     /// <summary>
     /// Returns a nonnegative random number.
@@ -85,7 +85,7 @@ public class CryptoRandom : Random
     /// <returns>
     /// A 32-bit signed integer greater than or equal to zero and less than <see cref="F:System.Int32.MaxValue"/>.
     /// </returns>
-    public override Int32 Next()
+    public override int Next()
     {
         Rng.GetBytes(_uint32Buffer);
         return BitConverter.ToInt32(_uint32Buffer, 0) & 0x7FFFFFFF;
@@ -101,7 +101,7 @@ public class CryptoRandom : Random
     /// <exception cref="T:System.ArgumentOutOfRangeException">
     /// 	<paramref name="maxValue"/> is less than zero.
     /// </exception>
-    public override Int32 Next(Int32 maxValue)
+    public override int Next(int maxValue)
     {
         if (maxValue < 0) throw new ArgumentOutOfRangeException(nameof(maxValue));
         return Next(0, maxValue);
@@ -118,22 +118,22 @@ public class CryptoRandom : Random
     /// <exception cref="T:System.ArgumentOutOfRangeException">
     /// 	<paramref name="minValue"/> is greater than <paramref name="maxValue"/>.
     /// </exception>
-    public override Int32 Next(Int32 minValue, Int32 maxValue)
+    public override int Next(int minValue, int maxValue)
     {
         if (minValue > maxValue) throw new ArgumentOutOfRangeException(nameof(minValue));
         if (minValue == maxValue) return minValue;
-        Int64 diff = maxValue - minValue;
+        long diff = maxValue - minValue;
 
         while (true)
         {
             Rng.GetBytes(_uint32Buffer);
-            UInt32 rand = BitConverter.ToUInt32(_uint32Buffer, 0);
+            var rand = BitConverter.ToUInt32(_uint32Buffer, 0);
 
-            Int64 max = (1 + (Int64)UInt32.MaxValue);
-            Int64 remainder = max % diff;
+            var max = (1 + (long)uint.MaxValue);
+            var remainder = max % diff;
             if (rand < max - remainder)
             {
-                return (Int32)(minValue + (rand % diff));
+                return (int)(minValue + (rand % diff));
             }
         }
     }
@@ -147,8 +147,8 @@ public class CryptoRandom : Random
     public override double NextDouble()
     {
         Rng.GetBytes(_uint32Buffer);
-        UInt32 rand = BitConverter.ToUInt32(_uint32Buffer, 0);
-        return rand / (1.0 + UInt32.MaxValue);
+        var rand = BitConverter.ToUInt32(_uint32Buffer, 0);
+        return rand / (1.0 + uint.MaxValue);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net.Http.Headers;
@@ -33,19 +33,19 @@ public class BasicAuthenticationOAuthHeaderValue : AuthenticationHeaderValue
         if (string.IsNullOrWhiteSpace(userName)) throw new ArgumentNullException(nameof(userName));
         if (password == null) password = "";
 
-        Encoding encoding = Encoding.UTF8;
-        string credential = $"{UrlEncode(userName)}:{UrlEncode(password)}";
+        var encoding = Encoding.UTF8;
+        var credential = $"{UrlEncode(userName)}:{UrlEncode(password)}";
 
         return Convert.ToBase64String(encoding.GetBytes(credential));
     }
 
     private static string UrlEncode(string value)
     {
-        if (String.IsNullOrEmpty(value))
+        if (string.IsNullOrEmpty(value))
         {
-            return String.Empty;
+            return string.Empty;
         }
-            
+
         return Uri.EscapeDataString(value).Replace("%20", "+");
     }
 }

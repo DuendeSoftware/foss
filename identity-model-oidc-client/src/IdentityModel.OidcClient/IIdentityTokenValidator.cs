@@ -3,20 +3,19 @@
 
 using Duende.IdentityModel.OidcClient.Results;
 
-namespace Duende.IdentityModel.OidcClient
+namespace Duende.IdentityModel.OidcClient;
+
+/// <summary>
+/// Models pluggable identity token validation
+/// </summary>
+public interface IIdentityTokenValidator
 {
     /// <summary>
-    /// Models pluggable identity token validation
+    /// Validates an identity token
     /// </summary>
-    public interface IIdentityTokenValidator
-    {
-        /// <summary>
-        /// Validates an identity token
-        /// </summary>
-        /// <param name="identityToken"></param>
-        /// <param name="options"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<IdentityTokenValidationResult> ValidateAsync(string identityToken, OidcClientOptions options, CancellationToken cancellationToken = default);
-    }
+    /// <param name="identityToken"></param>
+    /// <param name="options"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<IdentityTokenValidationResult> ValidateAsync(string identityToken, OidcClientOptions options, CancellationToken cancellationToken = default);
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.Internal;
@@ -22,8 +22,8 @@ public class DiscoveryEndpoint
     public static DiscoveryEndpoint ParseUrl(string input, string? path = null)
     {
         if (input == null) throw new ArgumentNullException(nameof(input));
-        
-        if (String.IsNullOrEmpty(path))
+
+        if (string.IsNullOrEmpty(path))
         {
             path = OidcConstants.Discovery.DiscoveryEndpoint;
         }

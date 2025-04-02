@@ -15,7 +15,7 @@ public class ClientCredentialsClientConfigureOptions : IConfigureNamedOptions<Cl
     {
         _cache = cache;
     }
-    
+
     public void Configure(ClientCredentialsClient options)
     {
         throw new System.NotImplementedException();

@@ -1,13 +1,6 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace WorkerService;
 
 public class WorkerDPoPHttpClient : BackgroundService
@@ -24,7 +17,7 @@ public class WorkerDPoPHttpClient : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Delay(2000, stoppingToken);
-            
+
         while (!stoppingToken.IsCancellationRequested)
         {
             Console.WriteLine("\n\n");
@@ -32,11 +25,11 @@ public class WorkerDPoPHttpClient : BackgroundService
 
             var client = _clientFactory.CreateClient("client.dpop");
             var response = await client.GetAsync("test?x=1", stoppingToken);
-                
+
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync(stoppingToken);
-                _logger.LogInformation("API response: {response}", content);    
+                _logger.LogInformation("API response: {response}", content);
             }
             else
             {

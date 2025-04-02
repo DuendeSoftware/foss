@@ -14,7 +14,7 @@ public class PushedAuthorizationResponse : ProtocolResponse
     /// the authorization server but will typically be relatively short (e.g.,
     /// between 5 and 600 seconds).
     /// </summary>
-    public int? ExpiresIn => 
+    public int? ExpiresIn =>
         Json?.TryGetInt(OidcConstants.PushedAuthorizationRequestResponse.ExpiresIn);
 
 

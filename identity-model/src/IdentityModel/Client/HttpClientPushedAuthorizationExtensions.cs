@@ -19,7 +19,7 @@ public static class HttpClientPushedAuthorizationExtensions
     /// <returns></returns>
     public static Task<PushedAuthorizationResponse> PushAuthorizationAsync(this HttpClient client, PushedAuthorizationRequest request, CancellationToken cancellationToken = default)
     {
-        if(request.Parameters.ContainsKey(OidcConstants.AuthorizeRequest.RequestUri))
+        if (request.Parameters.ContainsKey(OidcConstants.AuthorizeRequest.RequestUri))
         {
             throw new ArgumentException("request_uri cannot be used in a pushed authorization request", "request_uri");
         }
@@ -28,7 +28,7 @@ public static class HttpClientPushedAuthorizationExtensions
 
         // client id is always required, and will be added by the call to
         // Prepare() for other client credential styles.
-        if(request.ClientCredentialStyle == ClientCredentialStyle.AuthorizationHeader)
+        if (request.ClientCredentialStyle == ClientCredentialStyle.AuthorizationHeader)
         {
             clone.Parameters.AddRequired(OidcConstants.AuthorizeRequest.ClientId, request.ClientId);
         }
@@ -36,7 +36,7 @@ public static class HttpClientPushedAuthorizationExtensions
         if (request.Request.IsPresent() || request.Parameters.ContainsKey(OidcConstants.AuthorizeRequest.Request))
         {
             clone.Parameters.AddRequired(OidcConstants.AuthorizeRequest.Request, request.Request);
-        } 
+        }
         else
         {
             clone.Parameters.AddRequired(OidcConstants.AuthorizeRequest.ResponseType, request.ResponseType);
@@ -54,7 +54,7 @@ public static class HttpClientPushedAuthorizationExtensions
             clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.MaxAge, request.MaxAge.ToString());
             clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.UiLocales, request.UiLocales);
             clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.IdTokenHint, request.IdTokenHint);
-            foreach(var resource in request.Resource ?? [])
+            foreach (var resource in request.Resource ?? [])
             {
                 clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Resource, resource, allowDuplicates: true);
             }
@@ -68,16 +68,16 @@ public static class HttpClientPushedAuthorizationExtensions
     {
         request.Prepare();
         request.Method = HttpMethod.Post;
-            
+
         HttpResponseMessage response;
         try
         {
             response = await client.SendAsync(request, cancellationToken).ConfigureAwait();
         }
         catch (OperationCanceledException)
-		{
+        {
             throw;
-		}
+        }
         catch (Exception ex)
         {
             return ProtocolResponse.FromException<PushedAuthorizationResponse>(ex);

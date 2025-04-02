@@ -32,7 +32,7 @@ public class PasswordTokenRequest : TokenRequest
     /// The scope.
     /// </value>
     public string? Scope { get; set; }
-        
+
     /// <summary>
     /// List of requested resources
     /// </summary>

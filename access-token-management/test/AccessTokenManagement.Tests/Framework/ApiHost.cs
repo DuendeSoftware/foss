@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityServer.Models;
@@ -14,9 +14,14 @@ public class ApiHost : GenericHost
 
     private readonly IdentityServerHost _identityServerHost;
     public event Action<Microsoft.AspNetCore.Http.HttpContext> ApiInvoked = ctx => { };
-        
-    public ApiHost(IdentityServerHost identityServerHost, string scope, string baseAddress = "https://api", string resource = "urn:api") 
-        : base(baseAddress)
+
+    public ApiHost(
+        WriteTestOutput writeTestOutput,
+        IdentityServerHost identityServerHost,
+        string scope,
+        string baseAddress = "https://api",
+        string resource = "urn:api")
+        : base(writeTestOutput, baseAddress)
     {
         _identityServerHost = identityServerHost;
         _identityServerHost.ApiScopes.Add(new ApiScope(scope));
@@ -44,7 +49,7 @@ public class ApiHost : GenericHost
 
     private void Configure(IApplicationBuilder app)
     {
-        app.Use(async(context, next) => 
+        app.Use(async (context, next) =>
         {
             ApiInvoked.Invoke(context);
             if (ApiStatusCodeToReturn != null)

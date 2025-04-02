@@ -8,24 +8,11 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 /// <summary>
 /// Named options to synthesize client credentials based on OIDC handler configuration
 /// </summary>
-public class ConfigureOpenIdConnectClientCredentialsOptions : IConfigureNamedOptions<ClientCredentialsClient>
+public class ConfigureOpenIdConnectClientCredentialsOptions(
+    IOpenIdConnectConfigurationService configurationService,
+    IOptions<UserTokenManagementOptions> options) : IConfigureNamedOptions<ClientCredentialsClient>
 {
-    private readonly IOpenIdConnectConfigurationService _configurationService;
-    private readonly UserTokenManagementOptions _options;
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    /// <param name="configurationService"></param>
-    /// <param name="options"></param>
-    public ConfigureOpenIdConnectClientCredentialsOptions(
-        IOpenIdConnectConfigurationService configurationService,
-        IOptions<UserTokenManagementOptions> options)
-    {
-        _configurationService = configurationService;
-        _options = options.Value;
-    }
-
+    private readonly UserTokenManagementOptions _options = options.Value;
     /// <inheritdoc />
     public void Configure(ClientCredentialsClient options)
     { }
@@ -33,22 +20,29 @@ public class ConfigureOpenIdConnectClientCredentialsOptions : IConfigureNamedOpt
     /// <inheritdoc />
     public void Configure(string? name, ClientCredentialsClient options)
     {
-        if (name.IsMissing()) return;
-        if (!name.StartsWith(OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix)) return;
-        
+        if (name.IsMissing())
+        {
+            return;
+        }
+
+        if (!name.StartsWith(OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix))
+        {
+            return;
+        }
+
         string? scheme = null;
         if (name.Length > OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix.Length)
         {
             scheme = name[OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix.Length..];
         }
 
-        if (String.IsNullOrWhiteSpace(scheme))
+        if (string.IsNullOrWhiteSpace(scheme))
         {
             throw new ArgumentException("Missing scheme when used with OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix");
         }
-        
-        var oidc = _configurationService.GetOpenIdConnectConfigurationAsync(scheme).GetAwaiter().GetResult();
-            
+
+        var oidc = configurationService.GetOpenIdConnectConfigurationAsync(scheme).GetAwaiter().GetResult();
+
         options.TokenEndpoint = oidc.TokenEndpoint;
         options.ClientId = oidc.ClientId;
         options.ClientSecret = oidc.ClientSecret;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.IdentityModel.OidcClient.DPoP.Framework.DPoP;
@@ -14,8 +14,8 @@ public class ApiHost : GenericHost
     public bool ValidateNonce { get; set; }
 
     public event Action<Microsoft.AspNetCore.Http.HttpContext> ApiInvoked = ctx => { };
-        
-    public ApiHost(IdentityServerHost identityServerHost, string baseAddress = "https://api") 
+
+    public ApiHost(IdentityServerHost identityServerHost, string baseAddress = "https://api")
         : base(baseAddress)
     {
         _identityServerHost = identityServerHost;
@@ -51,7 +51,8 @@ public class ApiHost : GenericHost
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseEndpoints(ep => {
+        app.UseEndpoints(ep =>
+        {
             ep.MapGet("/api", ctx =>
             {
                 ApiInvoked.Invoke(ctx);

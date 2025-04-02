@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 namespace Duende.AccessTokenManagement;
@@ -12,7 +12,7 @@ public class ClientCredentialsToken
     /// The access token
     /// </summary>
     public string? AccessToken { get; set; }
-    
+
     /// <summary>
     /// The access token type
     /// </summary>
@@ -22,7 +22,7 @@ public class ClientCredentialsToken
     /// The string representation of the JSON web key to use for DPoP.
     /// </summary>
     public string? DPoPJsonWebKey { get; set; }
-    
+
     /// <summary>
     /// The access token expiration
     /// </summary>
@@ -42,4 +42,9 @@ public class ClientCredentialsToken
     /// Checks for an error
     /// </summary>
     public bool IsError => !string.IsNullOrWhiteSpace(Error);
+
+    /// <summary>
+    /// The Client id that this token was originally requested for. 
+    /// </summary>
+    public string? ClientId { get; set; }
 }

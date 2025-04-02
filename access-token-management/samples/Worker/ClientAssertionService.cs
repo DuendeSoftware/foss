@@ -1,9 +1,6 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Duende.AccessTokenManagement;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
@@ -32,8 +29,8 @@ public class ClientAssertionService : IClientAssertionService
             "qi":"pG6J4dcUDrDndMxa-ee1yG4KjZqqyCQcmPAfqklI2LmnpRIjcK78scclvpboI3JQyg6RCEKVMwAhVtQM6cBcIO3JrHgqeYDblp5wXHjto70HVW6Z8kBruNx1AH9E8LzNvSRL-JVTFzBkJuNgzKQfD0G77tQRgJ-Ri7qu3_9o1M4"
         }
         """;
-    
-    private static SigningCredentials Credential = new (new JsonWebKey(RsaKey), "RS256");
+
+    private static SigningCredentials Credential = new(new JsonWebKey(RsaKey), "RS256");
 
     public ClientAssertionService(IOptionsMonitor<ClientCredentialsClient> options)
     {
@@ -45,7 +42,7 @@ public class ClientAssertionService : IClientAssertionService
         if (clientName == "demo.jwt")
         {
             var options = _options.Get(clientName);
-            
+
             var descriptor = new SecurityTokenDescriptor
             {
                 Issuer = options.ClientId,
