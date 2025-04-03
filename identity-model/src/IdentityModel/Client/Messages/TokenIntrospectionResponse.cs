@@ -28,7 +28,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
             return Task.CompletedTask;
         }
 
-        if (contentType is "application/token-introspection+jwt" && !string.IsNullOrWhiteSpace(Raw))
+        if (contentType == "application/token-introspection+jwt" && !string.IsNullOrWhiteSpace(Raw))
         {
             // Split the JWT into its parts
             var parts = Raw!.Split('.');
@@ -37,19 +37,29 @@ public class TokenIntrospectionResponse : ProtocolResponse
                 throw new InvalidOperationException("Invalid JWT format");
             }
 
-            // Decode the payload
+            // Decode the payload (the second part)
             var payload = parts[1];
             var jsonString = Base64Url.Decode(payload);
-            using var doc = JsonDocument.Parse(jsonString);
+            using var rootDoc = JsonDocument.Parse(jsonString);
 
-            // Set the Json property of the base ProtocolResponse.
-            Json = doc.RootElement.Clone();
+            // Extract the 'token_introspection' claim from the JWT payload.
+            if (rootDoc.RootElement.TryGetProperty("token_introspection", out var introspectionElement))
+            {
+                // Parse the token_introspection claim value as JSON and set it as the Json property.
+                using var introspectionDoc = JsonDocument.Parse(introspectionElement.GetRawText()!);
+                Json = introspectionDoc.RootElement.Clone();
+            }
+            else
+            {
+                throw new InvalidOperationException("token_introspection claim not found in JWT payload");
+            }
         }
 
         if (Json == null)
         {
             throw new InvalidOperationException("Json is null"); // TODO better exception
         }
+
         var issuer = Json?.TryGetString("iss");
         var claims = Json?.ToClaims(issuer, "scope").ToList() ?? new List<Claim>();
 

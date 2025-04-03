@@ -382,8 +382,34 @@ public class TokenIntrospectionTests
         };
 
         var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
-
         var introspectionResponse = await introspectionClient.Introspect("token");
+
+        introspectionResponse.IsError.ShouldBeFalse();
+        introspectionResponse.ErrorType.ShouldBe(ResponseErrorType.None);
+        introspectionResponse.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionResponse.IsActive.ShouldBeTrue();
+        introspectionResponse.Raw.ShouldBe(document);
+
+        var expectedClaims = new Claim[]
+        {
+            new("active", "true", ClaimValueTypes.String, "https://as.example.com/"),
+            new("iss", "https://as.example.com/", ClaimValueTypes.String, "https://as.example.com/"),
+            new("aud", "https://rs.example.com/resource", ClaimValueTypes.String, "https://as.example.com/"),
+            new("iat", "1514797822", ClaimValueTypes.String, "https://as.example.com/"),
+            new("exp", "1514797942", ClaimValueTypes.String, "https://as.example.com/"),
+            new("client_id", "paiB2goo0a", ClaimValueTypes.String, "https://as.example.com/"),
+            new("sub", "Z5O3upPC88QrAjx00dis", ClaimValueTypes.String, "https://as.example.com/"),
+            new("birthdate", "1982-02-01", ClaimValueTypes.String, "https://as.example.com/"),
+            new("given_name", "John", ClaimValueTypes.String, "https://as.example.com/"),
+            new("family_name", "Doe", ClaimValueTypes.String, "https://as.example.com/"),
+            new("jti", "t1FoCCaZd4Xv4ORJUWVUeTZfsKhW30CQCrWDDjwXy6w", ClaimValueTypes.String, "https://as.example.com/"),
+            new("scope", "read", ClaimValueTypes.String, "https://as.example.com/"),
+            new("scope", "write", ClaimValueTypes.String, "https://as.example.com/"),
+            new("scope", "dolphin", ClaimValueTypes.String, "https://as.example.com/")
+        };
+
+        introspectionResponse.Claims.ShouldNotBeEmpty();
+        introspectionResponse.Claims.ShouldBe(expectedClaims, new ClaimComparer());
     }
 
     [Fact]

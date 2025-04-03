@@ -1,4 +1,4 @@
-﻿namespace Duende.IdentityModel
+namespace Duende.IdentityModel
 {
     public static class Base64Url
     {
@@ -1037,6 +1037,12 @@ namespace Duende.IdentityModel.Client
     public class IntrospectionClientOptions : Duende.IdentityModel.Client.ClientOptions
     {
         public IntrospectionClientOptions() { }
+        public Duende.IdentityModel.Client.IntrospectionResponseFormat ResponseFormat { get; set; }
+    }
+    public enum IntrospectionResponseFormat
+    {
+        Json = 0,
+        Jwt = 1,
     }
     public static class JsonElementExtensions
     {
