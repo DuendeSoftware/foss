@@ -19,33 +19,26 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <returns></returns>
     protected override Task InitializeAsync(object? initializationData = null)
     {
-        // Expect contentType to be "" when a JWT response is expected, otherwise "application/json"
-        var contentType = HttpResponse?.Content?.Headers.ContentType?.MediaType;
-
         if (IsError)
         {
-            // if we have an error, we don't need to do anything else
             return Task.CompletedTask;
         }
 
-        if (contentType == "application/token-introspection+jwt" && !string.IsNullOrWhiteSpace(Raw))
+        var contentType = HttpResponse?.Content?.Headers.ContentType?.MediaType;
+        if (contentType is "application/token-introspection+jwt" && !string.IsNullOrWhiteSpace(Raw))
         {
-            // Split the JWT into its parts
             var parts = Raw!.Split('.');
             if (parts.Length != 3)
             {
                 throw new InvalidOperationException("Invalid JWT format");
             }
 
-            // Decode the payload (the second part)
             var payload = parts[1];
             var jsonString = Base64Url.Decode(payload);
             using var rootDoc = JsonDocument.Parse(jsonString);
 
-            // Extract the 'token_introspection' claim from the JWT payload.
             if (rootDoc.RootElement.TryGetProperty("token_introspection", out var introspectionElement))
             {
-                // Parse the token_introspection claim value as JSON and set it as the Json property.
                 using var introspectionDoc = JsonDocument.Parse(introspectionElement.GetRawText()!);
                 Json = introspectionDoc.RootElement.Clone();
             }
