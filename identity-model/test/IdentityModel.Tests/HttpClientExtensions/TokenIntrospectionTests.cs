@@ -332,7 +332,7 @@ public class TokenIntrospectionTests
 
         handler.Request.ShouldNotBeNull();
         var acceptHeaders = handler.Request.Headers.Accept.ToArray();
-        acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse("application/token-introspection+jwt")]);
+        acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}")]);
     }
 
     [Fact]
@@ -374,7 +374,7 @@ public class TokenIntrospectionTests
         };
 
         var handler = new NetworkHandler(document, HttpStatusCode.OK);
-        handler.MediaType = "application/token-introspection+jwt";
+        handler.MediaType = $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
 
         var httpClient = new HttpClient(handler)
         {

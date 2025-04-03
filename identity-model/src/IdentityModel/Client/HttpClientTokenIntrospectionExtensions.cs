@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Net.Http.Headers;
 using Duende.IdentityModel.Internal;
 
 namespace Duende.IdentityModel.Client;
@@ -29,6 +30,12 @@ public static class HttpClientTokenIntrospectionExtensions
         HttpResponseMessage response;
         try
         {
+            if (request.ResponseFormat is IntrospectionResponseFormat.Jwt)
+            {
+                clone.Headers.Accept.Clear();
+                clone.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}"));
+            }
+
             response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
         }
         catch (OperationCanceledException)

@@ -75,7 +75,7 @@ public class ProtocolResponse
         // either 200 or 400 - both cases need a JSON response (if present), otherwise error
         try
         {
-            var isJwtResponse = httpResponse.Content?.Headers.ContentType?.MediaType is "application/token-introspection+jwt";
+            var isJwtResponse = httpResponse.Content?.Headers.ContentType?.MediaType is $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
             if (!skipJson && content.IsPresent() && !isJwtResponse)
             {
                 response.Json = JsonDocument.Parse(content!).RootElement;

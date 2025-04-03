@@ -25,7 +25,7 @@ public class TokenIntrospectionResponse : ProtocolResponse
         }
 
         var contentType = HttpResponse?.Content?.Headers.ContentType?.MediaType;
-        if (contentType is "application/token-introspection+jwt" && !string.IsNullOrWhiteSpace(Raw))
+        if (contentType is $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}" && !string.IsNullOrWhiteSpace(Raw))
         {
             var parts = Raw!.Split('.');
             if (parts.Length != 3)

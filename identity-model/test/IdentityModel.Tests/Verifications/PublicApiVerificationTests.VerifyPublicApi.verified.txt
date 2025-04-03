@@ -114,6 +114,7 @@ namespace Duende.IdentityModel
             public const string AccessToken = "at+jwt";
             public const string AuthorizationRequest = "oauth-authz-req+jwt";
             public const string DPoPProofToken = "dpop+jwt";
+            public const string IntrospectionJwtResponse = "token-introspection+jwt";
         }
     }
     public static class OidcConstants
@@ -1248,6 +1249,7 @@ namespace Duende.IdentityModel.Client
     public class TokenIntrospectionRequest : Duende.IdentityModel.Client.ProtocolRequest
     {
         public TokenIntrospectionRequest() { }
+        public Duende.IdentityModel.Client.IntrospectionResponseFormat ResponseFormat { get; set; }
         public string Token { get; set; }
         public string? TokenTypeHint { get; set; }
     }

@@ -220,6 +220,11 @@ public static class JwtClaimTypes
         /// DPoP proof token
         /// </summary>
         public const string DPoPProofToken = "dpop+jwt";
+
+        /// <summary>
+        /// Token Introspection response as JWT
+        /// </summary>
+        public const string IntrospectionJwtResponse = "token-introspection+jwt";
     }
 
     /// <summary>

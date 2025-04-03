@@ -59,7 +59,7 @@ public class IntrospectionClient
         if (_options.ResponseFormat is IntrospectionResponseFormat.Jwt)
         {
             request.Headers.Accept.Clear();
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/token-introspection+jwt"));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}"));
         }
     }
 
