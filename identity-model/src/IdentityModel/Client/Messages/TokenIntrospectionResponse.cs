@@ -1,17 +1,27 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Globalization;
+using System.Runtime.ExceptionServices;
 using System.Security.Claims;
 using System.Text.Json;
 
 namespace Duende.IdentityModel.Client;
 
 /// <summary>
-/// Models an OAuth 2.0 introspection response
+/// Models an OAuth 2.0 introspection response as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7662">RFC 7662 - OAuth 2.0 Token Introspection</a>
 /// </summary>
 /// <seealso cref="ProtocolResponse" />
 public class TokenIntrospectionResponse : ProtocolResponse
 {
+    private DateTimeOffset? _expiration;
+    private DateTimeOffset? _issuedAt;
+    private DateTimeOffset? _notBefore;
+
+    private ExceptionDispatchInfo? _expirationException;
+    private ExceptionDispatchInfo? _issuedAtException;
+    private ExceptionDispatchInfo? _notBeforeException;
+
     /// <summary>
     /// Allows to initialize instance specific data.
     /// </summary>
@@ -55,10 +65,42 @@ public class TokenIntrospectionResponse : ProtocolResponse
             }
             // }
 
+            Scopes = claims.Where(c => c.Type == JwtClaimTypes.Scope).Select(c => c.Value).ToArray();
+            ClientId = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.ClientId)?.Value;
+            UserName = claims.FirstOrDefault(c => c.Type == "username")?.Value;
+            TokenType = claims.FirstOrDefault(c => c.Type == "token_type")?.Value;
+            _expiration = GetDateTimeOffset(claims, JwtClaimTypes.Expiration, ref _expirationException);
+            _issuedAt = GetDateTimeOffset(claims, JwtClaimTypes.IssuedAt, ref _issuedAtException);
+            _notBefore = GetDateTimeOffset(claims, JwtClaimTypes.NotBefore, ref _notBeforeException);
+            Subject = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject)?.Value;
+            Audiences = claims.Where(c => c.Type == JwtClaimTypes.Audience).Select(c => c.Value).ToArray();
+            Issuer = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Issuer)?.Value;
+            JwtId = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.JwtId)?.Value;
+
             Claims = claims;
         }
 
         return Task.CompletedTask;
+    }
+
+    private static DateTimeOffset? GetDateTimeOffset(List<Claim> claims, string claimType, ref ExceptionDispatchInfo? exceptionDispatchInfo)
+    {
+        var claimValue = claims.FirstOrDefault(e => e.Type == claimType)?.Value;
+        if (claimValue == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var seconds = long.Parse(claimValue, NumberStyles.AllowLeadingSign, NumberFormatInfo.InvariantInfo);
+            return DateTimeOffset.FromUnixTimeSeconds(seconds);
+        }
+        catch (Exception exception)
+        {
+            exceptionDispatchInfo = ExceptionDispatchInfo.Capture(exception);
+            return null;
+        }
     }
 
     /// <summary>
@@ -68,6 +110,115 @@ public class TokenIntrospectionResponse : ProtocolResponse
     ///   <c>true</c> if the token is active; otherwise, <c>false</c>.
     /// </value>
     public bool IsActive => Json?.TryGetBoolean("active") ?? false;
+
+    /// <summary>
+    /// Gets the list of scopes associated to the token.
+    /// </summary>
+    /// <value>
+    /// The list of scopes associated to the token or an empty array if no <c>scope</c> claim is present.
+    /// </value>
+    public string[] Scopes { get; private set; } = [];
+
+    /// <summary>
+    /// Gets the client identifier for the OAuth 2.0 client that requested the token.
+    /// </summary>
+    /// <value>
+    /// The client identifier for the OAuth 2.0 client that requested the token or null if the <c>client_id</c> claim is missing.
+    /// </value>
+    public string? ClientId { get; private set; }
+
+    /// <summary>
+    /// Gets the human-readable identifier for the resource owner who authorized the token.
+    /// </summary>
+    /// <value>
+    /// The human-readable identifier for the resource owner who authorized the token or null if the <c>username</c> claim is missing.
+    /// </value>
+    public string? UserName { get; private set; }
+
+    /// <summary>
+    /// Gets the type of the token as defined in <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-5.1">section 5.1 of OAuth 2.0 (RFC6749)</a>.
+    /// </summary>
+    /// <value>
+    /// The type of the token as defined in <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-5.1">section 5.1 of OAuth 2.0 (RFC6749)</a> or null if the <c>token_type</c> claim is missing.
+    /// </value>
+    public string? TokenType { get; private set; }
+
+    /// <summary>
+    /// Gets the time on or after which the token must not be accepted for processing.
+    /// </summary>
+    /// <value>
+    /// The expiration time of the token or null if the <c>exp</c> claim is missing.
+    /// </value>
+    public DateTimeOffset? Expiration
+    {
+        get
+        {
+            _expirationException?.Throw();
+            return _expiration;
+        }
+    }
+
+    /// <summary>
+    /// Gets the time when the token was issued.
+    /// </summary>
+    /// <value>
+    /// The issuance time of the token or null if the <c>iat</c> claim is missing.
+    /// </value>
+    public DateTimeOffset? IssuedAt
+    {
+        get
+        {
+            _issuedAtException?.Throw();
+            return _issuedAt;
+        }
+    }
+
+    /// <summary>
+    /// Gets the time before which the token must not be accepted for processing.
+    /// </summary>
+    /// <value>
+    /// The validity start time of the token or null if the <c>nbf</c> claim is missing.
+    /// </value>
+    public DateTimeOffset? NotBefore
+    {
+        get
+        {
+            _notBeforeException?.Throw();
+            return _notBefore;
+        }
+    }
+
+    /// <summary>
+    /// Gets the subject of the token. Usually a machine-readable identifier of the resource owner who authorized the token.
+    /// </summary>
+    /// <value>
+    /// The subject of the token or null if the <c>sub</c> claim is missing.
+    /// </value>
+    public string? Subject { get; private set; }
+
+    /// <summary>
+    /// Gets the service-specific list of string identifiers representing the intended audience for the token.
+    /// </summary>
+    /// <value>
+    /// The service-specific list of string identifiers representing the intended audience for the token or an empty array if no <c>aud</c> claim is present.
+    /// </value>
+    public string[] Audiences { get; private set; } = [];
+
+    /// <summary>
+    /// Gets the string representing the issuer of the token.
+    /// </summary>
+    /// <value>
+    /// The string representing the issuer of the token or null if the <c>iss</c> claim is missing.
+    /// </value>
+    public string? Issuer { get; private set; }
+
+    /// <summary>
+    /// Gets the string identifier for the token.
+    /// </summary>
+    /// <value>
+    /// The string identifier for the token or null if the <c>jti</c> claim is missing.
+    /// </value>
+    public string? JwtId { get; private set; }
 
     /// <summary>
     /// Gets the claims.
