@@ -360,4 +360,54 @@ public class TokenIntrospectionTests
         var acceptHeaders = handler.Request.Headers.Accept.ToArray();
         acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse("application/json")]);
     }
+
+    [Fact]
+    public async Task Jwt_introspection_response_should_be_handled_correctly()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.jwt"));
+        var jwtOptions = new IntrospectionClientOptions
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ClientSecret = "secret",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        };
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = "application/token-introspection+jwt";
+
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(Endpoint)
+        };
+
+        var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
+
+        var introspectionResponse = await introspectionClient.Introspect("token");
+    }
+
+    [Fact]
+    public async Task Json_introspection_response_should_be_handled_correctly()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.json"));
+        var jwtOptions = new IntrospectionClientOptions
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ClientSecret = "secret",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        };
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = "application/json";
+
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(Endpoint)
+        };
+
+        var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
+
+        var introspectionResponse = await introspectionClient.Introspect("token");
+    }
 }
