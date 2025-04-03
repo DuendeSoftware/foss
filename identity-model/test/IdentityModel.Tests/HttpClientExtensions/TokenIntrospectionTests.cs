@@ -435,5 +435,31 @@ public class TokenIntrospectionTests
         var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
 
         var introspectionResponse = await introspectionClient.Introspect("token");
+
+        introspectionResponse.IsError.ShouldBeFalse();
+        introspectionResponse.ErrorType.ShouldBe(ResponseErrorType.None);
+        introspectionResponse.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionResponse.IsActive.ShouldBeTrue();
+        introspectionResponse.Raw.ShouldBe(document);
+
+        var expected = new Claim[]
+        {
+            new("aud", "https://idsvr4/resources", ClaimValueTypes.String, "https://idsvr4"),
+            new("aud", "api1", ClaimValueTypes.String, "https://idsvr4"),
+            new("iss", "https://idsvr4", ClaimValueTypes.String, "https://idsvr4"),
+            new("nbf", "1475824871", ClaimValueTypes.String, "https://idsvr4"),
+            new("exp", "1475828471", ClaimValueTypes.String, "https://idsvr4"),
+            new("client_id", "client", ClaimValueTypes.String, "https://idsvr4"),
+            new("sub", "1", ClaimValueTypes.String, "https://idsvr4"),
+            new("auth_time", "1475824871", ClaimValueTypes.String, "https://idsvr4"),
+            new("idp", "local", ClaimValueTypes.String, "https://idsvr4"),
+            new("amr", "password", ClaimValueTypes.String, "https://idsvr4"),
+            new("active", "true", ClaimValueTypes.String, "https://idsvr4"),
+            new("scope", "api1", ClaimValueTypes.String, "https://idsvr4"),
+            new("scope", "api2", ClaimValueTypes.String, "https://idsvr4"),
+        };
+
+        introspectionResponse.Claims.ShouldNotBeEmpty();
+        introspectionResponse.Claims.ShouldBe(expected, new ClaimComparer());
     }
 }
