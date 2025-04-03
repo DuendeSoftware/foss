@@ -312,6 +312,7 @@ public class TokenIntrospectionTests
     [Fact]
     public async Task Http_request_should_have_correct_accept_header_for_jwt_response()
     {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.jwt"));
         var jwtOptions = new IntrospectionClientOptions
         {
             Address = Endpoint,
@@ -320,7 +321,9 @@ public class TokenIntrospectionTests
             ResponseFormat = IntrospectionResponseFormat.Jwt
         };
 
-        var handler = new NetworkHandler("{}", HttpStatusCode.OK);
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
+
         var httpClient = new HttpClient(handler)
         {
             BaseAddress = new Uri(Endpoint)
@@ -331,6 +334,27 @@ public class TokenIntrospectionTests
         _ = await introspectionClient.Introspect("token");
 
         handler.Request.ShouldNotBeNull();
+        var acceptHeaders = handler.Request.Headers.Accept.ToArray();
+        acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}")]);
+    }
+
+    [Fact]
+    public async Task Http_request_should_have_correct_accept_header_when_using_Client_extension()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.jwt"));
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
+
+        var client = new HttpClient(handler);
+        var response = await client.IntrospectTokenAsync(new TokenIntrospectionRequest
+        {
+            Address = Endpoint,
+            Token = "token",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        });
+
+        response.ShouldNotBeNull();
         var acceptHeaders = handler.Request.Headers.Accept.ToArray();
         acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}")]);
     }
@@ -347,6 +371,8 @@ public class TokenIntrospectionTests
         };
 
         var handler = new NetworkHandler("{}", HttpStatusCode.OK);
+        handler.MediaType = $"application/json";
+
         var httpClient = new HttpClient(handler)
         {
             BaseAddress = new Uri(Endpoint)

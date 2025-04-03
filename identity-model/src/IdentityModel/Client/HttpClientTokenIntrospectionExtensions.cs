@@ -25,17 +25,18 @@ public static class HttpClientTokenIntrospectionExtensions
         clone.Method = HttpMethod.Post;
         clone.Parameters.AddRequired(OidcConstants.TokenIntrospectionRequest.Token, request.Token);
         clone.Parameters.AddOptional(OidcConstants.TokenIntrospectionRequest.TokenTypeHint, request.TokenTypeHint);
+
+        if (request.ResponseFormat is IntrospectionResponseFormat.Jwt)
+        {
+            clone.Headers.Accept.Clear();
+            clone.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}"));
+        }
+
         clone.Prepare();
 
         HttpResponseMessage response;
         try
         {
-            if (request.ResponseFormat is IntrospectionResponseFormat.Jwt)
-            {
-                clone.Headers.Accept.Clear();
-                clone.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}"));
-            }
-
             response = await client.SendAsync(clone, cancellationToken).ConfigureAwait();
         }
         catch (OperationCanceledException)
