@@ -1053,6 +1053,12 @@ namespace Duende.IdentityModel.Client
     public class IntrospectionClientOptions : Duende.IdentityModel.Client.ClientOptions
     {
         public IntrospectionClientOptions() { }
+        public Duende.IdentityModel.Client.IntrospectionResponseFormat ResponseFormat { get; set; }
+    }
+    public enum IntrospectionResponseFormat
+    {
+        Json = 0,
+        Jwt = 1,
     }
     public static class JsonElementExtensions
     {
@@ -1258,6 +1264,7 @@ namespace Duende.IdentityModel.Client
     public class TokenIntrospectionRequest : Duende.IdentityModel.Client.ProtocolRequest
     {
         public TokenIntrospectionRequest() { }
+        public Duende.IdentityModel.Client.IntrospectionResponseFormat ResponseFormat { get; set; }
         public string Token { get; set; }
         public string? TokenTypeHint { get; set; }
     }

@@ -308,4 +308,184 @@ public class TokenIntrospectionTests
         response.IsActive.ShouldBeTrue();
         response.Claims.ShouldNotBeEmpty();
     }
+
+    [Fact]
+    public async Task Http_request_should_have_correct_accept_header_for_jwt_response()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.jwt"));
+        var jwtOptions = new IntrospectionClientOptions
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ClientSecret = "secret",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        };
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
+
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(Endpoint)
+        };
+
+        var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
+
+        _ = await introspectionClient.Introspect("token");
+
+        handler.Request.ShouldNotBeNull();
+        var acceptHeaders = handler.Request.Headers.Accept.ToArray();
+        acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}")]);
+    }
+
+    [Fact]
+    public async Task Http_request_should_have_correct_accept_header_when_using_Client_extension()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.jwt"));
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
+
+        var client = new HttpClient(handler);
+        var response = await client.IntrospectTokenAsync(new TokenIntrospectionRequest
+        {
+            Address = Endpoint,
+            Token = "token",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        });
+
+        response.ShouldNotBeNull();
+        var acceptHeaders = handler.Request.Headers.Accept.ToArray();
+        acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse($"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}")]);
+    }
+
+    [Fact]
+    public async Task Http_request_should_have_correct_accept_header_for_json_response()
+    {
+        // Leaving the ResponseFormat unset here as default (JSON) should result in the correct Accept header
+        var jwtOptions = new IntrospectionClientOptions
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ClientSecret = "secret"
+        };
+
+        var handler = new NetworkHandler("{}", HttpStatusCode.OK);
+        handler.MediaType = $"application/json";
+
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(Endpoint)
+        };
+
+        var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
+
+        _ = await introspectionClient.Introspect("token");
+
+        handler.Request.ShouldNotBeNull();
+        var acceptHeaders = handler.Request.Headers.Accept.ToArray();
+        acceptHeaders.ShouldBe([MediaTypeWithQualityHeaderValue.Parse("application/json")]);
+    }
+
+    [Fact]
+    public async Task Jwt_introspection_response_should_be_handled_correctly()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.jwt"));
+        var jwtOptions = new IntrospectionClientOptions
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ClientSecret = "secret",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        };
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
+
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(Endpoint)
+        };
+
+        var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
+        var introspectionResponse = await introspectionClient.Introspect("token");
+
+        introspectionResponse.IsError.ShouldBeFalse();
+        introspectionResponse.ErrorType.ShouldBe(ResponseErrorType.None);
+        introspectionResponse.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionResponse.IsActive.ShouldBeTrue();
+        introspectionResponse.Raw.ShouldBe(document);
+
+        var expectedClaims = new Claim[]
+        {
+            new("active", "true", ClaimValueTypes.String, "https://as.example.com/"),
+            new("iss", "https://as.example.com/", ClaimValueTypes.String, "https://as.example.com/"),
+            new("aud", "https://rs.example.com/resource", ClaimValueTypes.String, "https://as.example.com/"),
+            new("iat", "1514797822", ClaimValueTypes.String, "https://as.example.com/"),
+            new("exp", "1514797942", ClaimValueTypes.String, "https://as.example.com/"),
+            new("client_id", "paiB2goo0a", ClaimValueTypes.String, "https://as.example.com/"),
+            new("sub", "Z5O3upPC88QrAjx00dis", ClaimValueTypes.String, "https://as.example.com/"),
+            new("birthdate", "1982-02-01", ClaimValueTypes.String, "https://as.example.com/"),
+            new("given_name", "John", ClaimValueTypes.String, "https://as.example.com/"),
+            new("family_name", "Doe", ClaimValueTypes.String, "https://as.example.com/"),
+            new("jti", "t1FoCCaZd4Xv4ORJUWVUeTZfsKhW30CQCrWDDjwXy6w", ClaimValueTypes.String, "https://as.example.com/"),
+            new("scope", "read", ClaimValueTypes.String, "https://as.example.com/"),
+            new("scope", "write", ClaimValueTypes.String, "https://as.example.com/"),
+            new("scope", "dolphin", ClaimValueTypes.String, "https://as.example.com/")
+        };
+
+        introspectionResponse.Claims.ShouldNotBeEmpty();
+        introspectionResponse.Claims.ShouldBe(expectedClaims, new ClaimComparer());
+    }
+
+    [Fact]
+    public async Task Json_introspection_response_should_be_handled_correctly()
+    {
+        var document = File.ReadAllText(FileName.Create("success_introspection_response.json"));
+        var jwtOptions = new IntrospectionClientOptions
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ClientSecret = "secret",
+            ResponseFormat = IntrospectionResponseFormat.Jwt
+        };
+
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        handler.MediaType = "application/json";
+
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(Endpoint)
+        };
+
+        var introspectionClient = new IntrospectionClient(httpClient, jwtOptions);
+
+        var introspectionResponse = await introspectionClient.Introspect("token");
+
+        introspectionResponse.IsError.ShouldBeFalse();
+        introspectionResponse.ErrorType.ShouldBe(ResponseErrorType.None);
+        introspectionResponse.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionResponse.IsActive.ShouldBeTrue();
+        introspectionResponse.Raw.ShouldBe(document);
+
+        var expected = new Claim[]
+        {
+            new("aud", "https://idsvr4/resources", ClaimValueTypes.String, "https://idsvr4"),
+            new("aud", "api1", ClaimValueTypes.String, "https://idsvr4"),
+            new("iss", "https://idsvr4", ClaimValueTypes.String, "https://idsvr4"),
+            new("nbf", "1475824871", ClaimValueTypes.String, "https://idsvr4"),
+            new("exp", "1475828471", ClaimValueTypes.String, "https://idsvr4"),
+            new("client_id", "client", ClaimValueTypes.String, "https://idsvr4"),
+            new("sub", "1", ClaimValueTypes.String, "https://idsvr4"),
+            new("auth_time", "1475824871", ClaimValueTypes.String, "https://idsvr4"),
+            new("idp", "local", ClaimValueTypes.String, "https://idsvr4"),
+            new("amr", "password", ClaimValueTypes.String, "https://idsvr4"),
+            new("active", "true", ClaimValueTypes.String, "https://idsvr4"),
+            new("scope", "api1", ClaimValueTypes.String, "https://idsvr4"),
+            new("scope", "api2", ClaimValueTypes.String, "https://idsvr4"),
+        };
+
+        introspectionResponse.Claims.ShouldNotBeEmpty();
+        introspectionResponse.Claims.ShouldBe(expected, new ClaimComparer());
+    }
 }

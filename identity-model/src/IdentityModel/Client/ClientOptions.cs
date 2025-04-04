@@ -13,7 +13,15 @@ public class TokenClientOptions : ClientOptions
 /// Options for IntrospectionClient
 /// </summary>
 public class IntrospectionClientOptions : ClientOptions
-{ }
+{
+    /// <summary>
+    /// Gets or sets the response format to request from the introspection endpoint.
+    /// </summary>
+    /// <value>
+    /// The introspection response format (JSON or JWT). Defaults to JSON.
+    /// </value>
+    public IntrospectionResponseFormat ResponseFormat { get; set; } = IntrospectionResponseFormat.Json;
+}
 
 /// <summary>
 /// Base-class protocol client options

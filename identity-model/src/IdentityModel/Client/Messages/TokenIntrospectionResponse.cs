@@ -19,44 +19,66 @@ public class TokenIntrospectionResponse : ProtocolResponse
     /// <returns></returns>
     protected override Task InitializeAsync(object? initializationData = null)
     {
-        if (!IsError)
+        if (IsError)
         {
-            if (Json == null)
+            return Task.CompletedTask;
+        }
+
+        var contentType = HttpResponse?.Content?.Headers.ContentType?.MediaType;
+        if (contentType is $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}" && !string.IsNullOrWhiteSpace(Raw))
+        {
+            var parts = Raw!.Split('.');
+            if (parts.Length != 3)
             {
-                throw new InvalidOperationException("Json is null"); // TODO better exception
+                throw new InvalidOperationException("Invalid JWT format");
             }
-            var issuer = Json?.TryGetString("iss");
-            var claims = Json?.ToClaims(issuer, "scope").ToList() ?? new List<Claim>();
 
-            // due to a bug in identityserver - we need to be able to deal with the scope list both in array as well as space-separated list format
-            var scope = Json?.TryGetValue("scope");
+            var payload = parts[1];
+            var jsonString = Base64Url.Decode(payload);
+            using var rootDoc = JsonDocument.Parse(jsonString);
 
-            // scope element exists
-            // if (scope != null)
-            // {
-            // it's an array
-            if (scope?.ValueKind == JsonValueKind.Array)
+            if (rootDoc.RootElement.TryGetProperty("token_introspection", out var introspectionElement))
             {
-                foreach (var item in scope?.EnumerateArray() ?? Enumerable.Empty<JsonElement>())
-                {
-                    claims.Add(new Claim("scope", item.ToString(), ClaimValueTypes.String, issuer));
-                }
+                using var introspectionDoc = JsonDocument.Parse(introspectionElement.GetRawText()!);
+                Json = introspectionDoc.RootElement.Clone();
             }
             else
             {
-                // it's a string
-                var scopeString = scope.ToString() ?? "";
-
-                var scopes = scopeString.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var scopeValue in scopes)
-                {
-                    claims.Add(new Claim("scope", scopeValue, ClaimValueTypes.String, issuer));
-                }
+                throw new InvalidOperationException("token_introspection claim not found in JWT payload");
             }
-            // }
-
-            Claims = claims;
         }
+
+        if (Json == null)
+        {
+            throw new InvalidOperationException("Json is null"); // TODO better exception
+        }
+
+        var issuer = Json?.TryGetString("iss");
+        var claims = Json?.ToClaims(issuer, "scope").ToList() ?? new List<Claim>();
+
+        // due to a bug in identityserver - we need to be able to deal with the scope list both in array as well as space-separated list format
+        var scope = Json?.TryGetValue("scope");
+
+        if (scope?.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in scope?.EnumerateArray() ?? Enumerable.Empty<JsonElement>())
+            {
+                claims.Add(new Claim("scope", item.ToString(), ClaimValueTypes.String, issuer));
+            }
+        }
+        else
+        {
+            // it's a string
+            var scopeString = scope.ToString() ?? "";
+
+            var scopes = scopeString.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var scopeValue in scopes)
+            {
+                claims.Add(new Claim("scope", scopeValue, ClaimValueTypes.String, issuer));
+            }
+        }
+
+        Claims = claims;
 
         return Task.CompletedTask;
     }
