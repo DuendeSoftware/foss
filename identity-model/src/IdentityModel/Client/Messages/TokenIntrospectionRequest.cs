@@ -24,4 +24,9 @@ public class TokenIntrospectionRequest : ProtocolRequest
     /// The token type hint.
     /// </value>
     public string? TokenTypeHint { get; set; }
+
+    /// <summary>
+    /// Sets the desired format for the introspection response.
+    /// </summary>
+    public IntrospectionResponseFormat ResponseFormat { get; set; } = IntrospectionResponseFormat.Json;
 }
