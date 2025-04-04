@@ -75,8 +75,7 @@ public class ProtocolResponse
         // either 200 or 400 - both cases need a JSON response (if present), otherwise error
         try
         {
-            var isJwtResponse = httpResponse.Content?.Headers.ContentType?.MediaType is $"application/{JwtClaimTypes.JwtTypes.IntrospectionJwtResponse}";
-            if (!skipJson && content.IsPresent() && !isJwtResponse)
+            if (!skipJson && content.IsPresent() && !httpResponse.IsContentJwtMediaType())
             {
                 response.Json = JsonDocument.Parse(content!).RootElement;
             }
@@ -95,7 +94,7 @@ public class ProtocolResponse
             }
         }
 
-        if (!skipJson)
+        if (!skipJson || (content.IsPresent() && httpResponse.IsContentJwtMediaType()))
         {
             await response.InitializeAsync(initializationData).ConfigureAwait();
         }
