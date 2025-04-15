@@ -7,6 +7,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement;
 
@@ -51,6 +52,7 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 
         services.TryAddTransient<IDPoPProofService, DefaultDPoPProofService>();
         services.TryAddTransient<IDPoPKeyStore, DefaultDPoPKeyStore>();
+        services.TryAddTransient<IDPopProofRequestHandler, DPopProofRequestHandler>();
 
         // ** DistributedDPoPNonceStore **
         // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
@@ -61,14 +63,13 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 #pragma warning restore CS0618 // Type or member is obsolete
 
         services.TryAddSingleton(TimeProvider.System);
+        services.TryAddTransient<ISendRequestRetryPolicy, RetryOnUnauthorizedPolicy>();
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
 
         services.TryAddTransient<IClientCredentialsCacheKeyGenerator, DefaultClientCredentialsCacheKeyGenerator>();
         services.TryAddTransient<IDPoPNonceStoreKeyGenerator, DPoPNonceStoreKeyGenerator>();
-#pragma warning disable CS0618 // Type or member is obsolete
         services.AddSingleton<AccessTokenManagementMetrics>();
-#pragma warning restore CS0618 // Type or member is obsolete
 
         return new ClientCredentialsTokenManagementBuilder(services);
     }
@@ -132,19 +133,45 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
             var dpopService = provider.GetRequiredService<IDPoPProofService>();
             var dpopNonceStore = provider.GetRequiredService<IDPoPNonceStore>();
             var accessTokenManagementService = provider.GetRequiredService<IClientCredentialsTokenManagementService>();
+
+            var options = provider.GetRequiredService<IOptions<ClientCredentialsTokenManagementOptions>>();
+            if (options.Value.UsePreviewExtensibilityOnAccessTokenHandlers)
+            {
+                var logger = provider.GetRequiredService<ILogger<ClientCredentialsTokenRetriever>>();
+
+                var retriever = new ClientCredentialsTokenRetriever(accessTokenManagementService, tokenClientName);
+                var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
+                var retryPolicy = provider.GetRequiredService<ISendRequestRetryPolicy>();
+
+                var accessTokenHandler = new AccessTokenHandler<ClientCredentialsTokenRetriever, ClientCredentialsToken>(
+                    retryPolicy: retryPolicy,
+                    tokenRetriever: retriever,
+                    dPoPProofRequestHandler: dpopHandler,
+                    logger: logger);
+
+                return accessTokenHandler;
+            }
+            else
+            {
 #pragma warning disable CS0618 // Type or member is obsolete
-            var logger = provider.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>();
 
-            return new ClientCredentialsTokenHandler(
-                metrics: metrics,
-                dPoPProofService: dpopService,
-                dPoPNonceStore: dpopNonceStore,
-                accessTokenManagementService: accessTokenManagementService,
-                logger: logger,
-                tokenClientName: tokenClientName);
-        });
+                var logger = provider.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>();
 
+                var clientCredentialsTokenHandler = new ClientCredentialsTokenHandler(
+                    metrics: metrics,
+                    dPoPProofService: dpopService,
+                    dPoPNonceStore: dpopNonceStore,
+                    accessTokenManagementService: accessTokenManagementService,
+                    logger: logger,
+                    tokenClientName: tokenClientName);
+
+                return clientCredentialsTokenHandler;
 #pragma warning restore CS0618 // Type or member is obsolete
 
+            }
+        });
+
+
     }
+
 }

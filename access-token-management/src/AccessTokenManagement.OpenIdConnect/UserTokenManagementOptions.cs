@@ -49,4 +49,13 @@ public class UserTokenManagementOptions
     /// The string representation of the JSON web key to use for DPoP.
     /// </summary>
     public string? DPoPJsonWebKey { get; set; }
+
+    /// <summary>
+    /// By default, access token management uses <see cref="AccessTokenHandler"/>. Enabling this preview flag will replace this
+    /// with a more extensible model that allows you to use your own <see cref="ITokenRetriever{TToken}"/> and <see cref="ISendRequestRetryPolicy"/>
+    /// It switches to use <see cref="AccessTokenHandler{TTokenRetriever,TToken}"/>
+    /// 
+    /// In future versions, this will be the default behavior.
+    /// </summary>
+    public bool UsePreviewExtensibilityOnAccessTokenHandlers { get; set; }
 }

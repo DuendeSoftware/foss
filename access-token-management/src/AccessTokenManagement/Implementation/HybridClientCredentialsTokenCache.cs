@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Duende.AccessTokenManagement;
+namespace Duende.AccessTokenManagement.Implementation;
 
 /// <summary>
 /// Client access token cache using IDistributedCache

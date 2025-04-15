@@ -62,7 +62,7 @@ public static class HostingExtensions
 
         // registers HTTP client that uses the managed user access token
         builder.Services.AddTransient<RemoteApiService>();
-        builder.Services.AddUserAccessTokenHttpClient("demoApiClient", configureClient: client =>
+        builder.Services.AddUserAccessTokenHttpClient("demoApiClient").ConfigureHttpClient(client =>
         {
             client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
         });

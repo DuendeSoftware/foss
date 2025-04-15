@@ -112,15 +112,14 @@
         public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddBlazorServerAccessTokenManagement<TTokenStore>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services)
             where TTokenStore :  class, Duende.AccessTokenManagement.OpenIdConnect.IUserTokenStore { }
         public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientAccessTokenHandler(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder httpClientBuilder, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientAccessTokenHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string name, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Action<System.Net.Http.HttpClient>? configureClient = null) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientAccessTokenHttpClient<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Action<System.Net.Http.HttpClient>? configureClient = null)
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientAccessTokenHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string name, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientAccessTokenHttpClient<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null)
             where T :  class { }
         public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddOpenIdConnectAccessTokenManagement(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
         public static Microsoft.Extensions.DependencyInjection.IServiceCollection AddOpenIdConnectAccessTokenManagement(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> configureAction) { }
         public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddUserAccessTokenHandler(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder httpClientBuilder, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddUserAccessTokenHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string name, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Action<System.Net.Http.HttpClient>? configureClient = null) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddUserAccessTokenHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string name, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Action<System.IServiceProvider, System.Net.Http.HttpClient>? configureClient = null) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddUserAccessTokenHttpClient<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Action<System.IServiceProvider, System.Net.Http.HttpClient>? configureClient = null)
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddUserAccessTokenHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string name, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddUserAccessTokenHttpClient<T>(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null)
             where T :  class { }
     }
     [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
@@ -180,6 +179,7 @@
         public string? DPoPJsonWebKey { get; set; }
         public System.TimeSpan RefreshBeforeExpiration { get; set; }
         public bool UseChallengeSchemeScopedTokens { get; set; }
+        public bool UsePreviewExtensibilityOnAccessTokenHandlers { get; set; }
     }
     public class UserTokenRequestParameters : Duende.AccessTokenManagement.TokenRequestParameters
     {

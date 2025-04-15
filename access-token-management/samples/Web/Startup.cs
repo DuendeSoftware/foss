@@ -81,7 +81,7 @@ public static class Startup
         });
 
         // registers HTTP client that uses the managed user access token
-        builder.Services.AddUserAccessTokenHttpClient("user",
+        builder.Services.AddUserAccessTokenHttpClient("user").ConfigureHttpClient(
             configureClient: client =>
             {
                 client.BaseAddress = new Uri(config.ApiBaseUrl);
@@ -93,15 +93,19 @@ public static class Startup
             new UserTokenRequestParameters
             {
                 Resource = "urn:resource1"
-            },
+            })
+            .ConfigureHttpClient(
             configureClient: client =>
             {
                 client.BaseAddress = new Uri(config.ApiBaseUrl);
             });
 
         // registers HTTP client that uses the managed client access token
-        builder.Services.AddClientAccessTokenHttpClient("client",
-            configureClient: client => { client.BaseAddress = new Uri(config.ApiBaseUrl); });
+        builder.Services.AddClientAccessTokenHttpClient("client")
+            .ConfigureHttpClient(configureClient: client =>
+            {
+                client.BaseAddress = new Uri(config.ApiBaseUrl);
+            });
 
         // registers HTTP client that uses the managed client access token and
         // includes a resource indicator
@@ -109,8 +113,11 @@ public static class Startup
             new UserTokenRequestParameters
             {
                 Resource = "urn:resource1"
-            },
-            configureClient: client => { client.BaseAddress = new Uri(config.ApiBaseUrl); });
+            })
+            .ConfigureHttpClient(configureClient: client =>
+            {
+                client.BaseAddress = new Uri(config.ApiBaseUrl);
+            });
 
         // registers a typed HTTP client with token management support
         builder.Services.AddHttpClient<TypedUserClient>(client =>

@@ -59,12 +59,18 @@ public static class Startup
         builder.Services.AddTransient<IClientAssertionService, ClientAssertionService>();
 
         // registers HTTP client that uses the managed user access token
-        builder.Services.AddUserAccessTokenHttpClient("user_client",
-            configureClient: client => { client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/"); });
+        builder.Services.AddUserAccessTokenHttpClient("user_client")
+            .ConfigureHttpClient(configureClient: client =>
+            {
+                client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
+            });
 
         // registers HTTP client that uses the managed client access token
-        builder.Services.AddClientAccessTokenHttpClient("client",
-            configureClient: client => { client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/"); });
+        builder.Services.AddClientAccessTokenHttpClient("client")
+            .ConfigureHttpClient(configureClient: client =>
+            {
+                client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
+            });
 
         // registers a typed HTTP client with token management support
         builder.Services.AddHttpClient<TypedUserClient>(client =>

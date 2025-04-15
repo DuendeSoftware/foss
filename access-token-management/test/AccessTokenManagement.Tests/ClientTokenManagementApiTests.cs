@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
+using Duende.AccessTokenManagement.Implementation;
 using Duende.IdentityModel;
 using Duende.IdentityServer.Configuration;
 using Microsoft.AspNetCore.Authentication;
