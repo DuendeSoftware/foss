@@ -3,7 +3,7 @@
 
 namespace Duende.AccessTokenManagement;
 
-public interface ISendRequestRetryPolicy
+public interface ISendRequestRetryHandler
 {
     Task<HttpResponseMessage> Handle(
         HttpRequestMessage request,

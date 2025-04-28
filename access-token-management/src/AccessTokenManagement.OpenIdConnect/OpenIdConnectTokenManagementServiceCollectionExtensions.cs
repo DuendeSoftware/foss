@@ -90,7 +90,7 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Adds a typed HTTP client for the factory that automatically sends the current user access token
+    /// Adds a named HTTP client that automatically sends the current user access token
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/>.</param>
     /// <param name="name">The name of the http client</param>
@@ -102,29 +102,130 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
             .AddUserAccessTokenHandler(parameters);
 
     /// <summary>
-    /// Adds a typed HTTP client for the factory that automatically sends the current user access token
+    /// Adds a named HTTP client that automatically sends the current user access token
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="name">The name of the http client</param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddUserAccessTokenHttpClient(
+        this IServiceCollection services,
+        string name,
+        Action<HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null) => services.AddHttpClient(name)
+            .AddUserAccessTokenHandler(parameters)
+            .ConfigureHttpClient(configureClient);
+
+    /// <summary>
+    /// Adds a typed HTTP client that automatically sends the current user access token
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="name">The name of the http client</param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
+    /// <param name="configureClient">Additional configuration with service provider instance.</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddUserAccessTokenHttpClient(this IServiceCollection services,
+        string name,
+        Action<IServiceProvider, HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null
+        ) =>
+        services.AddHttpClient(name)
+            .AddUserAccessTokenHandler(parameters)
+            .ConfigureHttpClient(configureClient);
+
+
+    /// <summary>
+    /// Adds a typed HTTP client that automatically sends the current user access token
     /// </summary>
     /// <typeparam name="T">The typed http client</typeparam>
     /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-    /// <param name="parameters"></param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
     /// <returns></returns>
     public static IHttpClientBuilder AddUserAccessTokenHttpClient<T>(this IServiceCollection services,
         UserTokenRequestParameters? parameters = null) where T : class => services.AddHttpClient<T>()
             .AddUserAccessTokenHandler(parameters);
 
+
     /// <summary>
-    /// Adds a typed HTTP client for the factory that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// Adds a typed HTTP client that automatically sends the current user access token
+    /// </summary>
+    /// <typeparam name="T">The typed http client</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddUserAccessTokenHttpClient<T>(
+        this IServiceCollection services,
+        Action<HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null) where T : class =>
+        services.AddHttpClient<T>()
+        .AddUserAccessTokenHandler(parameters)
+        .ConfigureHttpClient(configureClient);
+
+    /// <summary>
+    /// Adds a typed HTTP client that automatically sends the current user access token
+    /// </summary>
+    /// <typeparam name="T">The typed http client</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddUserAccessTokenHttpClient<T>(
+        this IServiceCollection services,
+        Action<IServiceProvider, HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null) where T : class =>
+        services.AddHttpClient<T>()
+            .AddUserAccessTokenHandler(parameters)
+            .ConfigureHttpClient(configureClient);
+
+    /// <summary>
+    /// Adds a typed HTTP client that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
     /// </summary>
     /// <typeparam name="T">The typed http client</typeparam>
     /// <param name="services">The <see cref="IServiceCollection"/>.</param>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    public static IHttpClientBuilder AddClientAccessTokenHttpClient<T>(this IServiceCollection services,
-        UserTokenRequestParameters? parameters = null) where T : class => services.AddHttpClient<T>()
+    public static IHttpClientBuilder AddClientAccessTokenHttpClient<T>(
+        this IServiceCollection services,
+        UserTokenRequestParameters? parameters = null
+        ) where T : class => services.AddHttpClient<T>()
             .AddClientAccessTokenHandler(parameters);
 
     /// <summary>
-    /// Adds a named HTTP client for the factory that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// Adds a typed HTTP client that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// </summary>
+    /// <typeparam name="T">The typed http client</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddClientAccessTokenHttpClient<T>(
+        this IServiceCollection services,
+        Action<HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null) where T : class =>
+        services.AddHttpClient<T>()
+        .AddClientAccessTokenHandler(parameters)
+        .ConfigureHttpClient(configureClient);
+
+    /// <summary>
+    /// Adds a typed HTTP client that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// </summary>
+    /// <typeparam name="T">The typed http client</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="parameters">Additional optional parameters for a user access token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddClientAccessTokenHttpClient<T>(
+        this IServiceCollection services,
+        Action<IServiceProvider, HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null) where T : class =>
+        services.AddHttpClient<T>()
+            .AddClientAccessTokenHandler(parameters)
+            .ConfigureHttpClient(configureClient);
+
+    /// <summary>
+    /// Adds a named HTTP client that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection"/>.</param>
     /// <param name="name">The name of the client.</param>
@@ -134,6 +235,37 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         string name,
         UserTokenRequestParameters? parameters = null) => services.AddHttpClient(name)
             .AddClientAccessTokenHandler(parameters);
+    /// <summary>
+    /// Adds a named HTTP client that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="name">The name of the client.</param>
+    /// <param name="parameters">Additional optional parameters for a client credentials token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddClientAccessTokenHttpClient(this IServiceCollection services,
+        string name,
+        Action<HttpClient> configureClient,
+        UserTokenRequestParameters? parameters = null) =>
+        services.AddHttpClient(name)
+            .AddClientAccessTokenHandler(parameters)
+            .ConfigureHttpClient(configureClient);
+
+    /// <summary>
+    /// Adds a named HTTP client that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="name">The name of the client.</param>
+    /// <param name="parameters">Additional optional parameters for a client credentials token request</param>
+    /// <param name="configureClient">Additional configuration parameters</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddClientAccessTokenHttpClient(this IServiceCollection services,
+        string name,
+        Action<IServiceProvider, HttpClient> configureClient,
+    UserTokenRequestParameters? parameters = null) =>
+        services.AddHttpClient(name)
+            .AddClientAccessTokenHandler(parameters)
+            .ConfigureHttpClient(configureClient);
 
 
     /// <summary>
@@ -157,10 +289,10 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
                 var userAccessor = provider.GetRequiredService<IUserAccessor>();
                 var retriever = new OpenIdConnectUserAccessTokenRetriever(userAccessor, userTokenManagement, parameters);
                 var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
-                var retryPolicy = provider.GetRequiredService<ISendRequestRetryPolicy>();
+                var retryPolicy = provider.GetRequiredService<ISendRequestRetryHandler>();
 
                 var accessTokenHandler = new AccessTokenHandler<OpenIdConnectUserAccessTokenRetriever, UserToken>(
-                    retryPolicy: retryPolicy,
+                    retryHandler: retryPolicy,
                     tokenRetriever: retriever,
                     dPoPProofRequestHandler: dpopHandler,
                     logger: logger);
@@ -210,10 +342,10 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
                 var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
                 var retriever = new OpenIdConnectClientAccessTokenRetriever(httpContextAccessor, parameters);
                 var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
-                var retryPolicy = provider.GetRequiredService<ISendRequestRetryPolicy>();
+                var retryPolicy = provider.GetRequiredService<ISendRequestRetryHandler>();
 
                 var accessTokenHandler = new AccessTokenHandler<OpenIdConnectClientAccessTokenRetriever, ClientCredentialsToken>(
-                    retryPolicy: retryPolicy,
+                    retryHandler: retryPolicy,
                     tokenRetriever: retriever,
                     dPoPProofRequestHandler: dpopHandler,
                     logger: logger);

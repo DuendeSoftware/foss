@@ -63,7 +63,7 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 #pragma warning restore CS0618 // Type or member is obsolete
 
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddTransient<ISendRequestRetryPolicy, RetryOnUnauthorizedPolicy>();
+        services.TryAddTransient<ISendRequestRetryHandler, RetryWhenUnauthorizedHandler>();
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
 
@@ -141,10 +141,10 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 
                 var retriever = new ClientCredentialsTokenRetriever(accessTokenManagementService, tokenClientName);
                 var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
-                var retryPolicy = provider.GetRequiredService<ISendRequestRetryPolicy>();
+                var retryPolicy = provider.GetRequiredService<ISendRequestRetryHandler>();
 
                 var accessTokenHandler = new AccessTokenHandler<ClientCredentialsTokenRetriever, ClientCredentialsToken>(
-                    retryPolicy: retryPolicy,
+                    retryHandler: retryPolicy,
                     tokenRetriever: retriever,
                     dPoPProofRequestHandler: dpopHandler,
                     logger: logger);

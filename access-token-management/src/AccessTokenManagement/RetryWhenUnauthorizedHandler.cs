@@ -6,16 +6,22 @@ using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement;
 
-internal class RetryOnUnauthorizedPolicy
+/// <summary>
+/// Retries requests that somehow return unauthorized. Two conditions are expected:
+/// 1. Access token has expired.
+/// 2. Dpop nonce is invalid or missing and should be sent. 
+/// </summary>
+/// <param name="logger"></param>
+internal class RetryWhenUnauthorizedHandler
 (
-    ILogger<RetryOnUnauthorizedPolicy> logger) : ISendRequestRetryPolicy
+    ILogger<RetryWhenUnauthorizedHandler> logger) : ISendRequestRetryHandler
 {
     public async Task<HttpResponseMessage> Handle(
         HttpRequestMessage request,
         SendRequestWithToken sendRequestWithToken,
         CancellationToken cancellationToken)
     {
-        var response = await sendRequestWithToken(new AccessTokenHandlerRequestData()
+        var response = await sendRequestWithToken(new AccessTokenHandlerRequestParameters()
         {
             Request = request
         }, cancellationToken).ConfigureAwait(false);
@@ -24,7 +30,6 @@ internal class RetryOnUnauthorizedPolicy
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            response.Dispose();
             var forceTokenRefresh = !response.IsDPoPError();
             if (!forceTokenRefresh && !string.IsNullOrEmpty(dPoPNonce))
             {
@@ -35,7 +40,9 @@ internal class RetryOnUnauthorizedPolicy
                 logger.TokenNotAcceptedWhenSendingRequest();
             }
 
-            response = await sendRequestWithToken(new AccessTokenHandlerRequestData()
+            // Dispose the previous request and send it again. 
+            response.Dispose();
+            response = await sendRequestWithToken(new AccessTokenHandlerRequestParameters()
             {
                 Request = request,
                 DPoPNonce = dPoPNonce,
@@ -45,17 +52,4 @@ internal class RetryOnUnauthorizedPolicy
 
         return response;
     }
-}
-
-public delegate Task<HttpResponseMessage> SendRequestWithToken(AccessTokenHandlerRequestData data, CancellationToken cancellationToken);
-
-/// <summary>
-/// Captures information about requests being sent via access token handler,
-/// so that the retry policy and the access token handler can work together 
-/// </summary>
-public record AccessTokenHandlerRequestData
-{
-    public required HttpRequestMessage Request { get; init; }
-    public string? DPoPNonce { get; init; }
-    public bool ForceTokenRefresh { get; init; }
 }

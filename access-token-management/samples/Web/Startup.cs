@@ -81,7 +81,7 @@ public static class Startup
         });
 
         // registers HTTP client that uses the managed user access token
-        builder.Services.AddUserAccessTokenHttpClient("user").ConfigureHttpClient(
+        builder.Services.AddUserAccessTokenHttpClient("user",
             configureClient: client =>
             {
                 client.BaseAddress = new Uri(config.ApiBaseUrl);
@@ -90,34 +90,27 @@ public static class Startup
         // registers HTTP client that uses the managed user access token and
         // includes a resource indicator
         builder.Services.AddUserAccessTokenHttpClient("user-resource",
-            new UserTokenRequestParameters
+            parameters: new UserTokenRequestParameters
             {
                 Resource = "urn:resource1"
-            })
-            .ConfigureHttpClient(
+            },
             configureClient: client =>
             {
                 client.BaseAddress = new Uri(config.ApiBaseUrl);
             });
 
         // registers HTTP client that uses the managed client access token
-        builder.Services.AddClientAccessTokenHttpClient("client")
-            .ConfigureHttpClient(configureClient: client =>
-            {
-                client.BaseAddress = new Uri(config.ApiBaseUrl);
-            });
+        builder.Services.AddClientAccessTokenHttpClient("client",
+            configureClient: client => { client.BaseAddress = new Uri(config.ApiBaseUrl); });
 
         // registers HTTP client that uses the managed client access token and
         // includes a resource indicator
         builder.Services.AddClientAccessTokenHttpClient("client-resource",
-            new UserTokenRequestParameters
+            parameters: new UserTokenRequestParameters
             {
                 Resource = "urn:resource1"
-            })
-            .ConfigureHttpClient(configureClient: client =>
-            {
-                client.BaseAddress = new Uri(config.ApiBaseUrl);
-            });
+            },
+            configureClient: client => { client.BaseAddress = new Uri(config.ApiBaseUrl); });
 
         // registers a typed HTTP client with token management support
         builder.Services.AddHttpClient<TypedUserClient>(client =>

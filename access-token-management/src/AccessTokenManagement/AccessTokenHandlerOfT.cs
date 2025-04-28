@@ -19,16 +19,16 @@ public sealed class AccessTokenHandler<TTokenRetriever, TToken> : DelegatingHand
     where TTokenRetriever : ITokenRetriever<TToken>
 {
     private TTokenRetriever _tokenRetriever;
-    private readonly ISendRequestRetryPolicy _retryPolicy;
+    private readonly ISendRequestRetryHandler _retryHandler;
     private readonly IDPopProofRequestHandler _dPoPProofRequestHandler;
     private readonly ILogger<TTokenRetriever> _logger;
 
-    internal AccessTokenHandler(ISendRequestRetryPolicy retryPolicy,
+    internal AccessTokenHandler(ISendRequestRetryHandler retryHandler,
         TTokenRetriever tokenRetriever,
         IDPopProofRequestHandler dPoPProofRequestHandler,
         ILogger<TTokenRetriever> logger)
     {
-        _retryPolicy = retryPolicy;
+        _retryHandler = retryHandler;
         _dPoPProofRequestHandler = dPoPProofRequestHandler;
         _logger = logger;
         _tokenRetriever = tokenRetriever;
@@ -41,29 +41,36 @@ public sealed class AccessTokenHandler<TTokenRetriever, TToken> : DelegatingHand
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var response = await _retryPolicy.Handle(request, SendRequestWithToken, cancellationToken);
+        var response = await _retryHandler.Handle(request, SendRequestWithToken, cancellationToken);
 
         return response;
     }
 
     private async Task<HttpResponseMessage> SendRequestWithToken(
-        AccessTokenHandlerRequestData data,
+        AccessTokenHandlerRequestParameters parameters,
         CancellationToken cancellationToken)
     {
-        var request = data.Request;
+        var request = parameters.Request;
         // Add a log scope that adds the Request URL to all subsequent log messages
         using var logScope = _logger.BeginScope(
             (OTelParameters.RequestUrl, request.RequestUri?.GetLeftPart(UriPartial.Path))
         );
 
-        var token = await _tokenRetriever.GetToken(request, data.ForceTokenRefresh, cancellationToken);
+        var token = await _tokenRetriever.GetToken(request, parameters.ForceTokenRefresh, cancellationToken);
 
         var scheme = token.AccessTokenType ?? OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer;
 
         if (!string.IsNullOrWhiteSpace(token.DPoPJsonWebKey))
         {
+            var dpopParameters = new DPopProofRequestParameters()
+            {
+                ClientCredentialsToken = token,
+                DPoPNonce = parameters.DPoPNonce,
+                Request = request
+            };
+
             // looks like this is a DPoP bound token, so try to generate the proof token
-            if (!await _dPoPProofRequestHandler.TryAcquireDPopProof(request, data.DPoPNonce, token, cancellationToken))
+            if (!await _dPoPProofRequestHandler.TryAcquireDPopProof(dpopParameters, cancellationToken))
             {
                 // failed or opted out for this request, to fall back to Bearer 
                 scheme = OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer;

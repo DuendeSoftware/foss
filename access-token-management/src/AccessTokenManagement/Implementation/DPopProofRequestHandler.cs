@@ -17,11 +17,14 @@ internal sealed class DPopProofRequestHandler(
     IDPoPProofService dPoPProofService,
     ILogger<DPopProofRequestHandler> logger) : IDPopProofRequestHandler
 {
-    public async Task<bool> TryAcquireDPopProof(HttpRequestMessage request, string? dPoPNonce, ClientCredentialsToken token,
+    public async Task<bool> TryAcquireDPopProof(DPopProofRequestParameters parameters,
         CancellationToken cancellationToken)
     {
+        var request = parameters.Request;
+        
         request.ClearDPoPProofToken();
 
+        var token = parameters.ClientCredentialsToken;
         if (string.IsNullOrEmpty(token.DPoPJsonWebKey))
         {
             return false;
@@ -34,7 +37,7 @@ internal sealed class DPopProofRequestHandler(
             Url = request.GetDPoPUrl(),
             Method = request.Method.ToString(),
             DPoPJsonWebKey = token.DPoPJsonWebKey,
-            DPoPNonce = dPoPNonce,
+            DPoPNonce = parameters.DPoPNonce,
             AdditionalPayloadClaims = additionalClaims,
         };
         var proofToken = await dPoPProofService.CreateProofTokenAsync(dPoPProofRequest).ConfigureAwait(false);
