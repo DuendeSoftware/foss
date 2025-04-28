@@ -3,7 +3,7 @@
 
 using Microsoft.Extensions.Options;
 
-namespace Duende.AccessTokenManagement.Implementation;
+namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// The logic to generate a cache key. Defaults to a key based on <see cref="ClientCredentialsTokenManagementOptions.CacheKeyPrefix"/>, client name, scope, and resource.

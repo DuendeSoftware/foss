@@ -3,7 +3,7 @@
 
 using Microsoft.Extensions.Options;
 
-namespace Duende.AccessTokenManagement.Implementation;
+namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// The logic to generate a key to store a DPoP nonce in the Cache. Defaults to

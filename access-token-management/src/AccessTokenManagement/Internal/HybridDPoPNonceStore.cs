@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.Implementation;
+namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// DPoP nonce store using IDistributedCache

@@ -3,7 +3,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace Duende.AccessTokenManagement.Implementation;
+namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// Serialization context used by the DPoP proof service and the client credential token cache.
