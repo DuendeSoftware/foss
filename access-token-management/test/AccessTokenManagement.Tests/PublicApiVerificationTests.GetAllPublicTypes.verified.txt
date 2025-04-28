@@ -1,5 +1,6 @@
 ﻿Duende.AccessTokenManagement.AccessTokenHandler (obsolete)
 Duende.AccessTokenManagement.AccessTokenHandler`2 (sealed)
+Duende.AccessTokenManagement.AccessTokenHandlerRequestParameters
 Duende.AccessTokenManagement.ActivitySources (sealed)
 Duende.AccessTokenManagement.ActivitySourceNames (sealed)
 Duende.AccessTokenManagement.ActivityNames (sealed)
@@ -18,6 +19,7 @@ Duende.AccessTokenManagement.DefaultDPoPProofService (obsolete)
 Duende.AccessTokenManagement.DistributedClientCredentialsTokenCache (obsolete)
 Duende.AccessTokenManagement.DistributedDPoPNonceStore (obsolete)
 Duende.AccessTokenManagement.DPoPExtensions (sealed)
+Duende.AccessTokenManagement.DPopProofRequestParameters
 Duende.AccessTokenManagement.HttpRequestMessageExtensions (sealed)
 Duende.AccessTokenManagement.IClientAssertionService
 Duende.AccessTokenManagement.IClientCredentialsCacheKeyGenerator
@@ -33,11 +35,10 @@ Duende.AccessTokenManagement.IDPopProofRequestHandler
 Duende.AccessTokenManagement.IDPoPProofService
 Duende.AccessTokenManagement.DPoPProofRequest
 Duende.AccessTokenManagement.DPoPProof
-Duende.AccessTokenManagement.ISendRequestRetryPolicy
+Duende.AccessTokenManagement.ISendRequestRetryHandler
 Duende.AccessTokenManagement.ITokenRequestSynchronization
 Duende.AccessTokenManagement.ITokenRetriever`1
 Duende.AccessTokenManagement.SendRequestWithToken (sealed)
-Duende.AccessTokenManagement.AccessTokenHandlerRequestData
 Duende.AccessTokenManagement.ServiceProviderKeys (sealed)
 Duende.AccessTokenManagement.TokenRequestParameters
 Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics (sealed)

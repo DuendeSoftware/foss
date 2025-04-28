@@ -21,7 +21,7 @@ internal sealed class DPopProofRequestHandler(
         CancellationToken cancellationToken)
     {
         var request = parameters.Request;
-        
+
         request.ClearDPoPProofToken();
 
         var token = parameters.ClientCredentialsToken;

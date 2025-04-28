@@ -13,12 +13,12 @@
         protected virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> SetTokenAsync(System.Net.Http.HttpRequestMessage request, bool forceRenewal, System.Threading.CancellationToken cancellationToken, string? dpopNonce = null) { }
     }
     [System.Runtime.CompilerServices.RequiredMember]
-    public class AccessTokenHandlerRequestData : System.IEquatable<Duende.AccessTokenManagement.AccessTokenHandlerRequestData>
+    public class AccessTokenHandlerRequestParameters : System.IEquatable<Duende.AccessTokenManagement.AccessTokenHandlerRequestParameters>
     {
         [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
             "your compiler."), true)]
         [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
-        public AccessTokenHandlerRequestData() { }
+        public AccessTokenHandlerRequestParameters() { }
         public string? DPoPNonce { get; init; }
         public bool ForceTokenRefresh { get; init; }
         [System.Runtime.CompilerServices.RequiredMember]
@@ -177,6 +177,19 @@
         [System.Runtime.CompilerServices.RequiredMember]
         public string Url { get; set; }
     }
+    [System.Runtime.CompilerServices.RequiredMember]
+    public class DPopProofRequestParameters : System.IEquatable<Duende.AccessTokenManagement.DPopProofRequestParameters>
+    {
+        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
+            "your compiler."), true)]
+        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
+        public DPopProofRequestParameters() { }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.ClientCredentialsToken ClientCredentialsToken { get; init; }
+        public string? DPoPNonce { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.Net.Http.HttpRequestMessage Request { get; init; }
+    }
     [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
         "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
     public class DefaultClientAssertionService : Duende.AccessTokenManagement.IClientAssertionService
@@ -275,9 +288,9 @@
     public interface IDPopProofRequestHandler
     {
         System.Threading.Tasks.Task HandleDPopResponse(System.Net.Http.HttpResponseMessage response, System.Threading.CancellationToken cancellationToken);
-        System.Threading.Tasks.Task<bool> TryAcquireDPopProof(System.Net.Http.HttpRequestMessage request, string? dpopNonce, Duende.AccessTokenManagement.ClientCredentialsToken token, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<bool> TryAcquireDPopProof(Duende.AccessTokenManagement.DPopProofRequestParameters parameters, System.Threading.CancellationToken cancellationToken);
     }
-    public interface ISendRequestRetryPolicy
+    public interface ISendRequestRetryHandler
     {
         System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> Handle(System.Net.Http.HttpRequestMessage request, Duende.AccessTokenManagement.SendRequestWithToken sendRequestWithToken, System.Threading.CancellationToken cancellationToken);
     }
@@ -291,7 +304,7 @@
         Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType TokenRequestType { get; }
         System.Threading.Tasks.Task<T> GetToken(System.Net.Http.HttpRequestMessage request, bool forceTokenRefresh, System.Threading.CancellationToken cancellationToken);
     }
-    public delegate System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendRequestWithToken(Duende.AccessTokenManagement.AccessTokenHandlerRequestData data, System.Threading.CancellationToken cancellationToken);
+    public delegate System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendRequestWithToken(Duende.AccessTokenManagement.AccessTokenHandlerRequestParameters parameters, System.Threading.CancellationToken cancellationToken);
     public static class ServiceProviderKeys
     {
         public const string ClientCredentialsTokenCache = "ClientCredentialsTokenCache";

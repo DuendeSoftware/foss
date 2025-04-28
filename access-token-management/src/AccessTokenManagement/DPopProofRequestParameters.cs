@@ -11,15 +11,15 @@ public record DPopProofRequestParameters
     /// <summary>
     /// Exising http request message
     /// </summary>
-    public required HttpRequestMessage Request { get; set; }
+    public required HttpRequestMessage Request { get; init; }
 
     /// <summary>
     /// Already retrieved client credentials token. 
     /// </summary>
-    public required ClientCredentialsToken ClientCredentialsToken { get; set; }
+    public required ClientCredentialsToken ClientCredentialsToken { get; init; }
 
     /// <summary>
     /// Nonce (if present)
     /// </summary>
-    public string? DPoPNonce { get; set; }
+    public string? DPoPNonce { get; init; }
 }
