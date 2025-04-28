@@ -7,11 +7,8 @@ namespace Duende.AccessTokenManagement.Implementation;
 
 
 /// <summary>
-/// TokenRetriever that implements the logic on behalf of <see cref="AccessTokenHandler{TTokenRetriever,TToken}"/>
-/// to retrieve a ClientCredentials Token. 
+/// An <see cref="ITokenRetriever" /> implementation that retrieves a token using the client credentials flow.
 /// </summary>
-/// <param name="accessTokenManagementService">Service that actually retrieves client credential access tokens</param>
-/// <param name="tokenClientName"></param>
 internal class ClientCredentialsTokenRetriever(
     IClientCredentialsTokenManagementService accessTokenManagementService,
     string tokenClientName
