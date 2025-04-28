@@ -35,7 +35,8 @@ public class OpenIdConnectUserAccessTokenHandler(
 
         var user = await userAccessor.GetCurrentUserAsync().ConfigureAwait(false);
 
-        return await userTokenManagement.GetAccessTokenAsync(user, parameters, cancellationToken).ConfigureAwait(false);
+        var token = await userTokenManagement.GetAccessTokenAsync(user, parameters, cancellationToken).ConfigureAwait(false);
+        return token;
     }
 
     protected override AccessTokenManagementMetrics.TokenRequestType TokenRequestType => AccessTokenManagementMetrics.TokenRequestType.User;

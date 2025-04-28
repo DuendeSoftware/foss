@@ -66,6 +66,7 @@ public class PublicApiVerificationTests
     {
 
         var obsolete = (t.GetCustomAttributes().Any(x => x is ObsoleteAttribute) ? " (obsolete)" : "");
-        return $"{t.FullName}{obsolete}";
+        var isSealed = t.IsSealed ? " (sealed)" : "";
+        return $"{t.FullName}{isSealed}{obsolete}";
     }
 }

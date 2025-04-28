@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement.OTel;
+using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Logging;
-using static Duende.IdentityModel.OidcConstants;
 
 namespace Duende.AccessTokenManagement;
 
@@ -70,10 +70,13 @@ public abstract class AccessTokenHandler(
             {
                 logger.AccessTokenHandlerAuthenticationFailed();
                 metrics.AccessTokenAuthenticationFailed(token.ClientId, TokenRequestType);
+
+                return response;
             }
 
-            return response;
+            dPoPNonce = response.GetDPoPNonce();
         }
+
 
         if (dPoPNonce == null)
         {
@@ -115,7 +118,7 @@ public abstract class AccessTokenHandler(
 
         logger.SendAccessTokenToEndpoint(request.RequestUri?.AbsoluteUri, token.AccessTokenType);
 
-        var scheme = token.AccessTokenType ?? AuthenticationSchemes.AuthorizationHeaderBearer;
+        var scheme = token.AccessTokenType ?? OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer;
 
         if (!string.IsNullOrWhiteSpace(token.DPoPJsonWebKey))
         {
@@ -123,20 +126,20 @@ public abstract class AccessTokenHandler(
             if (!await SetDPoPProofTokenAsync(request, token, cancellationToken, dpopNonce))
             {
                 // failed or opted out for this request, to fall back to Bearer 
-                scheme = AuthenticationSchemes.AuthorizationHeaderBearer;
+                scheme = OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer;
             }
         }
 
         // since AccessTokenType above in the token endpoint response (the token_type value) could be case insensitive, but
         // when we send it as an Authorization header in the API request it must be case sensitive, we 
         // are checking for that here and forcing it to the exact casing required.
-        if (scheme.Equals(AuthenticationSchemes.AuthorizationHeaderBearer, StringComparison.OrdinalIgnoreCase))
+        if (scheme.Equals(OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer, StringComparison.OrdinalIgnoreCase))
         {
-            scheme = AuthenticationSchemes.AuthorizationHeaderBearer;
+            scheme = OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer;
         }
-        else if (scheme.Equals(AuthenticationSchemes.AuthorizationHeaderDPoP, StringComparison.OrdinalIgnoreCase))
+        else if (scheme.Equals(OidcConstants.AuthenticationSchemes.AuthorizationHeaderDPoP, StringComparison.OrdinalIgnoreCase))
         {
-            scheme = AuthenticationSchemes.AuthorizationHeaderDPoP;
+            scheme = OidcConstants.AuthenticationSchemes.AuthorizationHeaderDPoP;
         }
 
         // checking for null AccessTokenType and falling back to "Bearer" since this might be coming

@@ -115,7 +115,7 @@ public class AppHost : GenericHost
             }
         });
 
-        services.AddUserAccessTokenHttpClient("callApi", configureClient: client =>
+        services.AddUserAccessTokenHttpClient("callApi").ConfigureHttpClient(configureClient: client =>
         {
             client.BaseAddress = new Uri(_apiHost.Url());
         })

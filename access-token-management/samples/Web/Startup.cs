@@ -90,7 +90,7 @@ public static class Startup
         // registers HTTP client that uses the managed user access token and
         // includes a resource indicator
         builder.Services.AddUserAccessTokenHttpClient("user-resource",
-            new UserTokenRequestParameters
+            parameters: new UserTokenRequestParameters
             {
                 Resource = "urn:resource1"
             },
@@ -106,7 +106,7 @@ public static class Startup
         // registers HTTP client that uses the managed client access token and
         // includes a resource indicator
         builder.Services.AddClientAccessTokenHttpClient("client-resource",
-            new UserTokenRequestParameters
+            parameters: new UserTokenRequestParameters
             {
                 Resource = "urn:resource1"
             },
