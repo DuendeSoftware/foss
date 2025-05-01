@@ -4,7 +4,7 @@
 using System.Net;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.Implementation;
+namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// Hanldes Dpop proof requests for http requests. 

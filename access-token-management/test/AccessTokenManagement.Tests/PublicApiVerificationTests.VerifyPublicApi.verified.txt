@@ -24,9 +24,7 @@
         [System.Runtime.CompilerServices.RequiredMember]
         public System.Net.Http.HttpRequestMessage Request { get; init; }
     }
-    public sealed class AccessTokenHandler<TTokenRetriever, TToken> : System.Net.Http.DelegatingHandler
-        where TTokenRetriever : Duende.AccessTokenManagement.ITokenRetriever<TToken>
-        where TToken : Duende.AccessTokenManagement.ClientCredentialsToken
+    public sealed class AccessTokenRequestHandler : System.Net.Http.DelegatingHandler
     {
         protected override System.Net.Http.HttpResponseMessage Send(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) { }
         protected override System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) { }
@@ -298,11 +296,10 @@
     {
         System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> SynchronizeAsync(string name, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> func);
     }
-    public interface ITokenRetriever<T>
-        where T : Duende.AccessTokenManagement.ClientCredentialsToken
+    public interface ITokenRetriever
     {
         Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType TokenRequestType { get; }
-        System.Threading.Tasks.Task<T> GetToken(System.Net.Http.HttpRequestMessage request, bool forceTokenRefresh, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetToken(System.Net.Http.HttpRequestMessage request, bool forceTokenRefresh, System.Threading.CancellationToken cancellationToken);
     }
     public delegate System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendRequestWithToken(Duende.AccessTokenManagement.AccessTokenHandlerRequestParameters parameters, System.Threading.CancellationToken cancellationToken);
     public static class ServiceProviderKeys

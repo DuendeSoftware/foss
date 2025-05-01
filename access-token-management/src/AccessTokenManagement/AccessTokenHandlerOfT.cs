@@ -12,21 +12,18 @@ namespace Duende.AccessTokenManagement;
 /// http requests. The method on how to aquire tokens, the retry policy and the dpop handling
 /// can be customized. 
 /// </summary>
-/// <typeparam name="TTokenRetriever">The logic to retrieve an access token.</typeparam>
-/// <typeparam name="TToken">The type of access token that's added to the request. </typeparam>
-public sealed class AccessTokenHandler<TTokenRetriever, TToken> : DelegatingHandler
-    where TToken : ClientCredentialsToken
-    where TTokenRetriever : ITokenRetriever<TToken>
+public sealed class AccessTokenRequestHandler : DelegatingHandler
 {
-    private TTokenRetriever _tokenRetriever;
+    private ITokenRetriever _tokenRetriever;
     private readonly ISendRequestRetryHandler _retryHandler;
     private readonly IDPopProofRequestHandler _dPoPProofRequestHandler;
-    private readonly ILogger<TTokenRetriever> _logger;
+    private readonly ILogger<AccessTokenRequestHandler> _logger;
 
-    internal AccessTokenHandler(ISendRequestRetryHandler retryHandler,
-        TTokenRetriever tokenRetriever,
+    internal AccessTokenRequestHandler(
+        ISendRequestRetryHandler retryHandler,
+        ITokenRetriever tokenRetriever,
         IDPopProofRequestHandler dPoPProofRequestHandler,
-        ILogger<TTokenRetriever> logger)
+        ILogger<AccessTokenRequestHandler> logger)
     {
         _retryHandler = retryHandler;
         _dPoPProofRequestHandler = dPoPProofRequestHandler;

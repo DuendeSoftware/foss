@@ -9,11 +9,11 @@ internal class OpenIdConnectUserAccessTokenRetriever(
     IUserAccessor userAccessor,
     IUserTokenManagementService userTokenManagement,
     UserTokenRequestParameters? parameters = null
-) : ITokenRetriever<UserToken>
+) : ITokenRetriever
 {
     private readonly UserTokenRequestParameters _parameters = parameters ?? new UserTokenRequestParameters();
 
-    public async Task<UserToken> GetToken(HttpRequestMessage request, bool forceTokenRefresh, CancellationToken cancellationToken)
+    public async Task<ClientCredentialsToken> GetToken(HttpRequestMessage request, bool forceTokenRefresh, CancellationToken cancellationToken)
     {
         var parameters = new UserTokenRequestParameters
         {

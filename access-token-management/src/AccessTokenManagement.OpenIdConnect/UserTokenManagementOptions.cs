@@ -52,8 +52,8 @@ public class UserTokenManagementOptions
 
     /// <summary>
     /// By default, access token management uses <see cref="AccessTokenHandler"/>. Enabling this preview flag will replace this
-    /// with <see cref="AccessTokenHandler{TTokenRetriever,TToken}"/>, a more extensible model
-    /// that allows you to use your own <see cref="ITokenRetriever{TToken}"/> and <see cref="ISendRequestRetryHandler"/>.
+    /// with <see cref="AccessTokenRequestHandler"/>, a more extensible model
+    /// that allows you to use your own <see cref="ITokenRetriever"/> and <see cref="ISendRequestRetryHandler"/>.
     /// 
     /// In future versions, this will be the default behavior.
     /// </summary>

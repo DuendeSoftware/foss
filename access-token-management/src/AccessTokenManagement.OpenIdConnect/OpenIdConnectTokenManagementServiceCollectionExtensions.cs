@@ -285,13 +285,13 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
 
             if (options.UsePreviewExtensibilityOnAccessTokenHandlers)
             {
-                var logger = provider.GetRequiredService<ILogger<OpenIdConnectUserAccessTokenRetriever>>();
+                var logger = provider.GetRequiredService<ILogger<AccessTokenRequestHandler>>();
                 var userAccessor = provider.GetRequiredService<IUserAccessor>();
                 var retriever = new OpenIdConnectUserAccessTokenRetriever(userAccessor, userTokenManagement, parameters);
                 var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
                 var retryPolicy = provider.GetRequiredService<ISendRequestRetryHandler>();
 
-                var accessTokenHandler = new AccessTokenHandler<OpenIdConnectUserAccessTokenRetriever, UserToken>(
+                var accessTokenHandler = new AccessTokenRequestHandler(
                     retryHandler: retryPolicy,
                     tokenRetriever: retriever,
                     dPoPProofRequestHandler: dpopHandler,
@@ -338,13 +338,13 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
             var options = provider.GetRequiredService<IOptions<UserTokenManagementOptions>>().Value;
             if (options.UsePreviewExtensibilityOnAccessTokenHandlers)
             {
-                var logger = provider.GetRequiredService<ILogger<OpenIdConnectClientAccessTokenRetriever>>();
+                var logger = provider.GetRequiredService<ILogger<AccessTokenRequestHandler>>();
                 var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
                 var retriever = new OpenIdConnectClientAccessTokenRetriever(httpContextAccessor, parameters);
                 var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
                 var retryPolicy = provider.GetRequiredService<ISendRequestRetryHandler>();
 
-                var accessTokenHandler = new AccessTokenHandler<OpenIdConnectClientAccessTokenRetriever, ClientCredentialsToken>(
+                var accessTokenHandler = new AccessTokenRequestHandler(
                     retryHandler: retryPolicy,
                     tokenRetriever: retriever,
                     dPoPProofRequestHandler: dpopHandler,

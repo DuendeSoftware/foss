@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 namespace Duende.AccessTokenManagement.OpenIdConnect.Implementation;
 
 /// <summary>
-/// TokenRetriever that implements the logic on behalf of <see cref="AccessTokenHandler{TTokenRetriever,TToken}"/> to
+/// TokenRetriever that implements the logic on behalf of <see cref="AccessTokenRequestHandler"/> to
 /// retrieve a ClientCredentials Token for an OpenID Connect flow.
 /// </summary>
 /// <param name="httpContextAccessor"></param>
@@ -15,7 +15,7 @@ namespace Duende.AccessTokenManagement.OpenIdConnect.Implementation;
 internal class OpenIdConnectClientAccessTokenRetriever(
     IHttpContextAccessor httpContextAccessor,
     UserTokenRequestParameters? parameters = null
-) : ITokenRetriever<ClientCredentialsToken>
+) : ITokenRetriever
 {
     private readonly UserTokenRequestParameters _parameters = parameters ?? new UserTokenRequestParameters();
 

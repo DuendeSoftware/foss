@@ -3,16 +3,16 @@
 
 using Duende.AccessTokenManagement.OTel;
 
-namespace Duende.AccessTokenManagement.Implementation;
+namespace Duende.AccessTokenManagement.Internal;
 
 
 /// <summary>
-/// An <see cref="ITokenRetriever&lt;ClientCredentialsToken&gt;" /> implementation that retrieves a token using the client credentials flow.
+/// An <see cref="ITokenRetriever" /> implementation that retrieves a token using the client credentials flow.
 /// </summary>
 internal class ClientCredentialsTokenRetriever(
     IClientCredentialsTokenManagementService accessTokenManagementService,
     string tokenClientName
-) : ITokenRetriever<ClientCredentialsToken>
+) : ITokenRetriever
 {
     /// <inheritdoc />
     public async Task<ClientCredentialsToken> GetToken(HttpRequestMessage request, bool forceTokenRefresh, CancellationToken cancellationToken)

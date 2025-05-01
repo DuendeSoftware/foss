@@ -1,5 +1,5 @@
 ﻿Duende.AccessTokenManagement.AccessTokenHandler (obsolete)
-Duende.AccessTokenManagement.AccessTokenHandler`2 (sealed)
+Duende.AccessTokenManagement.AccessTokenRequestHandler (sealed)
 Duende.AccessTokenManagement.AccessTokenHandlerRequestParameters
 Duende.AccessTokenManagement.ActivitySources (sealed)
 Duende.AccessTokenManagement.ActivitySourceNames (sealed)
@@ -37,7 +37,7 @@ Duende.AccessTokenManagement.DPoPProofRequest
 Duende.AccessTokenManagement.DPoPProof
 Duende.AccessTokenManagement.ISendRequestRetryHandler
 Duende.AccessTokenManagement.ITokenRequestSynchronization
-Duende.AccessTokenManagement.ITokenRetriever`1
+Duende.AccessTokenManagement.ITokenRetriever
 Duende.AccessTokenManagement.SendRequestWithToken (sealed)
 Duende.AccessTokenManagement.ServiceProviderKeys (sealed)
 Duende.AccessTokenManagement.TokenRequestParameters

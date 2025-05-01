@@ -137,13 +137,13 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
             var options = provider.GetRequiredService<IOptions<ClientCredentialsTokenManagementOptions>>();
             if (options.Value.UsePreviewExtensibilityOnAccessTokenHandlers)
             {
-                var logger = provider.GetRequiredService<ILogger<ClientCredentialsTokenRetriever>>();
+                var logger = provider.GetRequiredService<ILogger<AccessTokenRequestHandler>>();
 
                 var retriever = new ClientCredentialsTokenRetriever(accessTokenManagementService, tokenClientName);
                 var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
                 var retryPolicy = provider.GetRequiredService<ISendRequestRetryHandler>();
 
-                var accessTokenHandler = new AccessTokenHandler<ClientCredentialsTokenRetriever, ClientCredentialsToken>(
+                var accessTokenHandler = new AccessTokenRequestHandler(
                     retryHandler: retryPolicy,
                     tokenRetriever: retriever,
                     dPoPProofRequestHandler: dpopHandler,

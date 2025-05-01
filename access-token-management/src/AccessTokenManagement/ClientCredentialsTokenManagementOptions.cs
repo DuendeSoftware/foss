@@ -25,8 +25,8 @@ public class ClientCredentialsTokenManagementOptions
 
     /// <summary>
     /// By default, access token management uses <see cref="AccessTokenHandler"/>. Enabling this preview flag will replace this
-    /// with a more extensible model that allows you to use your own <see cref="ITokenRetriever{TToken}"/> and <see cref="ISendRequestRetryHandler"/>
-    /// It switches to use <see cref="AccessTokenHandler{TTokenRetriever,TToken}"/>
+    /// with a more extensible model that allows you to use your own <see cref="ITokenRetriever"/> and <see cref="ISendRequestRetryHandler"/>
+    /// It switches to use <see cref="AccessTokenRequestHandler"/>
     /// 
     /// In future versions, this will be the default behavior.
     /// </summary>
