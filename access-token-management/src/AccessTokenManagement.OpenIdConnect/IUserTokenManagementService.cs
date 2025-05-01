@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
+using Duende.AccessTokenManagement.Types;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect;
 
@@ -17,7 +18,7 @@ public interface IUserTokenManagementService
     /// <param name="parameters"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<UserToken> GetAccessTokenAsync(
+    Task<TokenResult<UserToken>> GetAccessTokenAsync(
         ClaimsPrincipal user,
         UserTokenRequestParameters? parameters = null,
         CancellationToken cancellationToken = default);

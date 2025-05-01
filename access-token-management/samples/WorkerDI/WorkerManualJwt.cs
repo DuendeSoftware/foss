@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement;
+using Duende.AccessTokenManagement.Types;
 using Duende.IdentityModel.Client;
 
 namespace WorkerService;
@@ -31,8 +32,8 @@ public class WorkerManualJwt : BackgroundService
             var client = _clientFactory.CreateClient();
             client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
 
-            var token = await _tokenManagementService.GetAccessTokenAsync("demo.jwt");
-            client.SetBearerToken(token.AccessToken!);
+            ClientCredentialsToken token = await _tokenManagementService.GetAccessTokenAsync("demo.jwt");
+            client.SetBearerToken(token.AccessToken.Value);
 
             var response = await client.GetAsync("test", stoppingToken);
 

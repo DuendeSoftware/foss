@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.AccessTokenManagement.Types;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,7 @@ public static class TokenManagementHttpContextExtensions
     /// <param name="parameters">Extra optional parameters</param>
     /// <param name="cancellationToken">A cancellation token to cancel operation.</param>
     /// <returns></returns>
-    public static async Task<UserToken> GetUserAccessTokenAsync(
+    public static async Task<TokenResult<UserToken>> GetUserAccessTokenAsync(
         this HttpContext httpContext,
         UserTokenRequestParameters? parameters = null,
         CancellationToken cancellationToken = default)
@@ -54,7 +55,7 @@ public static class TokenManagementHttpContextExtensions
     /// <param name="parameters">Extra optional parameters</param>
     /// <param name="cancellationToken">A cancellation token to cancel operation.</param>
     /// <returns></returns>
-    public static async Task<ClientCredentialsToken> GetClientAccessTokenAsync(
+    public static async Task<TokenResult<ClientCredentialsToken>> GetClientAccessTokenAsync(
         this HttpContext httpContext,
         UserTokenRequestParameters? parameters = null,
         CancellationToken cancellationToken = default)
@@ -65,7 +66,7 @@ public static class TokenManagementHttpContextExtensions
 
         var schemeName = parameters?.ChallengeScheme ?? options.Value.ChallengeScheme;
 
-        if (string.IsNullOrEmpty(schemeName))
+        if (schemeName == null)
         {
             var defaultScheme = await schemes.GetDefaultChallengeSchemeAsync().ConfigureAwait(false);
             ArgumentNullException.ThrowIfNull(defaultScheme);
@@ -80,23 +81,28 @@ public static class TokenManagementHttpContextExtensions
     }
 
     const string AuthenticationPropertiesDPoPKey = ".Token.dpop_proof_key";
-    internal static void SetProofKey(this AuthenticationProperties properties, string key) => properties.Items[AuthenticationPropertiesDPoPKey] = key;
-    internal static string? GetProofKey(this AuthenticationProperties properties)
+    internal static void SetProofKey(this AuthenticationProperties properties, DPoPJsonWebKey key) => properties.Items[AuthenticationPropertiesDPoPKey] = key.Value;
+    internal static DPoPJsonWebKey? GetProofKey(this AuthenticationProperties properties)
     {
         if (properties.Items.TryGetValue(AuthenticationPropertiesDPoPKey, out var key))
         {
-            return key;
+            if (key == null)
+            {
+                return null;
+            }
+
+            return DPoPJsonWebKey.Parse(key);
         }
         return null;
     }
 
     const string HttpContextDPoPKey = "dpop_proof_key";
-    internal static void SetCodeExchangeDPoPKey(this HttpContext context, string key) => context.Items[HttpContextDPoPKey] = key;
-    internal static string? GetCodeExchangeDPoPKey(this HttpContext context)
+    internal static void SetCodeExchangeDPoPKey(this HttpContext context, DPoPJsonWebKey key) => context.Items[HttpContextDPoPKey] = key;
+    internal static DPoPJsonWebKey? GetCodeExchangeDPoPKey(this HttpContext context)
     {
         if (context.Items.TryGetValue(HttpContextDPoPKey, out var item))
         {
-            return item as string;
+            return item as DPoPJsonWebKey;
         }
         return null;
     }

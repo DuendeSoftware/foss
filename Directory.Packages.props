@@ -2,26 +2,22 @@
   <PropertyGroup>
     <WilsonVersion>7.1.2</WilsonVersion>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
     <ExtensionsVersion>8.0.0</ExtensionsVersion>
     <WilsonVersion>7.1.2</WilsonVersion>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
     <FrameworkVersion>8.0.1</FrameworkVersion>
     <ExtensionsVersion>9.0.3</ExtensionsVersion>
-    <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion> 
+    <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
     <IdentityServerVersion>7.0.8</IdentityServerVersion>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0'">
     <FrameworkVersion>9.0.0</FrameworkVersion>
     <ExtensionsVersion>9.0.3</ExtensionsVersion>
     <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
     <IdentityServerVersion>7.0.8</IdentityServerVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.1.2" />
     <PackageVersion Include="BullsEye" Version="5.0.0" />
@@ -36,14 +32,15 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid " Version="9.3.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(ExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Primitives" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.1.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(WilsonVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.NETCore.Jit" Version="2.0.8" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0"/>
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="MinVer" Version="6.0.0" />
     <PackageVersion Include="PublicApiGenerator" Version="11.1.0" />
     <PackageVersion Include="RichardSzalay.MockHttp" Version="7.0.0" />
@@ -54,6 +51,7 @@
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Text.Json" Version="8.0.5" />
     <PackageVersion Include="Verify.XunitV3" Version="28.9.0" />
+    <PackageVersion Include="Vogen" Version="7.0.3" />
     <PackageVersion Include="xunit.v3.core" Version="1.0.1" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1" />
   </ItemGroup>

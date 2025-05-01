@@ -21,7 +21,7 @@ public class ClientCredentialsClientConfigureOptions : IConfigureNamedOptions<Cl
         {
             var disco = _cache.GetAsync().GetAwaiter().GetResult();
 
-            options.TokenEndpoint = disco.TokenEndpoint;
+            options.TokenEndpoint = new Uri(disco.TokenEndpoint ?? throw new InvalidOperationException("tokenendpoint is null"));
             options.ClientId = "m2m.short.jwt";
             options.Scope = "api";
         }

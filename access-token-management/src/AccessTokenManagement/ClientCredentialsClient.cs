@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.AccessTokenManagement.Types;
 using Duende.IdentityModel.Client;
 
 namespace Duende.AccessTokenManagement;
@@ -13,17 +14,17 @@ public class ClientCredentialsClient
     /// <summary>
     /// The address of the token endpoint
     /// </summary>
-    public string? TokenEndpoint { get; set; }
+    public Uri? TokenEndpoint { get; set; }
 
     /// <summary>
     /// The client ID 
     /// </summary>
-    public string? ClientId { get; set; }
+    public ClientId? ClientId { get; set; }
 
     /// <summary>
     /// The static (shared) client secret
     /// </summary>
-    public string? ClientSecret { get; set; }
+    public ClientSecret? ClientSecret { get; set; }
 
     /// <summary>
     /// The client credential transmission style
@@ -41,12 +42,12 @@ public class ClientCredentialsClient
     /// <summary>
     /// The scope
     /// </summary>
-    public string? Scope { get; set; }
+    public Scope? Scope { get; set; }
 
     /// <summary>
     /// The resource
     /// </summary>
-    public string? Resource { get; set; }
+    public Resource? Resource { get; set; }
 
     /// <summary>
     /// The HTTP client name to use for the backchannel operations, will fall back to the standard backchannel client if not set
@@ -66,5 +67,5 @@ public class ClientCredentialsClient
     /// <summary>
     /// The string representation of the JSON web key to use for DPoP.
     /// </summary>
-    public string? DPoPJsonWebKey { get; set; }
+    public DPoPJsonWebKey? DPoPJsonWebKey { get; set; }
 }

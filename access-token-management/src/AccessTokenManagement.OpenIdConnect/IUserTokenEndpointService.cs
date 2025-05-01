@@ -1,6 +1,8 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.AccessTokenManagement.Types;
+
 namespace Duende.AccessTokenManagement.OpenIdConnect;
 
 /// <summary>
@@ -15,8 +17,8 @@ public interface IUserTokenEndpointService
     /// <param name="parameters"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<UserToken> RefreshAccessTokenAsync(
-        UserToken userToken,
+    Task<TokenResult<UserToken>> RefreshAccessTokenAsync(
+        UserRefreshToken userToken,
         UserTokenRequestParameters parameters,
         CancellationToken cancellationToken = default);
 
@@ -27,8 +29,8 @@ public interface IUserTokenEndpointService
     /// <param name="parameters"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task RevokeRefreshTokenAsync(
-        UserToken userToken,
+    Task RevokeRefreshTokenAsync(UserRefreshToken userToken,
         UserTokenRequestParameters parameters,
         CancellationToken cancellationToken = default);
 }
+

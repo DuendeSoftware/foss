@@ -4,7 +4,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using RichardSzalay.MockHttp;
@@ -42,10 +41,9 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
 
         // This API call should trigger a refresh, and that refresh request must use a nonce from the server (because the client is configured that way)
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessTokenType.ShouldBe("DPoP");
     }
 
@@ -108,9 +106,8 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
 
         // This API call triggers a refresh
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessTokenType.ShouldBe("DPoP");
         mockHttp.VerifyNoOutstandingExpectation();
     }

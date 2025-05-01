@@ -25,4 +25,5 @@ internal class OTelParameters
     public const string TokenType = "TokenType";
     public const string ForceRenewal = "ForceRenewal";
     public const string StatusCode = "StatusCode";
+    public const string Value = "Value";
 }
