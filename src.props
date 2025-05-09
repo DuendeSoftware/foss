@@ -10,7 +10,7 @@
     <ImplicitUsings>true</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<WarningsAsErrors>8600;8601;8602;8603;8604;8625;8618;8619;8620</WarningsAsErrors>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">True</ContinuousIntegrationBuild>
     <Deterministic>true</Deterministic>
     <NoWarn>$(NoWarn);CS1591,NU1507</NoWarn>
@@ -42,6 +42,11 @@
     <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
 
     <PackageReadmePath>../../README.md</PackageReadmePath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<WarningsAsErrors />
   </PropertyGroup>
 
   <ItemGroup>

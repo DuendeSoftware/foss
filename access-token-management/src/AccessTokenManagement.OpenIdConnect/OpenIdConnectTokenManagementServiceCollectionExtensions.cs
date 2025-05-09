@@ -1,7 +1,8 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.AccessTokenManagement.OTel;
+using Duende.AccessTokenManagement.DPoP;
+using Duende.AccessTokenManagement.OpenIdConnect.Internal;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -102,10 +103,12 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         if (configureClient != null)
         {
             return services.AddHttpClient<T>(configureClient)
+                .AddDefaultAccessTokenResiliency()
                 .AddUserAccessTokenHandler(parameters);
         }
 
         return services.AddHttpClient<T>()
+            .AddDefaultAccessTokenResiliency()
             .AddUserAccessTokenHandler(parameters);
     }
     /// <summary>
@@ -124,10 +127,12 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         if (configureClient != null)
         {
             return services.AddHttpClient(name, configureClient)
+                .AddDefaultAccessTokenResiliency()
                 .AddUserAccessTokenHandler(parameters);
         }
 
         return services.AddHttpClient(name)
+            .AddDefaultAccessTokenResiliency()
             .AddUserAccessTokenHandler(parameters);
     }
 
@@ -147,10 +152,12 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         if (configureClient != null)
         {
             return services.AddHttpClient(name, configureClient)
+                .AddDefaultAccessTokenResiliency()
                 .AddUserAccessTokenHandler(parameters);
         }
 
         return services.AddHttpClient(name)
+            .AddDefaultAccessTokenResiliency()
             .AddUserAccessTokenHandler(parameters);
     }
 
@@ -169,10 +176,12 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         if (configureClient != null)
         {
             return services.AddHttpClient<T>(configureClient)
+                .AddDefaultAccessTokenResiliency()
                 .AddClientAccessTokenHandler(parameters);
         }
 
         return services.AddHttpClient<T>()
+            .AddDefaultAccessTokenResiliency()
             .AddClientAccessTokenHandler(parameters);
     }
 
@@ -192,10 +201,12 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         if (configureClient != null)
         {
             return services.AddHttpClient(name, configureClient)
+                .AddDefaultAccessTokenResiliency()
                 .AddClientAccessTokenHandler(parameters);
         }
 
         return services.AddHttpClient(name)
+            .AddDefaultAccessTokenResiliency()
             .AddClientAccessTokenHandler(parameters);
     }
 
@@ -211,24 +222,20 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         UserTokenRequestParameters? parameters = null) =>
         httpClientBuilder.AddHttpMessageHandler(provider =>
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var metrics = provider.GetRequiredService<AccessTokenManagementMetrics>();
-#pragma warning restore CS0618 // Type or member is obsolete
-            var dpopService = provider.GetRequiredService<IDPoPProofService>();
-            var dpopNonceStore = provider.GetRequiredService<IDPoPNonceStore>();
-            var userTokenManagement = provider.GetRequiredService<IUserTokenManagementService>();
-#pragma warning disable CS0618 // Type or member is obsolete
-            var logger = provider.GetRequiredService<ILogger<OpenIdConnectClientAccessTokenHandler>>();
-            var principalAccessor = provider.GetRequiredService<IUserAccessor>();
+            var dPoPProofRequestHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
+            var logger = provider.GetRequiredService<ILogger<AccessTokenRequestHandler>>();
+            var httpContextAccessor = provider.GetRequiredService<IUserAccessor>();
+            var userTokenManagementService = provider.GetRequiredService<IUserTokenManagementService>();
 
-            return new OpenIdConnectUserAccessTokenHandler(
-                metrics,
-                dpopService,
-                dpopNonceStore,
-                principalAccessor,
-                userTokenManagement,
-                logger,
+            var tokenRetriever = new OpenIdConnectUserAccessTokenRetriever(
+                httpContextAccessor,
+                userTokenManagementService,
                 parameters);
+
+            return new AccessTokenRequestHandler(
+                tokenRetriever,
+                dPoPProofRequestHandler,
+                logger);
 
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -245,22 +252,18 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
         UserTokenRequestParameters? parameters = null) =>
         httpClientBuilder.AddHttpMessageHandler(provider =>
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var metrics = provider.GetRequiredService<AccessTokenManagementMetrics>();
-#pragma warning restore CS0618 // Type or member is obsolete
-            var dpopService = provider.GetRequiredService<IDPoPProofService>();
-            var dpopNonceStore = provider.GetRequiredService<IDPoPNonceStore>();
-            var contextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
-#pragma warning disable CS0618 // Type or member is obsolete
-            var logger = provider.GetRequiredService<ILogger<OpenIdConnectClientAccessTokenHandler>>();
+            var dPoPProofRequestHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
+            var logger = provider.GetRequiredService<ILogger<AccessTokenRequestHandler>>();
+            var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
 
-            return new OpenIdConnectClientAccessTokenHandler(
-                metrics,
-                dpopService,
-                dpopNonceStore,
-                contextAccessor,
-                logger,
+            var tokenRetriever = new OpenIdConnectClientAccessTokenRetriever(httpContextAccessor,
                 parameters);
+
+            return new AccessTokenRequestHandler(
+                tokenRetriever,
+                dPoPProofRequestHandler,
+                logger);
+
         });
 #pragma warning restore CS0618 // Type or member is obsolete
 

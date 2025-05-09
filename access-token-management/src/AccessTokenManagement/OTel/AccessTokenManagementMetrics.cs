@@ -3,11 +3,11 @@
 
 
 using System.Diagnostics.Metrics;
+using Duende.AccessTokenManagement.Types;
 
 namespace Duende.AccessTokenManagement.OTel;
 
 
-[Obsolete(Constants.AtmPublicSurfaceInternal, UrlFormat = Constants.AtmPublicSurfaceLink)]
 public sealed class AccessTokenManagementMetrics
 {
     public const string MeterName = "Duende.AccessTokenManagement";
@@ -64,7 +64,7 @@ public sealed class AccessTokenManagementMetrics
     /// </summary>
     /// <param name="clientId"></param>
     /// <param name="type"></param>
-    public void AccessTokenUsed(string? clientId, TokenRequestType type)
+    public void AccessTokenUsed(ClientId? clientId, TokenRequestType type)
     {
         if (!_accessTokenUsed.Enabled)
         {

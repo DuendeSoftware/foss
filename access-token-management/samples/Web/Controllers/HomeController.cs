@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using Duende.AccessTokenManagement.OpenIdConnect;
+using Duende.AccessTokenManagement.Types;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,9 +33,9 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserManual()
     {
-        var token = await _tokenManagementService.GetAccessTokenAsync(User);
+        UserToken token = await _tokenManagementService.GetAccessTokenAsync(User);
         var client = _httpClientFactory.CreateClient();
-        client.SetToken(token.AccessTokenType!, token.AccessToken!);
+        client.SetToken(token.AccessTokenType?.ToScheme().ToString()!, token.AccessToken.Value);
 
         var response = await client.GetStringAsync($"{_configuration.ApiBaseUrl}test");
         ViewBag.Json = PrettyPrint(response);
@@ -44,9 +45,9 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserExtensionMethod()
     {
-        var token = await HttpContext.GetUserAccessTokenAsync();
+        UserToken token = await HttpContext.GetUserAccessTokenAsync();
         var client = _httpClientFactory.CreateClient();
-        client.SetToken(token.AccessTokenType!, token.AccessToken!);
+        client.SetToken(token.AccessTokenType?.ToScheme().ToString(), token.AccessToken.Value);
 
         var response = await client.GetStringAsync($"{_configuration.ApiBaseUrl}test");
         ViewBag.Json = PrettyPrint(response);
@@ -86,9 +87,9 @@ public class HomeController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> CallApiAsClientExtensionMethod()
     {
-        var token = await HttpContext.GetClientAccessTokenAsync();
+        ClientCredentialsToken token = await HttpContext.GetClientAccessTokenAsync();
         var client = _httpClientFactory.CreateClient();
-        client.SetToken(token.AccessTokenType!, token.AccessToken!);
+        client.SetToken(token.AccessTokenType?.ToScheme().Value, token.AccessToken.Value);
 
         var response = await client.GetStringAsync($"{_configuration.ApiBaseUrl}test");
 

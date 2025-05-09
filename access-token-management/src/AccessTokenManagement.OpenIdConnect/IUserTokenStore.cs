@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
+using Duende.AccessTokenManagement.Types;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect;
 
@@ -20,7 +21,8 @@ public interface IUserTokenStore
     Task StoreTokenAsync(
         ClaimsPrincipal user,
         UserToken token,
-        UserTokenRequestParameters? parameters = null);
+        UserTokenRequestParameters? parameters = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves tokens from store
@@ -28,9 +30,10 @@ public interface IUserTokenStore
     /// <param name="user">User the tokens belong to</param>
     /// <param name="parameters">Extra optional parameters</param>
     /// <returns>access and refresh token and access token expiration</returns>
-    Task<UserToken> GetTokenAsync(
+    Task<TokenResult<TokenForParameters>> GetTokenAsync(
         ClaimsPrincipal user,
-        UserTokenRequestParameters? parameters = null);
+        UserTokenRequestParameters? parameters = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Clears the stored tokens for a given user
@@ -40,5 +43,6 @@ public interface IUserTokenStore
     /// <returns></returns>
     Task ClearTokenAsync(
         ClaimsPrincipal user,
-        UserTokenRequestParameters? parameters = null);
+        UserTokenRequestParameters? parameters = null,
+        CancellationToken cancellationToken = default);
 }

@@ -18,7 +18,7 @@ public class PublicApiVerificationTests
             IncludeAssemblyAttributes = false,
         };
 #pragma warning disable CS0618 // Type or member is obsolete
-        var publicApi = typeof(AccessTokenHandler).Assembly.GeneratePublicApi(apiGeneratorOptions);
+        var publicApi = typeof(AccessTokenRequestHandler).Assembly.GeneratePublicApi(apiGeneratorOptions);
 #pragma warning restore CS0618 // Type or member is obsolete
         var settings = new VerifySettings();
         await Verify(publicApi, settings);
@@ -42,7 +42,7 @@ public class PublicApiVerificationTests
     public async Task GetAllPublicTypes()
     {
 #pragma warning disable CS0618 // Type or member is obsolete
-        var types = typeof(AccessTokenHandler).Assembly.GetExportedTypes()
+        var types = typeof(AccessTokenRequestHandler).Assembly.GetExportedTypes()
 #pragma warning restore CS0618 // Type or member is obsolete
             .Where(t => t.IsPublic)
             .Select(t => FormatTypeName(t));

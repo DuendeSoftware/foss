@@ -1,9 +1,12 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.AccessTokenManagement.Implementation;
+using Duende.AccessTokenManagement.DPoP;
+using Duende.AccessTokenManagement.DPoP.Internal;
+using Duende.AccessTokenManagement.Internal;
 using Duende.AccessTokenManagement.OTel;
-using Microsoft.Extensions.Caching.Distributed;
+using Duende.AccessTokenManagement.Types;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -36,29 +39,24 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
     /// <returns></returns>
     public static ClientCredentialsTokenManagementBuilder AddClientCredentialsTokenManagement(this IServiceCollection services)
     {
-        services.TryAddSingleton<ITokenRequestSynchronization, TokenRequestSynchronization>();
 
-#pragma warning disable CS0618 // Type or member is obsolete
-        services.TryAddTransient<IClientCredentialsTokenManagementService, ClientCredentialsTokenManagementService>();
+        services.TryAddTransient<IClientCredentialsTokenManagementService, ClientCredentialsTokenManager>();
+        services.AddHybridCache();
 
-
-        // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
+        // By default, resolve the default hybridcache for the DefaultClientCredentialsTokenManager
         // without key. If desired, a consumers can register the distributed cache with a key
-        services.TryAddKeyedSingleton<IDistributedCache>(ServiceProviderKeys.ClientCredentialsTokenCache, (sp, _) => sp.GetRequiredService<IDistributedCache>());
-        services.TryAddTransient<IClientCredentialsTokenCache, DistributedClientCredentialsTokenCache>();
+        services.TryAddKeyedSingleton<HybridCache>(ServiceProviderKeys.ClientCredentialsTokenCache, (sp, _) => sp.GetRequiredService<HybridCache>());
         services.TryAddTransient<IClientCredentialsTokenEndpointService, ClientCredentialsTokenEndpointService>();
-        services.TryAddTransient<IClientAssertionService, DefaultClientAssertionService>();
+        services.TryAddTransient<IClientAssertionService, NoOpClientAssertionService>();
 
+        services.TryAddTransient<IDPopProofRequestHandler, DPopProofRequestHandler>();
         services.TryAddTransient<IDPoPProofService, DefaultDPoPProofService>();
         services.TryAddTransient<IDPoPKeyStore, DefaultDPoPKeyStore>();
 
-        // ** DistributedDPoPNonceStore **
-        // By default, resolve the distributed cache for the DistributedClientCredentialsTokenCache
+        // By default, resolve the default hybridcache for the HybridDPoPNonceStore
         // without key. If desired, a consumers can register the distributed cache with a key
-        services.TryAddKeyedSingleton<IDistributedCache>(ServiceProviderKeys.DPoPNonceStore, (sp, _) => sp.GetRequiredService<IDistributedCache>());
-        services.TryAddTransient<IDPoPNonceStore, DistributedDPoPNonceStore>();
-
-#pragma warning restore CS0618 // Type or member is obsolete
+        services.TryAddKeyedSingleton<HybridCache>(ServiceProviderKeys.DPoPNonceStore, (sp, _) => sp.GetRequiredService<HybridCache>());
+        services.AddTransient<IDPoPNonceStore, HybridDPoPNonceStore>();
 
         services.TryAddSingleton(TimeProvider.System);
 
@@ -66,9 +64,7 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
 
         services.TryAddTransient<IClientCredentialsCacheKeyGenerator, DefaultClientCredentialsCacheKeyGenerator>();
         services.TryAddTransient<IDPoPNonceStoreKeyGenerator, DPoPNonceStoreKeyGenerator>();
-#pragma warning disable CS0618 // Type or member is obsolete
         services.AddSingleton<AccessTokenManagementMetrics>();
-#pragma warning restore CS0618 // Type or member is obsolete
 
         return new ClientCredentialsTokenManagementBuilder(services);
     }
@@ -84,16 +80,18 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
     public static IHttpClientBuilder AddClientCredentialsHttpClient(
     this IServiceCollection services,
     string httpClientName,
-    string tokenClientName,
+    ClientCredentialsClientName tokenClientName,
     Action<HttpClient>? configureClient = null)
     {
         if (configureClient != null)
         {
             return services.AddHttpClient(httpClientName, configureClient)
+                .AddDefaultAccessTokenResiliency()
                 .AddClientCredentialsTokenHandler(tokenClientName);
         }
 
         return services.AddHttpClient(httpClientName)
+            .AddDefaultAccessTokenResiliency()
             .AddClientCredentialsTokenHandler(tokenClientName);
     }
 
@@ -108,9 +106,18 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
     public static IHttpClientBuilder AddClientCredentialsHttpClient(
         this IServiceCollection services,
         string httpClientName,
-        string tokenClientName,
+        ClientCredentialsClientName tokenClientName,
         Action<IServiceProvider, HttpClient> configureClient) =>
-            services.AddHttpClient(httpClientName, configureClient).AddClientCredentialsTokenHandler(tokenClientName);
+            services.AddHttpClient(httpClientName, configureClient)
+                .AddDefaultAccessTokenResiliency()
+                .AddClientCredentialsTokenHandler(tokenClientName);
+
+    public static IHttpClientBuilder AddDefaultAccessTokenResiliency(this IHttpClientBuilder httpClientBuilder)
+    {
+        httpClientBuilder.AddResilienceHandler("Duende", builder => builder.AddDefaultAccessTokenHandlingResiliency());
+
+        return httpClientBuilder;
+    }
 
     /// <summary>
     /// Adds the client access token handler to an HttpClient
@@ -120,31 +127,22 @@ public static class ClientCredentialsTokenManagementServiceCollectionExtensions
     /// <returns></returns>
     public static IHttpClientBuilder AddClientCredentialsTokenHandler(
         this IHttpClientBuilder httpClientBuilder,
-        string tokenClientName)
-    {
-        ArgumentNullException.ThrowIfNull(tokenClientName);
+        ClientCredentialsClientName tokenClientName) => httpClientBuilder
+            .AddHttpMessageHandler(provider =>
+                 {
+                     var accessTokenManagementService = provider.GetRequiredService<IClientCredentialsTokenManagementService>();
 
-        return httpClientBuilder.AddHttpMessageHandler(provider =>
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var metrics = provider.GetRequiredService<AccessTokenManagementMetrics>();
-#pragma warning restore CS0618 // Type or member is obsolete
-            var dpopService = provider.GetRequiredService<IDPoPProofService>();
-            var dpopNonceStore = provider.GetRequiredService<IDPoPNonceStore>();
-            var accessTokenManagementService = provider.GetRequiredService<IClientCredentialsTokenManagementService>();
-#pragma warning disable CS0618 // Type or member is obsolete
-            var logger = provider.GetRequiredService<ILogger<ClientCredentialsTokenHandler>>();
+                     var logger = provider.GetRequiredService<ILogger<AccessTokenRequestHandler>>();
 
-            return new ClientCredentialsTokenHandler(
-                metrics: metrics,
-                dPoPProofService: dpopService,
-                dPoPNonceStore: dpopNonceStore,
-                accessTokenManagementService: accessTokenManagementService,
-                logger: logger,
-                tokenClientName: tokenClientName);
-        });
+                     var retriever = new ClientCredentialsTokenRetriever(accessTokenManagementService, tokenClientName);
+                     var dpopHandler = provider.GetRequiredService<IDPopProofRequestHandler>();
 
-#pragma warning restore CS0618 // Type or member is obsolete
+                     var accessTokenHandler = new AccessTokenRequestHandler(
+                         tokenRetriever: retriever,
+                         dPoPProofRequestHandler: dpopHandler,
+                         logger: logger);
 
-    }
+                     return accessTokenHandler;
+
+                 });
 }

@@ -2,6 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
+using Duende.AccessTokenManagement.DPoP;
+using Duende.AccessTokenManagement.DPoP.Internal;
+using Duende.AccessTokenManagement.Types;
 using Duende.IdentityModel;
 using Duende.IdentityServer.Configuration;
 using Microsoft.AspNetCore.Authentication;
@@ -10,28 +13,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Duende.AccessTokenManagement.Tests;
-
-public class DistributedCacheClientTokenManagementApiTests(ITestOutputHelper output)
-    : ClientTokenManagementApiTests(output)
-{
-    public override ClientCredentialsTokenManagementBuilder CreateClientCredentialsTokenManagementBuilder()
-    {
-        var services = new ServiceCollection();
-        services.AddDistributedMemoryCache();
-
-        return services.AddClientCredentialsTokenManagement();
-    }
-    [Fact]
-    public void DistributedCache_should_be_registered()
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        Provider.GetRequiredService<IClientCredentialsTokenCache>().ShouldBeOfType<DistributedClientCredentialsTokenCache>();
-        Provider.GetRequiredService<IDPoPNonceStore>().ShouldBeOfType<DistributedDPoPNonceStore>();
-#pragma warning restore CS0618 // Type or member is obsolete
-
-    }
-
-}
 
 public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output)
     : ClientTokenManagementApiTests(output)
@@ -42,37 +23,19 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output)
         services.AddHybridCache();
         services.AddDistributedMemoryCache();
 
-        return services.AddClientCredentialsTokenManagement()
-            .UsePreviewHybridCache();
+        return services.AddClientCredentialsTokenManagement();
     }
 
     [Fact]
-    public void HybridCache_should_be_registered()
-    {
-        Provider.GetRequiredService<IClientCredentialsTokenCache>().ShouldBeOfType<HybridClientCredentialsTokenCache>();
-        Provider.GetRequiredService<IDPoPNonceStore>().ShouldBeOfType<HybridDPoPNonceStore>();
-    }
-
-
+    public void HybridCache_should_be_registered() => Provider.GetRequiredService<IDPoPNonceStore>().ShouldBeOfType<HybridDPoPNonceStore>();
 }
 
 public abstract class ClientTokenManagementApiTests(ITestOutputHelper output) : IntegrationTestBase(output), IAsyncLifetime
 {
-    private static readonly string _jwkJson = CreateJWKJson();
-
     private IClientCredentialsTokenManagementService _tokenService = null!;
     private IHttpClientFactory _clientFactory = null!;
     private ClientCredentialsClient _clientOptions = null!;
     protected ServiceProvider Provider = null!;
-
-    private static string CreateJWKJson()
-    {
-        var key = CryptoHelper.CreateRsaSecurityKey();
-        var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
-        jwk.Alg = "RS256";
-        var jwkJson = JsonSerializer.Serialize(jwk);
-        return jwkJson;
-    }
 
     public abstract ClientCredentialsTokenManagementBuilder CreateClientCredentialsTokenManagementBuilder();
 
@@ -85,12 +48,12 @@ public abstract class ClientTokenManagementApiTests(ITestOutputHelper output) : 
         builder
             .AddClient("test", client =>
             {
-                client.TokenEndpoint = "https://identityserver/connect/token";
+                client.TokenEndpoint = new Uri("https://identityserver/connect/token");
                 client.ClientId = "client_credentials_client";
                 client.ClientSecret = "secret";
                 client.Scope = "scope1";
                 client.HttpClient = IdentityServerHost.HttpClient;
-                client.DPoPJsonWebKey = _jwkJson;
+                client.DPoPJsonWebKey = The.JsonWebKey;
             });
         builder.Services.AddClientCredentialsHttpClient("test", "test")
             .AddHttpMessageHandler(() =>
@@ -150,12 +113,12 @@ public abstract class ClientTokenManagementApiTests(ITestOutputHelper output) : 
     [Fact]
     public async Task dpop_clients_GetAccessTokenAsync_should_obtain_token_with_cnf()
     {
-        var token = await _tokenService.GetAccessTokenAsync("test");
+        ClientCredentialsToken token = await _tokenService.GetAccessTokenAsync("test");
 
-        token.IsError.ShouldBeFalse();
         token.DPoPJsonWebKey.ShouldNotBeNull();
-        token.AccessTokenType.ShouldBe("DPoP");
-        var payload = Base64UrlEncoder.Decode(token.AccessToken!.Split('.')[1]);
+        token.AccessTokenType.ShouldNotBeNull()
+            .Value.ShouldBe("DPoP");
+        var payload = Base64UrlEncoder.Decode(token.AccessToken.Value.Split('.')[1]);
         var values = JsonSerializer.Deserialize<Dictionary<string, object>>(payload);
         values!.ShouldContainKey("cnf");
     }
@@ -176,12 +139,11 @@ public abstract class ClientTokenManagementApiTests(ITestOutputHelper output) : 
 
         _clientOptions.DPoPJsonWebKey = jwkJson;
 
-        var token = await _tokenService.GetAccessTokenAsync("test");
+        ClientCredentialsToken token = await _tokenService.GetAccessTokenAsync("test");
 
-        token.IsError.ShouldBeFalse();
         token.DPoPJsonWebKey.ShouldNotBeNull();
-        token.AccessTokenType.ShouldBe("DPoP");
-        var payload = Base64UrlEncoder.Decode(token.AccessToken!.Split('.')[1]);
+        token.AccessTokenType.ShouldNotBeNull().Value.ShouldBe("DPoP");
+        var payload = Base64UrlEncoder.Decode(token.AccessToken.Value.Split('.')[1]);
         var values = JsonSerializer.Deserialize<Dictionary<string, object>>(payload);
         values!.ShouldContainKey("cnf");
 
@@ -203,12 +165,11 @@ public abstract class ClientTokenManagementApiTests(ITestOutputHelper output) : 
 
         _clientOptions.DPoPJsonWebKey = jwkJson;
 
-        var token = await _tokenService.GetAccessTokenAsync("test");
+        ClientCredentialsToken token = await _tokenService.GetAccessTokenAsync("test");
 
-        token.IsError.ShouldBeFalse();
         token.DPoPJsonWebKey.ShouldNotBeNull();
-        token.AccessTokenType.ShouldBe("DPoP");
-        var payload = Base64UrlEncoder.Decode(token.AccessToken!.Split('.')[1]);
+        token.AccessTokenType.ShouldNotBeNull().Value.ShouldBe("DPoP");
+        var payload = Base64UrlEncoder.Decode(token.AccessToken.Value.Split('.')[1]);
         var values = JsonSerializer.Deserialize<Dictionary<string, object>>(payload);
         values!.ShouldContainKey("cnf");
 

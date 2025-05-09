@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.AccessTokenManagement.Types;
 using Duende.IdentityModel.Client;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect;
@@ -14,7 +15,7 @@ public class UserTokenManagementOptions
     /// Name of the authentication scheme to use for deriving token service configuration
     /// (will fall back to configured default challenge scheme if not set)
     /// </summary>
-    public string? ChallengeScheme { get; set; }
+    public Scheme? ChallengeScheme { get; set; }
 
     /// <summary>
     /// Boolean to set whether tokens added to a session should be challenge-scheme-specific.
@@ -31,13 +32,13 @@ public class UserTokenManagementOptions
     /// Scope value when requesting a client credentials token.
     /// If not set, token request will omit scope parameter.
     /// </summary>
-    public string? ClientCredentialsScope { get; set; }
+    public Scope? ClientCredentialsScope { get; set; }
 
     /// <summary>
     /// Resource value when requesting a client credentials token.
     /// If not set, token request will omit resource parameter.
     /// </summary>
-    public string? ClientCredentialsResource { get; set; }
+    public Resource? ClientCredentialsResource { get; set; }
 
     /// <summary>
     /// Default client credential style to use when requesting tokens
@@ -48,5 +49,5 @@ public class UserTokenManagementOptions
     /// <summary>
     /// The string representation of the JSON web key to use for DPoP.
     /// </summary>
-    public string? DPoPJsonWebKey { get; set; }
+    public DPoPJsonWebKey? DPoPJsonWebKey { get; set; }
 }

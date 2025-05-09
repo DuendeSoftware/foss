@@ -22,7 +22,9 @@ public class OidcEvents : OpenIdConnectEvents
             AccessTokenType = context.TokenEndpointResponse.TokenType,
             Expiration = exp,
             RefreshToken = context.TokenEndpointResponse.RefreshToken,
-            Scope = context.TokenEndpointResponse.Scope
+            Scope = context.TokenEndpointResponse.Scope,
+            ClientId = context.ProtocolMessage.ClientId,
+            IdentityToken = context.TokenEndpointResponse.IdToken
         });
 
         await base.TokenValidated(context);
