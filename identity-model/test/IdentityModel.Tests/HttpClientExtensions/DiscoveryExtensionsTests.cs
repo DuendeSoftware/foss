@@ -214,27 +214,114 @@ public class DiscoveryExtensionsTests
 
         disco.IsError.ShouldBeFalse();
 
+        // Endpoints
+        disco.Issuer.ShouldBe("https://demo.identityserver.io");
+        disco.JwksUri.ShouldBe("https://demo.identityserver.io/.well-known/jwks");
         disco.TokenEndpoint.ShouldBe("https://demo.identityserver.io/connect/token");
         disco.AuthorizeEndpoint.ShouldBe("https://demo.identityserver.io/connect/authorize");
         disco.UserInfoEndpoint.ShouldBe("https://demo.identityserver.io/connect/userinfo");
+        disco.IntrospectionEndpoint.ShouldBe("https://demo.identityserver.io/connect/introspect");
+        disco.RevocationEndpoint.ShouldBe("https://demo.identityserver.io/connect/revocation");
+        disco.DeviceAuthorizationEndpoint.ShouldBe("https://demo.identityserver.io/connect/deviceauthorization");
+        disco.BackchannelAuthenticationEndpoint.ShouldBe("https://demo.identityserver.io/connect/ciba");
         disco.PushedAuthorizationRequestEndpoint.ShouldBe("https://demo.identityserver.io/connect/par");
+        disco.EndSessionEndpoint.ShouldBe("https://demo.identityserver.io/connect/endsession");
+        disco.RegistrationEndpoint.ShouldBe("https://demo.identityserver.io/connect/dcr");
+        disco.CheckSessionIframe.ShouldBe("https://demo.identityserver.io/connect/checksession");
 
         disco.FrontChannelLogoutSupported.ShouldBe(true);
         disco.FrontChannelLogoutSessionSupported.ShouldBe(true);
+        disco.RequirePushedAuthorizationRequests.ShouldBe(true);
 
+        // Response Modes
         var responseModes = disco.ResponseModesSupported.ToList();
-
+        responseModes.Count.ShouldBe(3);
         responseModes.ShouldContain("form_post");
         responseModes.ShouldContain("query");
         responseModes.ShouldContain("fragment");
 
+        // Grant Types
+        var grantTypes = disco.GrantTypesSupported.ToList();
+        grantTypes.Count.ShouldBe(5);
+        grantTypes.ShouldContain("authorization_code");
+        grantTypes.ShouldContain("client_credentials");
+        grantTypes.ShouldContain("password");
+        grantTypes.ShouldContain("refresh_token");
+        grantTypes.ShouldContain("implicit");
+
+        // Response Types
+        var responseTypes = disco.ResponseTypesSupported.ToList();
+        responseTypes.Count.ShouldBe(7);
+        responseTypes.ShouldContain("code");
+        responseTypes.ShouldContain("token");
+        responseTypes.ShouldContain("id_token");
+        responseTypes.ShouldContain("id_token token");
+        responseTypes.ShouldContain("code id_token");
+        responseTypes.ShouldContain("code token");
+        responseTypes.ShouldContain("code id_token token");
+
+        // Subject Types
+        var subjectTypes = disco.SubjectTypesSupported.ToList();
+        subjectTypes.Count.ShouldBe(1);
+        subjectTypes.ShouldContain("public");
+
+        // PKCE Methods
+        var codeChallengeMethodsSupported = disco.CodeChallengeMethodsSupported.ToList();
+        codeChallengeMethodsSupported.Count.ShouldBe(2);
+        codeChallengeMethodsSupported.ShouldContain("plain");
+        codeChallengeMethodsSupported.ShouldContain("S256");
+
+        // Scopes
+        var scopes = disco.ScopesSupported.ToList();
+        scopes.Count.ShouldBe(7);
+        scopes.ShouldContain("openid");
+        scopes.ShouldContain("profile");
+        scopes.ShouldContain("email");
+        scopes.ShouldContain("address");
+        scopes.ShouldContain("phone");
+        scopes.ShouldContain("offline_access");
+        scopes.ShouldContain("api");
+
+        // Claims
+        var claims = disco.ClaimsSupported.ToList();
+        claims.Count.ShouldBe(20);
+        claims.ShouldContain("sub");
+        claims.ShouldContain("name");
+        claims.ShouldContain("family_name");
+        claims.ShouldContain("given_name");
+        claims.ShouldContain("middle_name");
+        claims.ShouldContain("nickname");
+        claims.ShouldContain("preferred_username");
+        claims.ShouldContain("profile");
+        claims.ShouldContain("picture");
+        claims.ShouldContain("website");
+        claims.ShouldContain("gender");
+        claims.ShouldContain("birthdate");
+        claims.ShouldContain("zoneinfo");
+        claims.ShouldContain("locale");
+        claims.ShouldContain("updated_at");
+        claims.ShouldContain("email");
+        claims.ShouldContain("email_verified");
+        claims.ShouldContain("address");
+        claims.ShouldContain("phone_number");
+        claims.ShouldContain("phone_number_verified");
+
+        // JWKS data
         disco.KeySet.Keys.Count.ShouldBe(1);
         disco.KeySet.Keys.First().Kid.ShouldBe("a3rMUgMFv9tPclLa6yF3zAkfquE");
 
+        // mTLS endpoint aliases
         disco.MtlsEndpointAliases.ShouldNotBeNull();
         disco.MtlsEndpointAliases.TokenEndpoint.ShouldBeNull();
 
-        disco.RequirePushedAuthorizationRequests!.Value.ShouldBeTrue();
+        // These collections aren't in the test discovery.json so they should be empty enumerations
+        disco.BackchannelTokenDeliveryModesSupported.ShouldBeEmpty();
+        disco.IntrospectionSigningAlgorithmsSupported.ShouldBeEmpty();
+        disco.IntrospectionEncryptionAlgorithmsSupported.ShouldBeEmpty();
+        disco.IntrospectionEncryptionEncValuesSupported.ShouldBeEmpty();
+
+        // These flags aren't in the test discovery.json, so they should be null
+        disco.BackchannelUserCodeParameterSupported.ShouldBeNull();
     }
 
     [Fact]
