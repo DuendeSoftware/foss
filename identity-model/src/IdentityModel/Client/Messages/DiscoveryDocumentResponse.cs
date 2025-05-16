@@ -258,8 +258,7 @@ public class DiscoveryDocumentResponse : ProtocolResponse
     /// Gets the signing algorithms supported by the token endpoint for the signature on the JWT used to authenticate
     /// the client at the token endpoint for the "private_key_jwt" and "client_secret_jwt" authentication methods.
     /// </summary>
-    public IEnumerable<string> TokenEndpointAuthenticationSigningAlgorithmsSupported => [];
-
+    public IEnumerable<string> TokenEndpointAuthenticationSigningAlgorithmsSupported => TryGetStringArray(OidcConstants.Discovery.TokenEndpointAuthenticationSigningAlgorithmsSupported);
 
     /// <summary>
     /// Gets the supported backchannel token delivery modes.
