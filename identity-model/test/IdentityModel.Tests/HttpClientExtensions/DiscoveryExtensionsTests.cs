@@ -306,6 +306,18 @@ public class DiscoveryExtensionsTests
         claims.ShouldContain("phone_number");
         claims.ShouldContain("phone_number_verified");
 
+        // Token Authentication Methods
+        var tokenEndpointAuthMethods = disco.TokenEndpointAuthenticationMethodsSupported.ToList();
+        tokenEndpointAuthMethods.Count.ShouldBe(3);
+        tokenEndpointAuthMethods.ShouldContain("client_secret_post");
+        tokenEndpointAuthMethods.ShouldContain("client_secret_basic");
+        tokenEndpointAuthMethods.ShouldContain("private_key_jwt");
+
+        // Token Authentication Signing Algorithms for private_key_jwt
+        var tokenEndpointAuthSigningAlgorithms = disco.TokenEndpointAuthenticationSigningAlgorithmsSupported.ToList();
+        tokenEndpointAuthSigningAlgorithms.Count.ShouldBe(1);
+        tokenEndpointAuthSigningAlgorithms.ShouldContain("RS256");
+
         // JWKS data
         disco.KeySet.Keys.Count.ShouldBe(1);
         disco.KeySet.Keys.First().Kid.ShouldBe("a3rMUgMFv9tPclLa6yF3zAkfquE");

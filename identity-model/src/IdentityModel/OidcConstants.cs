@@ -471,6 +471,7 @@ public static class OidcConstants
         public const string ResponseTypesSupported = "response_types_supported";
         public const string ClaimsSupported = "claims_supported";
         public const string TokenEndpointAuthenticationMethodsSupported = "token_endpoint_auth_methods_supported";
+        public const string TokenEndpointAuthenticationSigningAlgorithmsSupported = "token_endpoint_auth_signing_alg_values_supported";
 
         // more capabilities
         public const string ClaimsLocalesSupported = "claims_locales_supported";

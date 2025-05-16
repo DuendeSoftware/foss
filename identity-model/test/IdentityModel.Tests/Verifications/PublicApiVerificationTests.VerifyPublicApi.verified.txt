@@ -404,6 +404,7 @@
             public const string TokenEndpoint = "token_endpoint";
             public const string TokenEndpointAuthSigningAlgorithmsSupported = "token_endpoint_auth_signing_alg_values_supported";
             public const string TokenEndpointAuthenticationMethodsSupported = "token_endpoint_auth_methods_supported";
+            public const string TokenEndpointAuthenticationSigningAlgorithmsSupported = "token_endpoint_auth_signing_alg_values_supported";
             public const string UILocalesSupported = "ui_locales_supported";
             public const string UserInfoEncryptionAlgorithmsSupported = "userinfo_encryption_alg_values_supported";
             public const string UserInfoEncryptionEncValuesSupported = "userinfo_encryption_enc_values_supported";
@@ -835,6 +836,7 @@ namespace Duende.IdentityModel.Client
         public System.Collections.Generic.IEnumerable<string> SubjectTypesSupported { get; }
         public string? TokenEndpoint { get; }
         public System.Collections.Generic.IEnumerable<string> TokenEndpointAuthenticationMethodsSupported { get; }
+        public System.Collections.Generic.IEnumerable<string> TokenEndpointAuthenticationSigningAlgorithmsSupported { get; }
         public string? UserInfoEndpoint { get; }
         protected override System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
         public bool? TryGetBoolean(string name) { }
