@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
+using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +14,12 @@ namespace WebJarJwt.Controllers;
 public class HomeController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IUserTokenManagementService _tokenManagementService;
+    private readonly IUserTokenManager _tokenManager;
 
-    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManagementService tokenManagementService)
+    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManager tokenManager)
     {
         _httpClientFactory = httpClientFactory;
-        _tokenManagementService = tokenManagementService;
+        _tokenManager = tokenManager;
     }
 
     [AllowAnonymous]
@@ -29,9 +31,9 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserManual()
     {
-        var token = await _tokenManagementService.GetAccessTokenAsync(User);
+        var token = await _tokenManager.GetAccessTokenAsync(User).GetToken();
         var client = _httpClientFactory.CreateClient();
-        client.SetBearerToken(token.AccessToken!);
+        client.SetBearerToken(token.AccessToken.ToString()!);
 
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/test");
         ViewBag.Json = PrettyPrint(response);
@@ -41,9 +43,9 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserExtensionMethod()
     {
-        var token = await HttpContext.GetUserAccessTokenAsync();
+        var token = await HttpContext.GetUserAccessTokenAsync().GetToken();
         var client = _httpClientFactory.CreateClient();
-        client.SetBearerToken(token.AccessToken!);
+        client.SetBearerToken(token.AccessToken.ToString());
 
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/test");
         ViewBag.Json = PrettyPrint(response);
@@ -72,9 +74,9 @@ public class HomeController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> CallApiAsClientExtensionMethod()
     {
-        var token = await HttpContext.GetClientAccessTokenAsync();
+        var token = await HttpContext.GetClientAccessTokenAsync().GetToken();
         var client = _httpClientFactory.CreateClient();
-        client.SetBearerToken(token.AccessToken!);
+        client.SetBearerToken(token.AccessToken.ToString());
 
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/test");
 

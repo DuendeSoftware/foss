@@ -3,7 +3,7 @@
 
 using System.Collections;
 using System.Runtime.CompilerServices;
-using Duende.AccessTokenManagement;
+using Duende.AccessTokenManagement.OTel;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;

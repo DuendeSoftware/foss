@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+
 using Microsoft.AspNetCore.Authentication;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect;
@@ -13,13 +14,14 @@ public interface IStoreTokensInAuthenticationProperties
     /// <summary>
     /// Gets a UserToken from the AuthenticationProperties
     /// </summary>
-    UserToken GetUserToken(AuthenticationProperties authenticationProperties, UserTokenRequestParameters? parameters = null);
+    TokenResult<TokenForParameters> GetUserToken(AuthenticationProperties authenticationProperties, UserTokenRequestParameters? parameters = null);
 
     /// <summary>
     /// Sets a UserToken in the AuthenticationProperties.
     /// </summary>
-    Task SetUserToken(UserToken token, AuthenticationProperties authenticationProperties,
-        UserTokenRequestParameters? parameters = null);
+    Task SetUserTokenAsync(UserToken token, AuthenticationProperties authenticationProperties,
+        UserTokenRequestParameters? parameters = null,
+        CT ct = default);
 
     /// <summary>
     /// Removes a UserToken from the AuthenticationProperties.
@@ -32,5 +34,6 @@ public interface IStoreTokensInAuthenticationProperties
     /// Gets the scheme name used when storing a UserToken in an
     /// AuthenticationProperties.
     /// </summary>
-    Task<string> GetSchemeAsync(UserTokenRequestParameters? parameters = null);
+    Task<Scheme> GetSchemeAsync(UserTokenRequestParameters? parameters = null,
+        CT ct = default);
 }

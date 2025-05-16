@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Text.Json;
+using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +15,13 @@ namespace Web.Controllers;
 public class HomeController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IUserTokenManagementService _tokenManagementService;
+    private readonly IUserTokenManager _tokenManager;
     private readonly SampleConfiguration _configuration;
 
-    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManagementService tokenManagementService, IOptions<SampleConfiguration> options)
+    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManager tokenManager, IOptions<SampleConfiguration> options)
     {
         _httpClientFactory = httpClientFactory;
-        _tokenManagementService = tokenManagementService;
+        _tokenManager = tokenManager;
         _configuration = options.Value;
     }
 
@@ -32,9 +34,9 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserManual()
     {
-        var token = await _tokenManagementService.GetAccessTokenAsync(User);
+        var token = await _tokenManager.GetAccessTokenAsync(User).GetToken();
         var client = _httpClientFactory.CreateClient();
-        client.SetToken(token.AccessTokenType!, token.AccessToken!);
+        client.SetToken(token.AccessTokenType?.ToScheme().ToString()!, token.AccessToken.ToString());
 
         var response = await client.GetStringAsync($"{_configuration.ApiBaseUrl}test");
         ViewBag.Json = PrettyPrint(response);
@@ -44,9 +46,11 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserExtensionMethod()
     {
-        var token = await HttpContext.GetUserAccessTokenAsync();
+        var token = await HttpContext.GetUserAccessTokenAsync().GetToken();
         var client = _httpClientFactory.CreateClient();
-        client.SetToken(token.AccessTokenType!, token.AccessToken!);
+        var scheme = token.AccessTokenType?.ToScheme().ToString()
+            ?? throw new InvalidOperationException("Scheme is empty");
+        client.SetToken(scheme, token.AccessToken.ToString());
 
         var response = await client.GetStringAsync($"{_configuration.ApiBaseUrl}test");
         ViewBag.Json = PrettyPrint(response);
@@ -86,9 +90,10 @@ public class HomeController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> CallApiAsClientExtensionMethod()
     {
-        var token = await HttpContext.GetClientAccessTokenAsync();
+        var token = await HttpContext.GetClientAccessTokenAsync().GetToken();
         var client = _httpClientFactory.CreateClient();
-        client.SetToken(token.AccessTokenType!, token.AccessToken!);
+        var scheme = token.AccessTokenType?.ToScheme().ToString() ?? throw new InvalidOperationException("Scheme is empty");
+        client.SetToken(scheme, token.AccessToken.ToString());
 
         var response = await client.GetStringAsync($"{_configuration.ApiBaseUrl}test");
 

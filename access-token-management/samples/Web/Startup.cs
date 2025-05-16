@@ -3,7 +3,9 @@
 
 using System.Security.Cryptography;
 using System.Text.Json;
+using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
@@ -72,12 +74,12 @@ public static class Startup
         var rsaKey = new RsaSecurityKey(RSA.Create(2048));
         var jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(rsaKey);
         jsonWebKey.Alg = "PS256";
-        var jwk = JsonSerializer.Serialize(jsonWebKey);
+        var jwk = JsonSerializer.Serialize(jsonWebKey) ?? throw new InvalidOperationException("Failed to deserialize");
 
         builder.Services.AddOpenIdConnectAccessTokenManagement(options =>
         {
             var useDPoP = builder.Configuration.GetValue<bool>("UseDPoP");
-            options.DPoPJsonWebKey = useDPoP ? jwk : null;
+            options.DPoPJsonWebKey = useDPoP ? ProofKeyString.ParseOrDefault(jwk) : null;
         });
 
         // registers HTTP client that uses the managed user access token

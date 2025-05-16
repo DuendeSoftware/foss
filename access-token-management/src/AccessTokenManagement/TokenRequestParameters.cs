@@ -8,35 +8,35 @@ namespace Duende.AccessTokenManagement;
 /// <summary>
 /// Additional optional parameters for a client credentials access token request
 /// </summary>
-public class TokenRequestParameters
+public record TokenRequestParameters
 {
     /// <summary>
     /// Force renewal of token.
     /// </summary>
-    public bool ForceRenewal { get; set; }
+    public ForceTokenRenewal ForceTokenRenewal { get; init; } = new(false);
 
     /// <summary>
     /// Override the statically configured scope parameter.
     /// </summary>
-    public string? Scope { get; set; }
+    public Scope? Scope { get; init; }
 
     /// <summary>
     /// Override the statically configured resource parameter.
     /// </summary>
-    public string? Resource { get; set; }
+    public Resource? Resource { get; init; }
 
     /// <summary>
     /// Additional parameters to send.
     /// </summary>
-    public Parameters Parameters { get; set; } = [];
+    public Parameters Parameters { get; init; } = [];
 
     /// <summary>
     /// Specifies the client assertion.
     /// </summary>
-    public ClientAssertion? Assertion { get; set; }
+    public ClientAssertion? Assertion { get; init; }
 
     /// <summary>
     /// Additional context that might be relevant in the pipeline
     /// </summary>
-    public Parameters Context { get; set; } = [];
+    public Parameters Context { get; init; } = [];
 }

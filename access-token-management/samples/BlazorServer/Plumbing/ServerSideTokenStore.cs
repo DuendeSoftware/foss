@@ -3,7 +3,9 @@
 
 using System.Collections.Concurrent;
 using System.Security.Claims;
+using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 
 namespace BlazorServer.Plumbing;
 
@@ -13,29 +15,33 @@ namespace BlazorServer.Plumbing;
 /// </summary>
 public class ServerSideTokenStore : IUserTokenStore
 {
-    private static readonly ConcurrentDictionary<string, UserToken> _tokens = new();
+    private static readonly ConcurrentDictionary<string, TokenForParameters> _tokens = new();
 
-    public Task<UserToken> GetTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null)
+    public Task<TokenResult<TokenForParameters>> GetTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null,
+        CancellationToken cancellationToken = default)
     {
         var sub = user.FindFirst("sub")?.Value ?? throw new InvalidOperationException("no sub claim");
 
         if (_tokens.TryGetValue(sub, out var value))
         {
-            return Task.FromResult(value);
+            return Task.FromResult(TokenResult.Success(value));
         }
 
-        return Task.FromResult(new UserToken { Error = "not found" });
+        return Task.FromResult((TokenResult<TokenForParameters>)TokenResult.Failure("not found"));
     }
 
-    public Task StoreTokenAsync(ClaimsPrincipal user, UserToken token, UserTokenRequestParameters? parameters = null)
+    public Task StoreTokenAsync(ClaimsPrincipal user, UserToken token, UserTokenRequestParameters? parameters = null, CancellationToken ct = default)
     {
         var sub = user.FindFirst("sub")?.Value ?? throw new InvalidOperationException("no sub claim");
-        _tokens[sub] = token;
+        _tokens[sub] = new TokenForParameters(token,
+            token.RefreshToken == null
+                ? null
+                : new UserRefreshToken(token.RefreshToken.Value, token.DPoPJsonWebKey));
 
         return Task.CompletedTask;
     }
 
-    public Task ClearTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null)
+    public Task ClearTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null, CancellationToken ct = default)
     {
         var sub = user.FindFirst("sub")?.Value ?? throw new InvalidOperationException("no sub claim");
 

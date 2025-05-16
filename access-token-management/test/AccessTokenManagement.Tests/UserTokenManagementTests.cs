@@ -2,11 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
+using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
+using OidcConstants = Duende.IdentityModel.OidcConstants;
 
 namespace Duende.AccessTokenManagement.Tests;
 
@@ -16,10 +20,10 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     public async Task Anonymous_user_should_return_user_token_error()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token_error"));
+        var token = await response.Content.ReadFromJsonAsync<FailedResult>();
 
-        token!.IsError.ShouldBeTrue();
+        token!.Error.ShouldNotBeNull();
     }
 
     [Fact]
@@ -27,13 +31,59 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     {
         await InitializeAsync();
         var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/client_token"));
-        var token = await response.Content.ReadFromJsonAsync<ClientCredentialsToken>();
+        var token = await response.Content.ReadFromJsonAsync<ClientCredentialsTokenModel>();
 
         token!.AccessToken.ShouldNotBeNull();
-        token.AccessTokenType.ShouldBe("Bearer");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("Bearer");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
+    }
 
-        token.IsError.ShouldBeFalse();
+    [Fact]
+    public async Task Can_implement_custom_user_principal_transform()
+    {
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+
+        // Respond to code flow with a short token lifetime so that we trigger refresh on 1st use
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "tokentype",
+            expires_in = 10,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        var transformed = false;
+
+        Task<ClaimsPrincipal> LocalTransformPrincipalAsync(ClaimsPrincipal principal, CancellationToken ct)
+        {
+            transformed = true;
+            return Task.FromResult(new ClaimsPrincipal(
+                new ClaimsIdentity([
+                    new Claim(JwtClaimTypes.Name, "transformed"),
+                ], "openid")));
+        }
+
+        AppHost.OnConfigureServices += services =>
+        {
+            services.AddSingleton<TransformPrincipalAfterRefreshAsync>(LocalTransformPrincipalAsync);
+        };
+        await InitializeAsync();
+
+        await AppHost.LoginAsync("alice");
+        // Get a user token. This should trigger a token refresh, which then get's stored and triggers
+        // the custom token transform
+        await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"));
+
+        // Verify that the transform is used. 
+        transformed.ShouldBeTrue();
+
+        // The transformed principal should now be used. 
+        var claims = await AppHost.BrowserClient!.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"));
+        claims![JwtClaimTypes.Name].ShouldBe("transformed");
     }
 
     [Fact]
@@ -46,7 +96,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "initial_access_token",
-            token_type = "token_type",
+            token_type = "tokentype",
             expires_in = 3600,
             refresh_token = "initial_refresh_token",
         };
@@ -61,24 +111,22 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         // 1st request
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("initial_access_token");
-        token.AccessTokenType.ShouldBe("token_type");
-        token.RefreshToken.ShouldBe("initial_refresh_token");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // 2nd request should not trigger a token request
         response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        token = await response.Content.ReadFromJsonAsync<UserToken>();
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("initial_access_token");
-        token.AccessTokenType.ShouldBe("token_type");
-        token.RefreshToken.ShouldBe("initial_refresh_token");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
     }
 
@@ -92,7 +140,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "initial_access_token",
-            token_type = "token_type",
+            token_type = "tokentype",
             refresh_token = "initial_refresh_token",
         };
 
@@ -105,13 +153,12 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("initial_access_token");
-        token.AccessTokenType.ShouldBe("token_type");
-        token.RefreshToken.ShouldBe("initial_refresh_token");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
         token.Expiration.ShouldBe(DateTimeOffset.MaxValue);
     }
 
@@ -125,7 +172,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "initial_access_token",
-            token_type = "token_type",
+            token_type = "tokentype",
             expires_in = 3600
         };
 
@@ -138,12 +185,11 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("initial_access_token");
-        token.AccessTokenType.ShouldBe("token_type");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype");
         token.RefreshToken.ShouldBeNull();
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
     }
@@ -158,7 +204,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "initial_access_token",
-            token_type = "token_type",
+            token_type = "tokentype",
             expires_in = 10
         };
 
@@ -171,12 +217,11 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("initial_access_token");
-        token.AccessTokenType.ShouldBe("token_type");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype");
         token.RefreshToken.ShouldBeNull();
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
     }
@@ -200,7 +245,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "initial_access_token",
-            token_type = "token_type",
+            token_type = "tokentype",
             expires_in = 10,
             refresh_token = "initial_refresh_token",
         };
@@ -213,7 +258,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = "refreshed1_id_token",
             access_token = "refreshed1_access_token",
-            token_type = "token_type1",
+            token_type = "tokentype1",
             expires_in = 10,
             refresh_token = "refreshed1_refresh_token",
         };
@@ -227,7 +272,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = "refreshed2_id_token",
             access_token = "refreshed2_access_token",
-            token_type = "token_type2",
+            token_type = "tokentype2",
             expires_in = 3600,
             refresh_token = "refreshed2_refresh_token",
         };
@@ -242,37 +287,34 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         // first request should trigger refresh
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
-        token.IdentityToken.ShouldBe("refreshed1_id_token");
+        token.IdentityToken.ShouldNotBeNull().ShouldBe("refreshed1_id_token");
         token.AccessToken.ShouldBe("refreshed1_access_token");
-        token.AccessTokenType.ShouldBe("token_type1");
-        token.RefreshToken.ShouldBe("refreshed1_refresh_token");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype1");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("refreshed1_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // second request should trigger refresh
         response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        token = await response.Content.ReadFromJsonAsync<UserToken>();
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
-        token.IdentityToken.ShouldBe("refreshed2_id_token");
+        token.IdentityToken.ShouldNotBeNull().ShouldBe("refreshed2_id_token");
         token.AccessToken.ShouldBe("refreshed2_access_token");
-        token.AccessTokenType.ShouldBe("token_type2");
-        token.RefreshToken.ShouldBe("refreshed2_refresh_token");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype2");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("refreshed2_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // third request should not trigger refresh
         response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        token = await response.Content.ReadFromJsonAsync<UserToken>();
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("refreshed2_access_token");
-        token.AccessTokenType.ShouldBe("token_type2");
-        token.RefreshToken.ShouldBe("refreshed2_refresh_token");
+        token.AccessTokenType.ShouldNotBeNull().ShouldBe("tokentype2");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("refreshed2_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
     }
 
@@ -287,7 +329,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "access_token_without_resource",
-            token_type = "token_type",
+            token_type = "tokentype",
             expires_in = 3600,
             refresh_token = "initial_refresh_token",
         };
@@ -299,7 +341,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         var resource1TokenResponse = new
         {
             access_token = "urn:api1_access_token",
-            token_type = "token_type1",
+            token_type = "tokentype1",
             expires_in = 3600,
             refresh_token = "initial_refresh_token",
         };
@@ -312,7 +354,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         var resource2TokenResponse = new
         {
             access_token = "urn:api2_access_token",
-            token_type = "token_type1",
+            token_type = "tokentype1",
             expires_in = 3600,
             refresh_token = "initial_refresh_token",
         };
@@ -327,32 +369,29 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         // first request - no resource
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("access_token_without_resource");
-        token.RefreshToken.ShouldBe("initial_refresh_token");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // second request - with resource api1
         response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_with_resource/urn:api1"));
-        token = await response.Content.ReadFromJsonAsync<UserToken>();
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("urn:api1_access_token");
-        token.RefreshToken.ShouldBe("initial_refresh_token"); // This doesn't change with resources!
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token"); // This doesn't change with resources!
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // third request - with resource api2
         response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_with_resource/urn:api2"));
-        token = await response.Content.ReadFromJsonAsync<UserToken>();
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
         token.AccessToken.ShouldBe("urn:api2_access_token");
-        token.RefreshToken.ShouldBe("initial_refresh_token");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
     }
 
@@ -367,7 +406,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         {
             id_token = IdentityServerHost.CreateIdToken("1", "web"),
             access_token = "initial_access_token",
-            token_type = "token_type",
+            token_type = "tokentype",
             expires_in = 10,
             refresh_token = "initial_refresh_token",
         };
@@ -381,7 +420,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         var refreshTokenResponse = new
         {
             access_token = "refreshed1_access_token",
-            token_type = "token_type1",
+            token_type = "tokentype1",
             expires_in = 3600,
         };
 
@@ -397,11 +436,10 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         // first request should trigger refresh
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
 
         token.ShouldNotBeNull();
-        token.IsError.ShouldBeFalse();
-        token.RefreshToken.ShouldBe("initial_refresh_token");
+        token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
     }
 
     [Fact]
@@ -435,7 +473,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserToken>();
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
         var refreshToken = token?.RefreshToken;
 
         refreshToken.ShouldNotBeNull();

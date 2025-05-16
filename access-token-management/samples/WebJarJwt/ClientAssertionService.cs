@@ -3,6 +3,7 @@
 
 using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -36,22 +37,23 @@ public class ClientAssertionService : IClientAssertionService
     public ClientAssertionService(
         IOpenIdConnectConfigurationService configurationService) => _configurationService = configurationService;
 
-    public async Task<ClientAssertion?> GetClientAssertionAsync(string? clientName = null,
-        TokenRequestParameters? parameters = null)
+    public async Task<ClientAssertion?> GetClientAssertionAsync(ClientName? clientName = null,
+        TokenRequestParameters? parameters = null,
+        CancellationToken ct = default)
     {
-        var config = await _configurationService.GetOpenIdConnectConfigurationAsync();
+        var config = await _configurationService.GetOpenIdConnectConfigurationAsync(ct: ct);
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = config.ClientId,
-            Audience = config.Authority,
+            Issuer = config.ClientId.ToString(),
+            Audience = config.TokenEndpoint.GetLeftPart(UriPartial.Authority),
             Expires = DateTime.UtcNow.AddMinutes(1),
             SigningCredentials = Credential,
 
             Claims = new Dictionary<string, object>
             {
                 { JwtClaimTypes.JwtId, Guid.NewGuid().ToString() },
-                { JwtClaimTypes.Subject, config.ClientId! },
+                { JwtClaimTypes.Subject, config.ClientId.ToString()! },
                 { JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime() }
             },
 
@@ -71,7 +73,8 @@ public class ClientAssertionService : IClientAssertionService
         };
     }
 
-    public async Task<string> SignAuthorizeRequest(OpenIdConnectMessage message)
+    public async Task<string> SignAuthorizeRequest(OpenIdConnectMessage message,
+        CancellationToken ct = default)
     {
         var config = await _configurationService.GetOpenIdConnectConfigurationAsync();
 
@@ -83,8 +86,8 @@ public class ClientAssertionService : IClientAssertionService
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = config.ClientId,
-            Audience = config.Authority,
+            Issuer = config.ClientId.ToString(),
+            Audience = config.TokenEndpoint.GetLeftPart(UriPartial.Authority),
             Expires = DateTime.UtcNow.AddMinutes(1),
             SigningCredentials = Credential,
 

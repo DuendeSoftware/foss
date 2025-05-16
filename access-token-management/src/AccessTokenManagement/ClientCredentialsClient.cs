@@ -1,29 +1,35 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Duende.AccessTokenManagement.DPoP;
 using Duende.IdentityModel.Client;
+using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement;
+
+// This class is to be configured as IOptions. Therefor, all properties have to be nullable and it must have a default constructor
+// to make safe, I added a validator. 
+
 
 /// <summary>
 /// Defines a client credentials client
 /// </summary>
-public class ClientCredentialsClient
+public sealed class ClientCredentialsClient
 {
     /// <summary>
     /// The address of the token endpoint
     /// </summary>
-    public string? TokenEndpoint { get; set; }
+    public Uri? TokenEndpoint { get; set; }
 
     /// <summary>
     /// The client ID 
     /// </summary>
-    public string? ClientId { get; set; }
+    public ClientId? ClientId { get; set; }
 
     /// <summary>
     /// The static (shared) client secret
     /// </summary>
-    public string? ClientSecret { get; set; }
+    public ClientSecret? ClientSecret { get; set; }
 
     /// <summary>
     /// The client credential transmission style
@@ -41,12 +47,12 @@ public class ClientCredentialsClient
     /// <summary>
     /// The scope
     /// </summary>
-    public string? Scope { get; set; }
+    public Scope? Scope { get; set; }
 
     /// <summary>
     /// The resource
     /// </summary>
-    public string? Resource { get; set; }
+    public Resource? Resource { get; set; }
 
     /// <summary>
     /// The HTTP client name to use for the backchannel operations, will fall back to the standard backchannel client if not set
@@ -66,5 +72,39 @@ public class ClientCredentialsClient
     /// <summary>
     /// The string representation of the JSON web key to use for DPoP.
     /// </summary>
-    public string? DPoPJsonWebKey { get; set; }
+    public ProofKeyString? DPoPJsonWebKey { get; set; }
+
+
+    internal sealed class Validator : IValidateOptions<ClientCredentialsClient>
+    {
+        public ValidateOptionsResult Validate(string? name, ClientCredentialsClient options)
+        {
+            var subject = options.ClientId != null
+                ? "clientId " + options.ClientId
+                : "client " + (name ?? "default");
+
+            var errors = new List<string>();
+
+            if (options.ClientId == null)
+            {
+                errors.Add($"No {nameof(options.ClientId)} configured for {subject}");
+            }
+
+            if (options.TokenEndpoint == null)
+            {
+                errors.Add($"{nameof(options.TokenEndpoint)} cannot be null for {subject}");
+            }
+
+            if (options.ClientSecret == null)
+            {
+                errors.Add($"{nameof(options.ClientSecret)} cannot be null for {subject}");
+            }
+
+            if (errors.Any())
+            {
+                return ValidateOptionsResult.Fail(errors);
+            }
+            return ValidateOptionsResult.Success;
+        }
+    }
 }

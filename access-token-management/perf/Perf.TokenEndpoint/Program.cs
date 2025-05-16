@@ -37,12 +37,11 @@ services.AddClientCredentialsHttpClient("t2", "c1");
 services.AddClientCredentialsTokenManagement(opt => opt.CacheLifetimeBuffer = 0)
     .AddClient("c1", opt =>
     {
-        opt.TokenEndpoint = new Uri(Services.IdentityServer.ActualUri(), "/connect/token").ToString();
+        opt.TokenEndpoint = new Uri(Services.IdentityServer.ActualUri(), "/connect/token");
         opt.ClientId = "tokenendpoint";
         opt.ClientSecret = "secret";
         opt.HttpClientName = "c1";
-    })
-    .UsePreviewHybridCache();
+    });
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -90,7 +89,7 @@ app.MapGet("/client", async (HttpContext c, IHttpClientFactory factory, Cancella
 
 app.MapGet("/ok", () => "ok");
 
-app.MapGet("/token", async (IClientCredentialsTokenManagementService svc, CancellationToken ct) =>
+app.MapGet("/token", async (IClientCredentialsTokenManager svc, CancellationToken ct) =>
 {
     return await svc.GetAccessTokenAsync("c1");
 });

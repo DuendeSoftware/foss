@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement;
+
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Options;
@@ -10,10 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace WorkerService;
 
-public class ClientAssertionService : IClientAssertionService
+public class ClientAssertionService(IOptionsMonitor<ClientCredentialsClient> options) : IClientAssertionService
 {
-    private readonly IOptionsMonitor<ClientCredentialsClient> _options;
-
     private static string RsaKey =
         """
         {
@@ -32,25 +31,23 @@ public class ClientAssertionService : IClientAssertionService
 
     private static SigningCredentials Credential = new(new JsonWebKey(RsaKey), "RS256");
 
-    public ClientAssertionService(IOptionsMonitor<ClientCredentialsClient> options) => _options = options;
-
-    public Task<ClientAssertion?> GetClientAssertionAsync(string? clientName = null, TokenRequestParameters? parameters = null)
+    public Task<ClientAssertion?> GetClientAssertionAsync(ClientName? clientName = null, TokenRequestParameters? parameters = null, CancellationToken ct = default)
     {
         if (clientName == "demo.jwt")
         {
-            var options = _options.Get(clientName);
+            var options1 = options.Get(clientName.ToString());
 
             var descriptor = new SecurityTokenDescriptor
             {
-                Issuer = options.ClientId,
-                Audience = options.TokenEndpoint,
+                Issuer = options1.ClientId!.ToString(),
+                Audience = options1.TokenEndpoint!.ToString(),
                 Expires = DateTime.UtcNow.AddMinutes(1),
                 SigningCredentials = Credential,
 
                 Claims = new Dictionary<string, object>
                 {
                     { JwtClaimTypes.JwtId, Guid.NewGuid().ToString() },
-                    { JwtClaimTypes.Subject, options.ClientId! },
+                    { JwtClaimTypes.Subject, options1.ClientId.ToString() ?? "" },
                     { JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime() }
                 }
             };

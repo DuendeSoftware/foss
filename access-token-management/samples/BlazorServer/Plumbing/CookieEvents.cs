@@ -15,7 +15,7 @@ public class CookieEvents : CookieAuthenticationEvents
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
         var token = await _store.GetTokenAsync(context.Principal!);
-        if (token.IsError)
+        if (!token.Succeeded)
         {
             context.RejectPrincipal();
         }

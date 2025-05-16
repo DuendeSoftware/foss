@@ -13,5 +13,5 @@ public interface IUserAccessor
     /// <summary>
     /// Gets the current user.
     /// </summary>
-    Task<ClaimsPrincipal> GetCurrentUserAsync();
+    Task<ClaimsPrincipal> GetCurrentUserAsync(CT ct = default);
 }

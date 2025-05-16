@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement;
+
 using Duende.IdentityModel.Client;
 
 namespace WorkerService;
@@ -10,9 +11,9 @@ public class WorkerManual : BackgroundService
 {
     private readonly ILogger<WorkerManual> _logger;
     private readonly IHttpClientFactory _clientFactory;
-    private readonly IClientCredentialsTokenManagementService _tokenManagementService;
+    private readonly IClientCredentialsTokenManager _tokenManagementService;
 
-    public WorkerManual(ILogger<WorkerManual> logger, IHttpClientFactory factory, IClientCredentialsTokenManagementService tokenManagementService)
+    public WorkerManual(ILogger<WorkerManual> logger, IHttpClientFactory factory, IClientCredentialsTokenManager tokenManagementService)
     {
         _logger = logger;
         _clientFactory = factory;
@@ -31,8 +32,8 @@ public class WorkerManual : BackgroundService
             var client = _clientFactory.CreateClient();
             client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
 
-            var token = await _tokenManagementService.GetAccessTokenAsync("demo");
-            client.SetBearerToken(token.AccessToken!);
+            var token = await _tokenManagementService.GetAccessTokenAsync("demo", ct: stoppingToken).GetToken();
+            client.SetBearerToken(token.AccessToken.ToString());
 
             var response = await client.GetAsync("test", stoppingToken);
 

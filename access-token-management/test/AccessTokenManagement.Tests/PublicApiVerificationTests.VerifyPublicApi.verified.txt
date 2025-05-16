@@ -1,16 +1,409 @@
 ﻿namespace Duende.AccessTokenManagement
 {
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public abstract class AccessTokenHandler : System.Net.Http.DelegatingHandler
+    public sealed class AccessTokenRequestHandler : System.Net.Http.DelegatingHandler
     {
-        protected AccessTokenHandler(Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics metrics, Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Microsoft.Extensions.Logging.ILogger logger) { }
-        protected abstract Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType TokenRequestType { get; }
-        protected abstract System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, System.Threading.CancellationToken cancellationToken);
-        protected override System.Net.Http.HttpResponseMessage Send(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) { }
-        protected override System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) { }
-        protected virtual System.Threading.Tasks.Task<bool> SetDPoPProofTokenAsync(System.Net.Http.HttpRequestMessage request, Duende.AccessTokenManagement.ClientCredentialsToken token, System.Threading.CancellationToken cancellationToken, string? dpopNonce = null) { }
-        protected virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> SetTokenAsync(System.Net.Http.HttpRequestMessage request, bool forceRenewal, System.Threading.CancellationToken cancellationToken, string? dpopNonce = null) { }
+        public AccessTokenRequestHandler(Duende.AccessTokenManagement.AccessTokenRequestHandler.ITokenRetriever tokenRetriever, Duende.AccessTokenManagement.DPoP.IDPopProofRequestHandler dPoPProofRequestHandler, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.AccessTokenRequestHandler> logger) { }
+        protected override System.Net.Http.HttpResponseMessage Send(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken ct) { }
+        protected override System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken ct) { }
+        public interface IToken
+        {
+            Duende.AccessTokenManagement.AccessTokenString AccessToken { get; }
+            Duende.AccessTokenManagement.AccessTokenType? AccessTokenType { get; }
+            Duende.AccessTokenManagement.ClientId ClientId { get; }
+            Duende.AccessTokenManagement.DPoP.ProofKeyString? DPoPJsonWebKey { get; }
+        }
+        public interface ITokenRetriever
+        {
+            System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.AccessTokenRequestHandler.IToken>> GetTokenAsync(System.Net.Http.HttpRequestMessage request, System.Threading.CancellationToken ct);
+        }
+    }
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.AccessTokenString>))]
+    public readonly struct AccessTokenString : System.IEquatable<Duende.AccessTokenManagement.AccessTokenString>
+    {
+        public const int MaxLength = 32768;
+        public AccessTokenString() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.AccessTokenString Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.AccessTokenString? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.AccessTokenString op_Implicit(string value) { }
+    }
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.AccessTokenType>))]
+    public readonly struct AccessTokenType : System.IEquatable<Duende.AccessTokenManagement.AccessTokenType>
+    {
+        public const int MaxLength = 50;
+        public AccessTokenType() { }
+        public Duende.AccessTokenManagement.Scheme ToScheme() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.AccessTokenType Parse(string value) { }
+        public static Duende.AccessTokenManagement.AccessTokenType? ParseOrDefault(string? value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.AccessTokenType? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.AccessTokenType op_Implicit(string value) { }
+    }
+    public readonly struct ClientCredentialsCacheKey : System.IEquatable<Duende.AccessTokenManagement.ClientCredentialsCacheKey>
+    {
+        public const int MaxLength = 255;
+        public ClientCredentialsCacheKey() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.ClientCredentialsCacheKey Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.ClientCredentialsCacheKey? parsed, out string[] errors) { }
+    }
+    public sealed class ClientCredentialsClient
+    {
+        public ClientCredentialsClient() { }
+        public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
+        public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
+        public Duende.AccessTokenManagement.ClientId? ClientId { get; set; }
+        public Duende.AccessTokenManagement.ClientSecret? ClientSecret { get; set; }
+        public Duende.AccessTokenManagement.DPoP.ProofKeyString? DPoPJsonWebKey { get; set; }
+        public System.Net.Http.HttpClient? HttpClient { get; set; }
+        public string? HttpClientName { get; set; }
+        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
+        public Duende.AccessTokenManagement.Resource? Resource { get; set; }
+        public Duende.AccessTokenManagement.Scope? Scope { get; set; }
+        public System.Uri? TokenEndpoint { get; set; }
+    }
+    [System.Runtime.CompilerServices.RequiredMember]
+    public sealed class ClientCredentialsToken : Duende.AccessTokenManagement.AccessTokenRequestHandler.IToken, System.IEquatable<Duende.AccessTokenManagement.ClientCredentialsToken>
+    {
+        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
+            "your compiler."), true)]
+        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
+        public ClientCredentialsToken() { }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.AccessTokenType? AccessTokenType { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.AccessTokenString AccessToken { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.ClientId ClientId { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.DPoP.ProofKeyString? DPoPJsonWebKey { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.DateTimeOffset Expiration { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.Scope? Scope { get; init; }
+    }
+    public sealed class ClientCredentialsTokenManagementBuilder
+    {
+        public ClientCredentialsTokenManagementBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
+        public Microsoft.Extensions.DependencyInjection.IServiceCollection Services { get; }
+        public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClient(string name, System.Action<Duende.AccessTokenManagement.ClientCredentialsClient> configureOptions) { }
+    }
+    public static class ClientCredentialsTokenManagementDefaults
+    {
+        public const string BackChannelHttpClientName = "Duende.AccessTokenManagement.BackChannelHttpClient";
+        public const string DPoPProofAdditionalPayloadClaims = "Duende.AccessTokenManagement.DPoPProofAdditionalPayloadClaims";
+        public const string TokenRequestParametersOptionsName = "Duende.AccessTokenManagement.AccessTokenParameters";
+    }
+    public sealed class ClientCredentialsTokenManagementOptions
+    {
+        public ClientCredentialsTokenManagementOptions() { }
+        public string CacheKeyPrefix { get; set; }
+        public int CacheLifetimeBuffer { get; set; }
+        public System.TimeSpan DefaultCacheLifetime { get; set; }
+        public System.TimeSpan? LocalCacheExpiration { get; set; }
+        public string NonceStoreKeyPrefix { get; set; }
+        public bool UseCacheAutoTuning { get; set; }
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.ClientId>))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.ClientId>))]
+    public readonly struct ClientId : System.IEquatable<Duende.AccessTokenManagement.ClientId>
+    {
+        public ClientId() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.ClientId Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.ClientId? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.ClientId op_Implicit(string value) { }
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.ClientName>))]
+    public readonly struct ClientName : System.IEquatable<Duende.AccessTokenManagement.ClientName>
+    {
+        public ClientName() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.ClientName Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.ClientName? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.ClientName op_Implicit(string value) { }
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.ClientSecret>))]
+    public readonly struct ClientSecret : System.IEquatable<Duende.AccessTokenManagement.ClientSecret>
+    {
+        public ClientSecret() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.ClientSecret Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.ClientSecret? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.ClientSecret op_Implicit(string value) { }
+    }
+    public sealed class FailedResult : Duende.AccessTokenManagement.TokenResult, System.IEquatable<Duende.AccessTokenManagement.FailedResult>
+    {
+        public FailedResult(string Error, string? ErrorDescription = null) { }
+        public string? ErrorDescription { get; init; }
+        public string Error { get; init; }
+        public override string ToString() { }
+    }
+    public readonly struct ForceTokenRenewal : System.IEquatable<Duende.AccessTokenManagement.ForceTokenRenewal>
+    {
+        public ForceTokenRenewal(bool Value) { }
+        public bool Value { get; init; }
+        public static Duende.AccessTokenManagement.ForceTokenRenewal op_Implicit(bool value) { }
+    }
+    public interface IClientAssertionService
+    {
+        System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion?> GetClientAssertionAsync(Duende.AccessTokenManagement.ClientName? clientName = default, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
+    }
+    public interface IClientCredentialsCacheKeyGenerator
+    {
+        Duende.AccessTokenManagement.ClientCredentialsCacheKey GenerateKey(Duende.AccessTokenManagement.ClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null);
+    }
+    public interface IClientCredentialsTokenEndpoint
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.ClientCredentialsToken>> RequestAccessTokenAsync(Duende.AccessTokenManagement.ClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
+    }
+    public interface IClientCredentialsTokenManager
+    {
+        System.Threading.Tasks.Task DeleteAccessTokenAsync(Duende.AccessTokenManagement.ClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.ClientCredentialsToken>> GetAccessTokenAsync(Duende.AccessTokenManagement.ClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
+    }
+    public readonly struct IdentityTokenString : System.IEquatable<Duende.AccessTokenManagement.IdentityTokenString>
+    {
+        public const int MaxLength = 32768;
+        public IdentityTokenString() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.IdentityTokenString Parse(string value) { }
+        public static Duende.AccessTokenManagement.IdentityTokenString? ParseOrDefault(string? value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.IdentityTokenString? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.IdentityTokenString op_Implicit(string value) { }
+    }
+    public readonly struct RefreshTokenString : System.IEquatable<Duende.AccessTokenManagement.RefreshTokenString>
+    {
+        public const int MaxLength = 4096;
+        public RefreshTokenString() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.RefreshTokenString Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.RefreshTokenString? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.RefreshTokenString op_Implicit(string value) { }
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.Resource>))]
+    public readonly struct Resource : System.IEquatable<Duende.AccessTokenManagement.Resource>
+    {
+        public const int MaxLength = 1024;
+        public Resource() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.Resource Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.Resource? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.Resource op_Implicit(string value) { }
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.Scheme>))]
+    public readonly struct Scheme : System.IEquatable<Duende.AccessTokenManagement.Scheme>
+    {
+        public const int MaxLength = 50;
+        public static readonly Duende.AccessTokenManagement.Scheme Bearer;
+        public Scheme() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.Scheme Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.Scheme? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.Scheme op_Implicit(string value) { }
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.Scope>))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.Scope>))]
+    public readonly struct Scope : System.IEquatable<Duende.AccessTokenManagement.Scope>
+    {
+        public const int MaxLength = 1024;
+        public Scope() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.Scope Parse(string value) { }
+        public static Duende.AccessTokenManagement.Scope? ParseOrDefault(string? value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.Scope? parsed, out string[] errors) { }
+        public static Duende.AccessTokenManagement.Scope op_Implicit(string value) { }
+    }
+    public static class ServiceCollectionExtensions
+    {
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientCredentialsHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string httpClientName, Duende.AccessTokenManagement.ClientName tokenClientName, System.Action<System.Net.Http.HttpClient>? configureClient = null) { }
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientCredentialsHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string httpClientName, Duende.AccessTokenManagement.ClientName tokenClientName, System.Action<System.IServiceProvider, System.Net.Http.HttpClient> configureClient) { }
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientCredentialsTokenHandler(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder httpClientBuilder, Duende.AccessTokenManagement.ClientName tokenClientName) { }
+        public static Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClientCredentialsTokenManagement(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
+        public static Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClientCredentialsTokenManagement(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Duende.AccessTokenManagement.ClientCredentialsTokenManagementOptions> options) { }
+        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddDefaultAccessTokenResiliency(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder httpClientBuilder) { }
+    }
+    public static class ServiceProviderKeys
+    {
+        public const string ClientCredentialsTokenCache = "ClientCredentialsTokenCache";
+        public const string DPoPNonceStore = "DPoPNonceStore";
+    }
+    public class TokenRequestParameters : System.IEquatable<Duende.AccessTokenManagement.TokenRequestParameters>
+    {
+        public TokenRequestParameters() { }
+        public Duende.IdentityModel.Client.ClientAssertion? Assertion { get; init; }
+        public Duende.IdentityModel.Client.Parameters Context { get; init; }
+        public Duende.AccessTokenManagement.ForceTokenRenewal ForceTokenRenewal { get; init; }
+        public Duende.IdentityModel.Client.Parameters Parameters { get; init; }
+        public Duende.AccessTokenManagement.Resource? Resource { get; init; }
+        public Duende.AccessTokenManagement.Scope? Scope { get; init; }
+    }
+    public abstract class TokenResult : System.IEquatable<Duende.AccessTokenManagement.TokenResult>
+    {
+        protected TokenResult() { }
+        public static Duende.AccessTokenManagement.FailedResult Failure(string error, string? errorDescription = null) { }
+        public static Duende.AccessTokenManagement.TokenResult<T> Success<T>(T token)
+            where T :  class { }
+    }
+    public static class TokenResultExtensions
+    {
+        public static System.Threading.Tasks.Task<T> GetToken<T>(this System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<T>> task)
+            where T :  class { }
+    }
+    public sealed class TokenResult<T> : Duende.AccessTokenManagement.TokenResult, System.IEquatable<Duende.AccessTokenManagement.TokenResult<T>>
+        where T :  class
+    {
+        public Duende.AccessTokenManagement.FailedResult? FailedResult { get; }
+        [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(false, "FailedResult")]
+        [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, "Token")]
+        [get: System.Diagnostics.CodeAnalysis.MemberNotNullWhen(false, "FailedResult")]
+        [get: System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, "Token")]
+        public bool Succeeded { get; }
+        public T Token { get; }
+        public bool WasSuccessful(out T result) { }
+        public bool WasSuccessful([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out T? result, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out Duende.AccessTokenManagement.FailedResult? failure) { }
+        public static Duende.AccessTokenManagement.TokenResult<T> op_Implicit(Duende.AccessTokenManagement.FailedResult failure) { }
+        public static Duende.AccessTokenManagement.TokenResult<T> op_Implicit(T input) { }
+    }
+}
+namespace Duende.AccessTokenManagement.DPoP
+{
+    public static class DPoPExtensions
+    {
+        public static void AddDPoPProofAdditionalPayloadClaims(this System.Net.Http.HttpRequestMessage request, System.Collections.Generic.IDictionary<string, string> customClaims) { }
+        public static void ClearDPoPProofToken(this System.Net.Http.HttpRequestMessage request) { }
+        public static string? GetDPoPError(this System.Net.Http.HttpResponseMessage response) { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPNonce? GetDPoPNonce(this System.Net.Http.HttpRequestMessage request) { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPNonce? GetDPoPNonce(this System.Net.Http.HttpResponseMessage response) { }
+        public static System.Uri GetDPoPUrl(this System.Net.Http.HttpRequestMessage request) { }
+        public static Duende.AccessTokenManagement.ForceTokenRenewal GetForceRenewal(this System.Net.Http.HttpRequestMessage request) { }
+        public static bool IsDPoPError(this System.Net.Http.HttpResponseMessage response) { }
+        public static void SetDPoPNonce(this System.Net.Http.HttpRequestMessage request, Duende.AccessTokenManagement.DPoP.DPoPNonce nonce) { }
+        public static void SetDPoPProofToken(this System.Net.Http.HttpRequestMessage request, Duende.AccessTokenManagement.DPoP.DPoPProofString proofString) { }
+        public static void SetForceRenewal(this System.Net.Http.HttpRequestMessage request, Duende.AccessTokenManagement.ForceTokenRenewal forceTokenRenewal) { }
+        public static bool TryGetDPopProofAdditionalPayloadClaims(this System.Net.Http.HttpRequestMessage request, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out System.Collections.Generic.IReadOnlyDictionary<string, string>? additionalClaims) { }
+    }
+    public readonly struct DPoPNonce : System.IEquatable<Duende.AccessTokenManagement.DPoP.DPoPNonce>
+    {
+        public DPoPNonce() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPNonce Parse(string value) { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPNonce? ParseOrDefault(string? value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.DPoP.DPoPNonce? parsed, out string[] errors) { }
+    }
+    [System.Runtime.CompilerServices.RequiredMember]
+    public sealed class DPoPNonceContext : System.IEquatable<Duende.AccessTokenManagement.DPoP.DPoPNonceContext>
+    {
+        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
+            "your compiler."), true)]
+        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
+        public DPoPNonceContext() { }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.Net.Http.HttpMethod Method { get; set; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.Uri Url { get; set; }
+    }
+    [System.Runtime.CompilerServices.RequiredMember]
+    public sealed class DPoPProof : System.IEquatable<Duende.AccessTokenManagement.DPoP.DPoPProof>
+    {
+        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
+            "your compiler."), true)]
+        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
+        public DPoPProof() { }
+        public Duende.AccessTokenManagement.AccessTokenString? AccessToken { get; init; }
+        public System.Collections.Generic.IReadOnlyDictionary<string, string>? AdditionalPayloadClaims { get; init; }
+        public Duende.AccessTokenManagement.DPoP.DPoPNonce? DPoPNonce { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.Net.Http.HttpMethod Method { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.DPoP.ProofKeyString ProofKey { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.Uri Url { get; init; }
+    }
+    public readonly struct DPoPProofString : System.IEquatable<Duende.AccessTokenManagement.DPoP.DPoPProofString>
+    {
+        public DPoPProofString() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPProofString Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.DPoP.DPoPProofString? parsed, out string[] errors) { }
+        public static string op_Implicit(Duende.AccessTokenManagement.DPoP.DPoPProofString value) { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPProofString op_Implicit(string value) { }
+    }
+    public readonly struct DPoPProofThumbprint : System.IEquatable<Duende.AccessTokenManagement.DPoP.DPoPProofThumbprint>
+    {
+        public DPoPProofThumbprint() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPProofThumbprint FromJsonWebKey(Microsoft.IdentityModel.Tokens.JsonWebKey jsonWebKey) { }
+        public static Duende.AccessTokenManagement.DPoP.DPoPProofThumbprint Parse(string value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.DPoP.DPoPProofThumbprint? parsed, out string[] errors) { }
+    }
+    [System.Runtime.CompilerServices.RequiredMember]
+    public sealed class DPopProofRequestParameters : System.IEquatable<Duende.AccessTokenManagement.DPoP.DPopProofRequestParameters>
+    {
+        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
+            "your compiler."), true)]
+        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
+        public DPopProofRequestParameters() { }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public Duende.AccessTokenManagement.AccessTokenRequestHandler.IToken AccessToken { get; init; }
+        public Duende.AccessTokenManagement.DPoP.DPoPNonce? DPoPNonce { get; init; }
+        [System.Runtime.CompilerServices.RequiredMember]
+        public System.Net.Http.HttpRequestMessage Request { get; init; }
+    }
+    public interface IDPoPKeyStore
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoP.ProofKeyString?> GetKeyAsync(Duende.AccessTokenManagement.ClientName clientName, System.Threading.CancellationToken ct = default);
+    }
+    public interface IDPoPNonceStore
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoP.DPoPNonce?> GetNonceAsync(Duende.AccessTokenManagement.DPoP.DPoPNonceContext context, System.Threading.CancellationToken ct = default);
+        System.Threading.Tasks.Task StoreNonceAsync(Duende.AccessTokenManagement.DPoP.DPoPNonceContext context, Duende.AccessTokenManagement.DPoP.DPoPNonce nonce, System.Threading.CancellationToken ct = default);
+    }
+    public interface IDPoPNonceStoreKeyGenerator
+    {
+        string GenerateKey(Duende.AccessTokenManagement.DPoP.DPoPNonceContext context);
+    }
+    public interface IDPoPProofService
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoP.DPoPProofString?> CreateProofTokenAsync(Duende.AccessTokenManagement.DPoP.DPoPProof request, System.Threading.CancellationToken ct = default);
+        Duende.AccessTokenManagement.DPoP.DPoPProofThumbprint? GetProofKeyThumbprint(Duende.AccessTokenManagement.DPoP.ProofKeyString keyString);
+    }
+    public interface IDPopProofRequestHandler
+    {
+        System.Threading.Tasks.Task HandleDPopResponseAsync(System.Net.Http.HttpResponseMessage response, System.Threading.CancellationToken ct);
+        System.Threading.Tasks.Task<bool> TryAcquireDPopProofAsync(Duende.AccessTokenManagement.DPoP.DPopProofRequestParameters parameters, System.Threading.CancellationToken ct);
+    }
+    [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.DPoP.ProofKeyString>))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.DPoP.ProofKeyString>))]
+    public readonly struct ProofKeyString : System.IEquatable<Duende.AccessTokenManagement.DPoP.ProofKeyString>
+    {
+        public ProofKeyString() { }
+        public bool Equals(Duende.AccessTokenManagement.DPoP.ProofKeyString other) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
+        public static Duende.AccessTokenManagement.DPoP.ProofKeyString Parse(string value) { }
+        public static Duende.AccessTokenManagement.DPoP.ProofKeyString? ParseOrDefault(string? value) { }
+        public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.DPoP.ProofKeyString? parsed, out string[] errors) { }
+        public static string op_Implicit(Duende.AccessTokenManagement.DPoP.ProofKeyString value) { }
+        public static Duende.AccessTokenManagement.DPoP.ProofKeyString op_Implicit(string value) { }
+    }
+}
+namespace Duende.AccessTokenManagement.OTel
+{
+    public sealed class AccessTokenManagementMetrics
+    {
+        public const string MeterName = "Duende.AccessTokenManagement";
+        public AccessTokenManagementMetrics(System.Diagnostics.Metrics.IMeterFactory meterFactory) { }
+        public void AccessTokenAccessDeniedRetry(Duende.AccessTokenManagement.ClientId? clientId) { }
+        public void AccessTokenUsed(Duende.AccessTokenManagement.ClientId? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type) { }
+        public void DPoPNonceErrorRetry(Duende.AccessTokenManagement.ClientId? clientId, string? error) { }
+        public void TokenRetrievalFailed(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type, string? error) { }
+        public void TokenRetrieved(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type) { }
+        public enum TokenRequestType
+        {
+            ClientCredentials = 1,
+            User = 2,
+        }
     }
     public static class ActivityNames
     {
@@ -23,268 +416,5 @@
     public static class ActivitySources
     {
         public static System.Diagnostics.ActivitySource Main;
-    }
-    public class ClientCredentialsClient
-    {
-        public ClientCredentialsClient() { }
-        public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
-        public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
-        public string? ClientId { get; set; }
-        public string? ClientSecret { get; set; }
-        public string? DPoPJsonWebKey { get; set; }
-        public System.Net.Http.HttpClient? HttpClient { get; set; }
-        public string? HttpClientName { get; set; }
-        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
-        public string? Resource { get; set; }
-        public string? Scope { get; set; }
-        public string? TokenEndpoint { get; set; }
-    }
-    public class ClientCredentialsToken
-    {
-        public ClientCredentialsToken() { }
-        public string? AccessToken { get; set; }
-        public string? AccessTokenType { get; set; }
-        public string? ClientId { get; set; }
-        public string? DPoPJsonWebKey { get; set; }
-        public string? Error { get; set; }
-        public System.DateTimeOffset Expiration { get; set; }
-        public bool IsError { get; }
-        public string? Scope { get; set; }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class ClientCredentialsTokenEndpointService : Duende.AccessTokenManagement.IClientCredentialsTokenEndpointService
-    {
-        public ClientCredentialsTokenEndpointService(Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics metrics, System.Net.Http.IHttpClientFactory httpClientFactory, Microsoft.Extensions.Options.IOptionsMonitor<Duende.AccessTokenManagement.ClientCredentialsClient> options, Duende.AccessTokenManagement.IClientAssertionService clientAssertionService, Duende.AccessTokenManagement.IDPoPKeyStore dPoPKeyMaterialService, Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.ClientCredentialsTokenEndpointService> logger) { }
-        public virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> RequestToken(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class ClientCredentialsTokenHandler : Duende.AccessTokenManagement.AccessTokenHandler
-    {
-        public ClientCredentialsTokenHandler(Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics metrics, Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Duende.AccessTokenManagement.IClientCredentialsTokenManagementService accessTokenManagementService, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.ClientCredentialsTokenHandler> logger, string tokenClientName) { }
-        protected override Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType TokenRequestType { get; }
-        protected override System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, System.Threading.CancellationToken cancellationToken) { }
-    }
-    public class ClientCredentialsTokenManagementBuilder
-    {
-        public ClientCredentialsTokenManagementBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
-        public Microsoft.Extensions.DependencyInjection.IServiceCollection Services { get; }
-        public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClient(string name, System.Action<Duende.AccessTokenManagement.ClientCredentialsClient> configureOptions) { }
-        public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder UsePreviewHybridCache() { }
-    }
-    public static class ClientCredentialsTokenManagementDefaults
-    {
-        public const string BackChannelHttpClientName = "Duende.AccessTokenManagement.BackChannelHttpClient";
-        public const string DPoPProofAdditionalPayloadClaims = "Duende.AccessTokenManagement.DPoPProofAdditionalPayloadClaims";
-        public const string TokenRequestParametersOptionsName = "Duende.AccessTokenManagement.AccessTokenParameters";
-    }
-    public class ClientCredentialsTokenManagementOptions
-    {
-        public ClientCredentialsTokenManagementOptions() { }
-        public string CacheKeyPrefix { get; set; }
-        public int CacheLifetimeBuffer { get; set; }
-        public string NonceStoreKeyPrefix { get; set; }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class ClientCredentialsTokenManagementService : Duende.AccessTokenManagement.IClientCredentialsTokenManagementService
-    {
-        public ClientCredentialsTokenManagementService(Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics metrics, Duende.AccessTokenManagement.IClientCredentialsTokenEndpointService clientCredentialsTokenEndpointService, Duende.AccessTokenManagement.IClientCredentialsTokenCache tokenCache) { }
-        public System.Threading.Tasks.Task DeleteAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
-        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
-    }
-    public static class ClientCredentialsTokenManagementServiceCollectionExtensions
-    {
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientCredentialsHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string httpClientName, string tokenClientName, System.Action<System.Net.Http.HttpClient>? configureClient = null) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientCredentialsHttpClient(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, string httpClientName, string tokenClientName, System.Action<System.IServiceProvider, System.Net.Http.HttpClient> configureClient) { }
-        public static Microsoft.Extensions.DependencyInjection.IHttpClientBuilder AddClientCredentialsTokenHandler(this Microsoft.Extensions.DependencyInjection.IHttpClientBuilder httpClientBuilder, string tokenClientName) { }
-        public static Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClientCredentialsTokenManagement(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
-        public static Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClientCredentialsTokenManagement(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Duende.AccessTokenManagement.ClientCredentialsTokenManagementOptions> options) { }
-    }
-    public static class DPoPExtensions
-    {
-        public static void AddDPoPProofAdditionalPayloadClaims(this System.Net.Http.HttpRequestMessage request, System.Collections.Generic.IDictionary<string, string> customClaims) { }
-        public static void ClearDPoPProofToken(this System.Net.Http.HttpRequestMessage request) { }
-        public static string? GetDPoPError(this System.Net.Http.HttpResponseMessage response) { }
-        public static string? GetDPoPNonce(this System.Net.Http.HttpResponseMessage response) { }
-        public static string GetDPoPUrl(this System.Net.Http.HttpRequestMessage request) { }
-        public static bool IsDPoPError(this System.Net.Http.HttpResponseMessage response) { }
-        public static void SetDPoPProofToken(this System.Net.Http.HttpRequestMessage request, string? proofToken) { }
-        public static bool TryGetDPopProofAdditionalPayloadClaims(this System.Net.Http.HttpRequestMessage request, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out System.Collections.Generic.IReadOnlyDictionary<string, string>? additionalClaims) { }
-    }
-    [System.Runtime.CompilerServices.RequiredMember]
-    public class DPoPKey
-    {
-        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
-            "your compiler."), true)]
-        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
-        public DPoPKey() { }
-        [System.Runtime.CompilerServices.RequiredMember]
-        public string JsonWebKey { get; set; }
-    }
-    [System.Runtime.CompilerServices.RequiredMember]
-    public class DPoPNonceContext
-    {
-        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
-            "your compiler."), true)]
-        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
-        public DPoPNonceContext() { }
-        [System.Runtime.CompilerServices.RequiredMember]
-        public string Method { get; set; }
-        [System.Runtime.CompilerServices.RequiredMember]
-        public string Url { get; set; }
-    }
-    public class DPoPProof
-    {
-        public DPoPProof() { }
-        public string ProofToken { get; set; }
-    }
-    [System.Runtime.CompilerServices.RequiredMember]
-    public class DPoPProofRequest
-    {
-        [System.Obsolete(("Constructors of types with required members are not supported in this version of " +
-            "your compiler."), true)]
-        [System.Runtime.CompilerServices.CompilerFeatureRequired("RequiredMembers")]
-        public DPoPProofRequest() { }
-        public string? AccessToken { get; set; }
-        public System.Collections.Generic.IReadOnlyDictionary<string, string>? AdditionalPayloadClaims { get; set; }
-        [System.Runtime.CompilerServices.RequiredMember]
-        public string DPoPJsonWebKey { get; set; }
-        public string? DPoPNonce { get; set; }
-        [System.Runtime.CompilerServices.RequiredMember]
-        public string Method { get; set; }
-        [System.Runtime.CompilerServices.RequiredMember]
-        public string Url { get; set; }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class DefaultClientAssertionService : Duende.AccessTokenManagement.IClientAssertionService
-    {
-        public DefaultClientAssertionService() { }
-        public System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion?> GetClientAssertionAsync(string? clientName = null, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null) { }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class DefaultDPoPKeyStore : Duende.AccessTokenManagement.IDPoPKeyStore
-    {
-        public DefaultDPoPKeyStore(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AccessTokenManagement.ClientCredentialsClient> options) { }
-        public virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPKey?> GetKeyAsync(string clientName) { }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class DefaultDPoPProofService : Duende.AccessTokenManagement.IDPoPProofService
-    {
-        public DefaultDPoPProofService(Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.DefaultDPoPProofService> logger) { }
-        public virtual System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPProof?> CreateProofTokenAsync(Duende.AccessTokenManagement.DPoPProofRequest request) { }
-        public virtual string? GetProofKeyThumbprint(Duende.AccessTokenManagement.DPoPProofRequest request) { }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class DistributedClientCredentialsTokenCache : Duende.AccessTokenManagement.IClientCredentialsTokenCache
-    {
-        public DistributedClientCredentialsTokenCache([Microsoft.Extensions.DependencyInjection.FromKeyedServices("ClientCredentialsTokenCache")] Microsoft.Extensions.Caching.Distributed.IDistributedCache cache, Duende.AccessTokenManagement.IClientCredentialsCacheKeyGenerator cacheKeyGenerator, Duende.AccessTokenManagement.ITokenRequestSynchronization synchronization, Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.ClientCredentialsTokenManagementOptions> options, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.DistributedClientCredentialsTokenCache> logger) { }
-        public System.Threading.Tasks.Task DeleteAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default) { }
-        [System.Obsolete(("This method is deprecated and will be removed in a future version. To customize C" +
-            "acheKeyGeneration, please use the property ClientCredentialsTokenManagementOptio" +
-            "ns.GenerateCacheKey"))]
-        protected virtual string GenerateCacheKey(Duende.AccessTokenManagement.ClientCredentialsTokenManagementOptions options, string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null) { }
-        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken?> GetAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default) { }
-        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetOrCreateAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Func<string, Duende.AccessTokenManagement.TokenRequestParameters, System.Threading.CancellationToken, System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> factory, System.Threading.CancellationToken cancellationToken = default) { }
-        public System.Threading.Tasks.Task SetAsync(string clientName, Duende.AccessTokenManagement.ClientCredentialsToken clientCredentialsToken, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default) { }
-    }
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public class DistributedDPoPNonceStore : Duende.AccessTokenManagement.IDPoPNonceStore
-    {
-        public DistributedDPoPNonceStore([Microsoft.Extensions.DependencyInjection.FromKeyedServices("DPoPNonceStore")] Microsoft.Extensions.Caching.Distributed.IDistributedCache cache, Duende.AccessTokenManagement.IDPoPNonceStoreKeyGenerator dPoPNonceStoreKeyGenerator, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.DistributedDPoPNonceStore> logger) { }
-        [System.Obsolete(("This method is deprecated and will be removed in a future version. To customize C" +
-            "acheKeyGeneration, please use the property ClientCredentialsTokenManagementOptio" +
-            "ns.GenerateNonceStoreKey"))]
-        protected virtual string GenerateCacheKey(Duende.AccessTokenManagement.DPoPNonceContext context) { }
-        public virtual System.Threading.Tasks.Task<string?> GetNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, System.Threading.CancellationToken cancellationToken = default) { }
-        public virtual System.Threading.Tasks.Task StoreNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, string nonce, System.Threading.CancellationToken cancellationToken = default) { }
-    }
-    public interface IClientAssertionService
-    {
-        System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion?> GetClientAssertionAsync(string? clientName = null, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null);
-    }
-    public interface IClientCredentialsCacheKeyGenerator
-    {
-        string GenerateKey(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null);
-    }
-    public interface IClientCredentialsTokenCache
-    {
-        System.Threading.Tasks.Task DeleteAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default);
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken?> GetAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default);
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetOrCreateAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Func<string, Duende.AccessTokenManagement.TokenRequestParameters, System.Threading.CancellationToken, System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> factory, System.Threading.CancellationToken cancellationToken = default);
-        System.Threading.Tasks.Task SetAsync(string clientName, Duende.AccessTokenManagement.ClientCredentialsToken clientCredentialsToken, Duende.AccessTokenManagement.TokenRequestParameters requestParameters, System.Threading.CancellationToken cancellationToken = default);
-    }
-    public interface IClientCredentialsTokenEndpointService
-    {
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> RequestToken(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
-    }
-    public interface IClientCredentialsTokenManagementService
-    {
-        System.Threading.Tasks.Task DeleteAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(string clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
-    }
-    public interface IDPoPKeyStore
-    {
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPKey?> GetKeyAsync(string clientName);
-    }
-    public interface IDPoPNonceStore
-    {
-        System.Threading.Tasks.Task<string?> GetNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, System.Threading.CancellationToken cancellationToken = default);
-        System.Threading.Tasks.Task StoreNonceAsync(Duende.AccessTokenManagement.DPoPNonceContext context, string nonce, System.Threading.CancellationToken cancellationToken = default);
-    }
-    public interface IDPoPNonceStoreKeyGenerator
-    {
-        string GenerateKey(Duende.AccessTokenManagement.DPoPNonceContext context);
-    }
-    public interface IDPoPProofService
-    {
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.DPoPProof?> CreateProofTokenAsync(Duende.AccessTokenManagement.DPoPProofRequest request);
-        string? GetProofKeyThumbprint(Duende.AccessTokenManagement.DPoPProofRequest request);
-    }
-    public interface ITokenRequestSynchronization
-    {
-        System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> SynchronizeAsync(string name, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken>> func);
-    }
-    public static class ServiceProviderKeys
-    {
-        public const string ClientCredentialsTokenCache = "ClientCredentialsTokenCache";
-        public const string DPoPNonceStore = "DPoPNonceStore";
-    }
-    public class TokenRequestParameters
-    {
-        public TokenRequestParameters() { }
-        public Duende.IdentityModel.Client.ClientAssertion? Assertion { get; set; }
-        public Duende.IdentityModel.Client.Parameters Context { get; set; }
-        public bool ForceRenewal { get; set; }
-        public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
-        public string? Resource { get; set; }
-        public string? Scope { get; set; }
-    }
-}
-namespace Duende.AccessTokenManagement.OTel
-{
-    [System.Obsolete(("This will be made internal or removed in a future version. If you are using this " +
-        "type directly, please see https://duende.link/aacs4dq"), UrlFormat="https://duende.link/aacs4dq")]
-    public sealed class AccessTokenManagementMetrics
-    {
-        public const string MeterName = "Duende.AccessTokenManagement";
-        public AccessTokenManagementMetrics(System.Diagnostics.Metrics.IMeterFactory meterFactory) { }
-        public void AccessTokenAccessDeniedRetry(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type) { }
-        public void AccessTokenAuthenticationFailed(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type) { }
-        public void AccessTokenUsed(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type) { }
-        public void DPoPNonceErrorRetry(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type, string? error) { }
-        public void TokenRetrievalFailed(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type, string? error) { }
-        public void TokenRetrieved(string? clientId, Duende.AccessTokenManagement.OTel.AccessTokenManagementMetrics.TokenRequestType type) { }
-        public enum TokenRequestType
-        {
-            ClientCredentials = 1,
-            User = 2,
-        }
     }
 }

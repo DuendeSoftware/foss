@@ -14,7 +14,7 @@ public interface IClientCredentialsCacheKeyGenerator
     /// <param name="clientName">The name of the client</param>
     /// <param name="parameters">The parameters</param>
     /// <returns></returns>
-    string GenerateKey(
-        string clientName,
+    ClientCredentialsCacheKey GenerateKey(
+        ClientName clientName,
         TokenRequestParameters? parameters = null);
 }

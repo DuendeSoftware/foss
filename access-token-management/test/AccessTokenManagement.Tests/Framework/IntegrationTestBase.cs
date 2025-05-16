@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
+using Duende.AccessTokenManagement.Framework;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
 using Duende.IdentityServer.Models;
@@ -10,6 +11,10 @@ namespace Duende.AccessTokenManagement.Tests;
 
 public class IntegrationTestBase : IAsyncDisposable
 {
+
+    public TestData The { get; } = new TestData();
+    public TestDataBuilder Some => new TestDataBuilder(The);
+
     protected readonly IdentityServerHost IdentityServerHost;
     protected ApiHost ApiHost;
     protected AppHost AppHost;

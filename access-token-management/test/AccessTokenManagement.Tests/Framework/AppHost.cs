@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 using Duende.AccessTokenManagement.OpenIdConnect;
+
 using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -104,7 +105,6 @@ public class AppHost : GenericHost
                 options.ProtocolValidator.RequireNonce = false;
             });
 
-        services.AddDistributedMemoryCache();
         services.AddOpenIdConnectAccessTokenManagement(opt =>
         {
             opt.UseChallengeSchemeScopedTokens = true;
@@ -145,8 +145,23 @@ public class AppHost : GenericHost
 
             endpoints.MapGet("/user_token", async context =>
             {
-                var token = await context.GetUserAccessTokenAsync();
-                await context.Response.WriteAsJsonAsync(token);
+                var token = await context.GetUserAccessTokenAsync().GetToken();
+                await context.Response.WriteAsJsonAsync(UserTokenModel.BuildFrom(token));
+            });
+            endpoints.MapGet("/user", async context =>
+            {
+                await context.Response.WriteAsJsonAsync(context.User.Claims.ToDictionary(x => x.Type, x => x.Value));
+            });
+            endpoints.MapGet("/user_token_error", async context =>
+            {
+                var getResult = await context.GetUserAccessTokenAsync();
+
+                if (getResult.Succeeded)
+                {
+                    throw new InvalidOperationException("Expected error");
+                }
+
+                await context.Response.WriteAsJsonAsync(getResult.FailedResult);
             });
 
             endpoints.MapGet("/call_api", async (IHttpClientFactory factory, HttpContext context) =>
@@ -161,14 +176,25 @@ public class AppHost : GenericHost
                 var token = await context.GetUserAccessTokenAsync(new UserTokenRequestParameters
                 {
                     Resource = resource
-                });
-                await context.Response.WriteAsJsonAsync(token);
+                }).GetToken();
+                await context.Response.WriteAsJsonAsync(UserTokenModel.BuildFrom(token));
             });
 
             endpoints.MapGet("/client_token", async context =>
             {
-                var token = await context.GetClientAccessTokenAsync();
-                await context.Response.WriteAsJsonAsync(token);
+                var token = await context.GetClientAccessTokenAsync().GetToken();
+                await context.Response.WriteAsJsonAsync(ClientCredentialsTokenModel.BuildFrom(token));
+            });
+
+            endpoints.MapGet("/client_token_error", async context =>
+            {
+                var getResult = await context.GetClientAccessTokenAsync();
+
+                if (getResult.Succeeded)
+                {
+                    throw new InvalidOperationException("Expected error");
+                }
+                await context.Response.WriteAsJsonAsync(getResult.FailedResult);
             });
         });
     }
@@ -223,4 +249,48 @@ public class AppHost : GenericHost
         response = await BrowserClient.GetAsync(Url(response.Headers.Location!.ToString()));
         return response;
     }
+}
+
+public class UserTokenModel
+{
+    public static UserTokenModel BuildFrom(UserToken token) => new UserTokenModel
+    {
+        AccessToken = token.AccessToken.ToString(),
+        DPoPJsonWebKey = token.DPoPJsonWebKey?.ToString(),
+        Expiration = token.Expiration,
+        Scope = token.Scope?.ToString(),
+        ClientId = token.ClientId.ToString(),
+        AccessTokenType = token.AccessTokenType?.ToString(),
+        RefreshToken = token.RefreshToken?.ToString(),
+        IdentityToken = token.IdentityToken?.ToString()
+    };
+    public string? AccessToken { get; init; }
+    public string? DPoPJsonWebKey { get; init; }
+    public DateTimeOffset Expiration { get; init; }
+    public string? Scope { get; init; }
+    public string? ClientId { get; init; }
+    public string? AccessTokenType { get; init; }
+    public string? RefreshToken { get; init; }
+    public string? IdentityToken { get; init; }
+
+}
+
+public class ClientCredentialsTokenModel
+{
+    public static ClientCredentialsTokenModel BuildFrom(ClientCredentialsToken token) => new ClientCredentialsTokenModel
+    {
+        AccessToken = token.AccessToken.ToString(),
+        DPoPJsonWebKey = token.DPoPJsonWebKey?.ToString(),
+        Expiration = token.Expiration,
+        Scope = token.Scope?.ToString(),
+        ClientId = token.ClientId.ToString(),
+        AccessTokenType = token.AccessTokenType?.ToString(),
+    };
+    public required string AccessToken { get; init; }
+    public required string? DPoPJsonWebKey { get; init; }
+    public required DateTimeOffset Expiration { get; init; }
+    public required string? Scope { get; init; }
+    public required string ClientId { get; init; }
+    public required string? AccessTokenType { get; init; }
+
 }
