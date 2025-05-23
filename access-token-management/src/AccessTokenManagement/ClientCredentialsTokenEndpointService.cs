@@ -176,7 +176,7 @@ public class ClientCredentialsTokenEndpointService : IClientCredentialsTokenEndp
 
             return new ClientCredentialsToken
             {
-                Error = response.Error
+                Error = error
             };
         }
         
