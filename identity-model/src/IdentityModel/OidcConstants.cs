@@ -441,78 +441,156 @@ public static class OidcConstants
 
     public static class Discovery
     {
-        public const string Issuer = "issuer";
-
-        // endpoints
-        public const string AuthorizationEndpoint = "authorization_endpoint";
-        public const string DeviceAuthorizationEndpoint = "device_authorization_endpoint";
-        public const string TokenEndpoint = "token_endpoint";
-        public const string UserInfoEndpoint = "userinfo_endpoint";
-        public const string IntrospectionEndpoint = "introspection_endpoint";
-        public const string RevocationEndpoint = "revocation_endpoint";
         public const string DiscoveryEndpoint = ".well-known/openid-configuration";
+
+        //**********************************************************************
+        // These constants are in the same order as they appear in the IANA
+        // registry of OAuth Authorization Server Metadata available here:
+        // https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml
+        //**********************************************************************
+
+        //******************************
+        //* RFC 8414 (OAuth Discovery) *
+        //******************************
+        public const string Issuer = "issuer";
+        public const string AuthorizationEndpoint = "authorization_endpoint";
+        public const string TokenEndpoint = "token_endpoint";
         public const string JwksUri = "jwks_uri";
-        public const string EndSessionEndpoint = "end_session_endpoint";
-        public const string CheckSessionIframe = "check_session_iframe";
         public const string RegistrationEndpoint = "registration_endpoint";
-        public const string MtlsEndpointAliases = "mtls_endpoint_aliases";
-        public const string PushedAuthorizationRequestEndpoint = "pushed_authorization_request_endpoint";
-
-        // common capabilities
-        public const string FrontChannelLogoutSupported = "frontchannel_logout_supported";
-        public const string FrontChannelLogoutSessionSupported = "frontchannel_logout_session_supported";
-        public const string BackChannelLogoutSupported = "backchannel_logout_supported";
-        public const string BackChannelLogoutSessionSupported = "backchannel_logout_session_supported";
-        public const string GrantTypesSupported = "grant_types_supported";
-        public const string CodeChallengeMethodsSupported = "code_challenge_methods_supported";
         public const string ScopesSupported = "scopes_supported";
-        public const string SubjectTypesSupported = "subject_types_supported";
-        public const string ResponseModesSupported = "response_modes_supported";
         public const string ResponseTypesSupported = "response_types_supported";
-        public const string ClaimsSupported = "claims_supported";
+        public const string ResponseModesSupported = "response_modes_supported";
+        public const string GrantTypesSupported = "grant_types_supported";
         public const string TokenEndpointAuthenticationMethodsSupported = "token_endpoint_auth_methods_supported";
-
-        // more capabilities
-        public const string ClaimsLocalesSupported = "claims_locales_supported";
-        public const string ClaimsParameterSupported = "claims_parameter_supported";
-        public const string ClaimTypesSupported = "claim_types_supported";
-        public const string DisplayValuesSupported = "display_values_supported";
-        public const string AcrValuesSupported = "acr_values_supported";
-        public const string IdTokenEncryptionAlgorithmsSupported = "id_token_encryption_alg_values_supported";
-        public const string IdTokenEncryptionEncValuesSupported = "id_token_encryption_enc_values_supported";
-        public const string IdTokenSigningAlgorithmsSupported = "id_token_signing_alg_values_supported";
+        public const string TokenEndpointAuthSigningAlgorithmsSupported = "token_endpoint_auth_signing_alg_values_supported";
+        public const string ServiceDocumentation = "service_documentation";
+        public const string UILocalesSupported = "ui_locales_supported";
         public const string OpPolicyUri = "op_policy_uri";
         public const string OpTosUri = "op_tos_uri";
+        public const string RevocationEndpoint = "revocation_endpoint";
+        // TODO revocation_endpoint_auth_methods_supported
+        // TODO revocation_endpoint_auth_signing_alg_values_supported
+        public const string IntrospectionEndpoint = "introspection_endpoint";
+        // TODO introspection_endpoint_auth_methods_supported
+        // TODO introspection_endpoint_auth_signing_alg_values_supported
+        public const string CodeChallengeMethodsSupported = "code_challenge_methods_supported";
+
+        // TODO signed_metadata
+
+        //*****************************************
+        //* RFC 8628 (Device Authorization Grant) *
+        //*****************************************
+        public const string DeviceAuthorizationEndpoint = "device_authorization_endpoint";
+
+        //*************************
+        //* RFC 8705 (OAuth mTLS) *
+        //*************************
+        public const string TlsClientCertificateBoundAccessTokens = "tls_client_certificate_bound_access_tokens";
+        public const string MtlsEndpointAliases = "mtls_endpoint_aliases";
+
+        //************************************
+        //* OIDC Discovery (OAuth Discovery) *
+        //************************************
+        public const string UserInfoEndpoint = "userinfo_endpoint";
+        public const string AcrValuesSupported = "acr_values_supported";
+        public const string SubjectTypesSupported = "subject_types_supported";
+        public const string IdTokenSigningAlgorithmsSupported = "id_token_signing_alg_values_supported";
+        public const string IdTokenEncryptionAlgorithmsSupported = "id_token_encryption_alg_values_supported";
+        public const string IdTokenEncryptionEncValuesSupported = "id_token_encryption_enc_values_supported";
+        public const string UserInfoSigningAlgorithmsSupported = "userinfo_signing_alg_values_supported";
+        public const string UserInfoEncryptionAlgorithmsSupported = "userinfo_encryption_alg_values_supported";
+        public const string UserInfoEncryptionEncValuesSupported = "userinfo_encryption_enc_values_supported";
+        public const string RequestObjectSigningAlgorithmsSupported = "request_object_signing_alg_values_supported";
         public const string RequestObjectEncryptionAlgorithmsSupported = "request_object_encryption_alg_values_supported";
         public const string RequestObjectEncryptionEncValuesSupported = "request_object_encryption_enc_values_supported";
-        public const string RequestObjectSigningAlgorithmsSupported = "request_object_signing_alg_values_supported";
+        public const string DisplayValuesSupported = "display_values_supported";
+        public const string ClaimTypesSupported = "claim_types_supported";
+        public const string ClaimsSupported = "claims_supported";
+        public const string ClaimsLocalesSupported = "claims_locales_supported";
+        public const string ClaimsParameterSupported = "claims_parameter_supported";
         public const string RequestParameterSupported = "request_parameter_supported";
         public const string RequestUriParameterSupported = "request_uri_parameter_supported";
         public const string RequireRequestUriRegistration = "require_request_uri_registration";
-        public const string ServiceDocumentation = "service_documentation";
-        public const string TokenEndpointAuthSigningAlgorithmsSupported = "token_endpoint_auth_signing_alg_values_supported";
-        public const string UILocalesSupported = "ui_locales_supported";
-        public const string UserInfoEncryptionAlgorithmsSupported = "userinfo_encryption_alg_values_supported";
-        public const string UserInfoEncryptionEncValuesSupported = "userinfo_encryption_enc_values_supported";
-        public const string UserInfoSigningAlgorithmsSupported = "userinfo_signing_alg_values_supported";
-        public const string TlsClientCertificateBoundAccessTokens = "tls_client_certificate_bound_access_tokens";
-        public const string AuthorizationResponseIssParameterSupported = "authorization_response_iss_parameter_supported";
-        public const string PromptValuesSupported = "prompt_values_supported";
+
+        //******************
+        //* RFC 9101 (JAR) *
+        //******************
+        // TODO require_signed_request_object
+
+        //******************
+        //* RFC 9126 (PAR) *
+        //******************
+        public const string PushedAuthorizationRequestEndpoint = "pushed_authorization_request_endpoint";
+        public const string RequirePushedAuthorizationRequests = "require_pushed_authorization_requests";
+
+        //*********************************************
+        //* RFC 9701 (JWT Response for Introspection) *
+        //*********************************************
         public const string IntrospectionSigningAlgorithmsSupported = "introspection_signing_alg_values_supported";
         public const string IntrospectionEncryptionAlgorithmsSupported = "introspection_encryption_alg_values_supported";
         public const string IntrospectionEncryptionEncValuesSupported = "introspection_encryption_enc_values_supported";
 
-        // CIBA
+        //*******************************
+        //* RFC 9207 (Issuer Parameter) *
+        //*******************************
+        public const string AuthorizationResponseIssParameterSupported = "authorization_response_iss_parameter_supported";
+
+        //***************************
+        //* OIDC Session Management *
+        //***************************
+        public const string CheckSessionIframe = "check_session_iframe";
+
+        //*****************************
+        //* OIDC Front-Channel Logout *
+        //*****************************
+        public const string FrontChannelLogoutSupported = "frontchannel_logout_supported";
+        public const string FrontChannelLogoutSessionSupported = "frontchannel_logout_session_supported";
+
+        //****************************
+        //* OIDC Back-Channel Logout *
+        //****************************
+        public const string BackChannelLogoutSupported = "backchannel_logout_supported";
+        public const string BackChannelLogoutSessionSupported = "backchannel_logout_supported";
+
+        //****************************
+        //* OIDC RP-Initiated Logout *
+        //****************************
+        public const string EndSessionEndpoint = "end_session_endpoint";
+
+        //********
+        //* CIBA *
+        //********
         public const string BackchannelTokenDeliveryModesSupported = "backchannel_token_delivery_modes_supported";
         public const string BackchannelAuthenticationEndpoint = "backchannel_authentication_endpoint";
         public const string BackchannelAuthenticationRequestSigningAlgValuesSupported = "backchannel_authentication_request_signing_alg_values_supported";
         public const string BackchannelUserCodeParameterSupported = "backchannel_user_code_parameter_supported";
 
-        // DPoP
+        //******************
+        //* RFC 9396 (RAR) *
+        //******************
+        // TODO authorization_details_types_supported
+
+        //*******************
+        //* RFC 9449 (DPoP) *
+        //*******************
         public const string DPoPSigningAlgorithmsSupported = "dpop_signing_alg_values_supported";
 
-        // PAR
-        public const string RequirePushedAuthorizationRequests = "require_pushed_authorization_requests";
+        //*************************
+        //* OpenID Federation 1.0 *
+        //*************************
+        // TODO
+
+        //******************************************
+        //* RFC 9728 (Protected Resource Metadata) *
+        //******************************************
+        // TODO protected_resources
+
+        //******************************************
+        //* Initiating User Registration via OIDC  *
+        //******************************************
+        // (Note, this is not currently in the IANA registry)
+        public const string PromptValuesSupported = "prompt_values_supported";
+
     }
 
     public static class BackchannelTokenDeliveryModes
