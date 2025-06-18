@@ -81,6 +81,10 @@ void GenerateCiWorkflow(Component component)
 
     job.StepSetupDotNet();
 
+    job.Step()
+        .Name("Install workloads")
+        .Run("dotnet workload install maui");
+
     job.StepVerifyFormatting();
 
     foreach (var testProject in component.Tests)
@@ -139,7 +143,6 @@ void GenerateReleaseWorkflow(Component component)
 
     tagJob.StepSetupDotNet();
 
-
     tagJob.Step()
         .Name("Git Config")
         .Run(@"git config --global user.email ""github-bot@duendesoftware.com""
@@ -181,7 +184,6 @@ git push origin {component.TagPrefix}-{contexts.Event.Input.Version}");
         .RunsOn(GitHubHostedRunners.UbuntuLatest)
         .Needs("tag")
         .Environment("nuget.org", "");
-    ;
 
     publishJob.Step()
         .Uses("actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16") // 4.1.8

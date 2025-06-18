@@ -50,6 +50,8 @@ jobs:
           6.0.x
           8.0.x
           9.0.203
+    - name: Install workloads
+      run: dotnet workload install maui
     - name: Verify Formatting
       run: |-
         dotnet restore ../
