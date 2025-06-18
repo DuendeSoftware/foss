@@ -35,6 +35,16 @@
     <Project Path="identity-model-oidc-client/clients/ConsoleClientWithBrowserAndDPoP/ConsoleClientWithBrowserAndDPoP.csproj" />
     <Project Path="identity-model-oidc-client/clients/ManualModeConsoleClient/ManualModeConsoleClient.csproj" />
   </Folder>
+  <Folder Name="/identity-model-oidc-client/samples/">
+    <Project Path="identity-model-oidc-client/samples/HttpSysConsoleClient/HttpSysConsoleClient.csproj" />
+    <Project Path="identity-model-oidc-client/samples/Maui/Maui.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="identity-model-oidc-client/samples/NetCoreConsoleClient/NetCoreConsoleClient.csproj" />
+    <Project Path="identity-model-oidc-client/samples/WindowsConsoleSystemBrowser/WindowsConsoleSystemBrowser.csproj" />
+    <Project Path="identity-model-oidc-client/samples/Wpf/Wpf.csproj" />
+    <Project Path="identity-model-oidc-client/samples/WpfWebView2/WpfWebView2.csproj" />
+  </Folder>
   <Folder Name="/identity-model-oidc-client/src/">
     <File Path="identity-model-oidc-client/src/Directory.Build.props" />
     <Project Path="identity-model-oidc-client/src/IdentityModel.OidcClient.Extensions/IdentityModel.OidcClient.Extensions.csproj" />
