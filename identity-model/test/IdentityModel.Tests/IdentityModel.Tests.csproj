@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <RootNamespace>Duende.IdentityModel</RootNamespace>
     <Nullable>disable</Nullable>
   </PropertyGroup>
@@ -17,9 +17,5 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <PackageReference Include="System.Net.Http" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- Fixes Warning (active)	NU1904	Package 'System.Text.Encodings.Web' 4.5.0 has a known critical severity vulnerability, https://github.com/advisories/GHSA-ghhp-997w-qr28	-->
-    <PackageReference Include="System.Text.Encodings.Web" VersionOverride="8.0.0" />
   </ItemGroup>
 </Project>

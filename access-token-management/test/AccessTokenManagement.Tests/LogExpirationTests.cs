@@ -9,7 +9,7 @@ public class LogExpirationTests
 {
     /// <summary>
     /// This test proves that the source generator for log messages do not invoke the function
-    /// passed as an argument. 
+    /// passed as an argument.
     /// </summary>
     [Fact]
     public void Logging_using_a_function_will_not_invoke_function()
@@ -32,7 +32,7 @@ public class LogExpirationTests
     }
 
     /// <summary>
-    /// Just a sanity check that log messages should be written. 
+    /// Just a sanity check that log messages should be written.
     /// </summary>
     [Fact]
     public void Log_using_string_will_write_output()
@@ -47,7 +47,6 @@ public class LogExpirationTests
 
         loggerProvider.LogEntries.Any(x => x.Contains("foo")).ShouldBeTrue();
     }
-
 }
 
 public static partial class TestLoggers
