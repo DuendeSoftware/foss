@@ -21,8 +21,7 @@ public sealed class ClientCredentialsTokenManagementBuilder(IServiceCollection s
     public ClientCredentialsTokenManagementBuilder AddClient(string name,
         Action<ClientCredentialsClient> configureOptions)
     {
-        Services
-            .Configure(name, configureOptions);
+        Services.Configure(name, configureOptions);
 
         return this;
     }
