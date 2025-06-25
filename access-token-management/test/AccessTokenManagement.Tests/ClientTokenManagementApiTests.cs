@@ -44,7 +44,7 @@ public abstract class ClientTokenManagementApiTests(ITestOutputHelper output) : 
 
 
         builder
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://identityserver/connect/token");
                 client.ClientId = ClientId.Parse("client_credentials_client");

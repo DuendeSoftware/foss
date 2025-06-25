@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Xml.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Duende.AccessTokenManagement;
@@ -18,7 +19,7 @@ public sealed class ClientCredentialsTokenManagementBuilder(IServiceCollection s
     /// <param name="name"></param>
     /// <param name="configureOptions"></param>
     /// <returns></returns>
-    public ClientCredentialsTokenManagementBuilder AddClient(string name,
+    public ClientCredentialsTokenManagementBuilder AddClient(ClientCredentialsClientName name,
         Action<ClientCredentialsClient> configureOptions)
     {
         Services

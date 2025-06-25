@@ -47,7 +47,7 @@ public class ClientTokenManagementTests
     public async Task Missing_client_id_throw_exception()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as/connect/token");
                 client.ClientId = null;
@@ -68,7 +68,7 @@ public class ClientTokenManagementTests
     public async Task Missing_client_secret_throw_exception()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as/connect/token");
                 client.ClientId = ClientId.Parse("test");
@@ -88,7 +88,7 @@ public class ClientTokenManagementTests
     public async Task Missing_tokenEndpoint_throw_exception()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = null;
                 client.ClientId = ClientId.Parse("test");
@@ -110,7 +110,7 @@ public class ClientTokenManagementTests
     public async Task Token_request_and_response_should_have_expected_values(ClientCredentialStyle style)
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client,
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client,
                 resource: The.Resource,
                 style: style,
                 parameters: new()
@@ -163,7 +163,7 @@ public class ClientTokenManagementTests
     {
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client));
 
         mockHttp.Expect(The.TokenEndpoint.ToString())
             .Respond(_ => Some.TokenHttpResponse(Some.Token() with
@@ -189,7 +189,7 @@ public class ClientTokenManagementTests
     public async Task Missing_expires_in_response_should_create_long_lived_token()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client));
 
 
 
@@ -215,7 +215,7 @@ public class ClientTokenManagementTests
     public async Task Request_parameters_should_take_precedence_over_configuration()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client,
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client,
                 resource: The.Resource,
                 parameters: new()
                 {
@@ -266,7 +266,7 @@ public class ClientTokenManagementTests
     public async Task Request_assertions_should_be_sent_correctly()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client, resource: The.Resource));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client, resource: The.Resource));
 
         var request = new TokenRequestParameters
         {
@@ -305,7 +305,7 @@ public class ClientTokenManagementTests
     public async Task Service_assertions_should_be_sent_correctly()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client, resource: The.Resource));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client, resource: The.Resource));
 
         services.AddTransient<IClientAssertionService>(_ =>
             new TestClientAssertionService("test", "service_type", "service_value"));
@@ -338,7 +338,7 @@ public class ClientTokenManagementTests
     public async Task Request_assertion_should_take_precedence_over_service_assertion()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client, resource: The.Resource));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client, resource: The.Resource));
 
         services.AddTransient<IClientAssertionService>(_ =>
             new TestClientAssertionService("test", "service_type", "service_value"));
@@ -380,7 +380,7 @@ public class ClientTokenManagementTests
     public async Task Service_should_hit_network_only_once_and_then_use_cache()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client));
 
 
 
@@ -409,7 +409,7 @@ public class ClientTokenManagementTests
     public async Task Service_should_hit_network_when_cache_throws_exception()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client));
 
 
 
@@ -435,7 +435,7 @@ public class ClientTokenManagementTests
     public async Task Service_should_always_hit_network_with_force_renewal()
     {
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(client));
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(client));
 
 
 
@@ -471,7 +471,7 @@ public class ClientTokenManagementTests
         services.AddSingleton<IDPoPProofService>(proof);
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(
                 toConfigure: client,
                 jsonWebKey: The.JsonWebKey));
 
@@ -503,7 +503,7 @@ public class ClientTokenManagementTests
         services.AddSingleton<IDPoPProofService>(proof);
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client => Some.ClientCredentialsClient(
+            .AddClient(ClientCredentialsClientName.Parse("test"), client => Some.ClientCredentialsClient(
                 toConfigure: client,
                 jsonWebKey: The.JsonWebKey));
 

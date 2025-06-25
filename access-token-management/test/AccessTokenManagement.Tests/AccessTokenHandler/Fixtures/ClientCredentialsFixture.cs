@@ -12,7 +12,7 @@ internal class ClientCredentialsFixture : AccessTokenHandlingBaseFixture
     public override ValueTask InitializeAsync(DPoPProofKey? dPoPJsonWebKey)
     {
         Services.AddClientCredentialsTokenManagement()
-            .AddClient("tokenClient", opt =>
+            .AddClient(ClientCredentialsClientName.Parse("tokenClient"), opt =>
             {
                 opt.TokenEndpoint = TokenEndpoint.TokenEndpoint;
                 opt.ClientId = ClientId.Parse("clientId");
