@@ -48,7 +48,7 @@ jobs:
           6.0.x
           8.0.x
           9.0.301
-          10.0.100-preview.5
+          10.0.0-preview.5.25277.114
     - name: Git Config
       run: |-
         git config --global user.email "github-bot@duendesoftware.com"
@@ -106,7 +106,7 @@ jobs:
           6.0.x
           8.0.x
           9.0.301
-          10.0.100-preview.5
+          10.0.0-preview.5.25277.114
     - name: List files
       run: tree
       shell: bash
