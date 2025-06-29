@@ -50,7 +50,7 @@ jobs:
           6.0.x
           8.0.x
           9.0.301
-          10.0.100-preview.5
+          10.0.0-preview.5.25277.114
     - name: Verify Formatting
       run: |-
         dotnet restore ../
