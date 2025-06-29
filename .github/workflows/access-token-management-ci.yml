@@ -51,10 +51,10 @@ jobs:
           8.0.x
           9.0.301
           10.0.x
+    - name: Restore
+      run: dotnet restore ../
     - name: Verify Formatting
-      run: |-
-        dotnet restore ../
-        dotnet format ../ --verify-no-changes --no-restore
+      run: dotnet format ../ --verify-no-changes --no-restore
     - name: Test - AccessTokenManagement.Tests
       run: dotnet test -c Release test/AccessTokenManagement.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=AccessTokenManagement.Tests.trx" --collect:"XPlat Code Coverage"
     - name: Test report

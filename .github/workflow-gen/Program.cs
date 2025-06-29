@@ -86,6 +86,8 @@ void GenerateCiWorkflow(Component component)
 
     job.StepSetupDotNet();
 
+    job.StepRestore();
+
     job.StepVerifyFormatting();
 
     foreach (var testProject in component.Tests)
@@ -364,10 +366,12 @@ public static class StepExtensions
     public static Step StepVerifyFormatting(this Job job)
         => job.Step()
             .Name("Verify Formatting")
-            .Run("""
-                 dotnet restore ../
-                 dotnet format ../ --verify-no-changes --no-restore
-                 """);
+            .Run("dotnet format ../ --verify-no-changes --no-restore");
+
+    public static Step StepRestore(this Job job)
+        => job.Step()
+            .Name("Restore")
+            .Run("dotnet restore ../");
 
     public static void StepUploadArtifacts(this Job job, string componentName, bool uploadAlways = false)
     {
