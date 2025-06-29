@@ -83,7 +83,10 @@ void GenerateCiWorkflow(Component component)
 
     job.StepRestore();
 
-    job.StepVerifyFormatting();
+    // dotnet format is broken for slnx in .net p5.
+    // Uncomment this for p6
+    // https://github.com/dotnet/sdk/issues/49331
+    // job.StepVerifyFormatting();
 
     foreach (var testProject in component.Tests)
     {

@@ -53,8 +53,6 @@ jobs:
           10.0.x
     - name: Restore
       run: dotnet restore ../
-    - name: Verify Formatting
-      run: dotnet format ../ --verify-no-changes --no-restore
     - name: Test - IdentityModel.Tests
       run: dotnet test -c Release test/IdentityModel.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=IdentityModel.Tests.trx" --collect:"XPlat Code Coverage"
     - name: Test report
