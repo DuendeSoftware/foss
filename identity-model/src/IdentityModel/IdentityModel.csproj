@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;netstandard2.0;net10.0</TargetFrameworks>
     <AssemblyName>Duende.IdentityModel</AssemblyName>
     <RootNamespace>Duende.IdentityModel</RootNamespace>
     <Description>OpenID Connect &amp; OAuth 2.0 client library</Description>
