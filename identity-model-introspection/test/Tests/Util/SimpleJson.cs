@@ -34,10 +34,22 @@
 #define SIMPLE_JSON_TYPEINFO
 //#endif
 
+
+<<<<<<< TODO: Unmerged change from project 'Tests(net9.0)', Before:
 using System;
 using System.CodeDom.Compiler;
-using System.Collections;
+=======
+using System.CodeDom.Compiler;
+>>>>>>> After
+using System
+<<<<<<< TODO: Unmerged change from project 'Tests(net9.0)', Before:
 using System.Collections.Generic;
+#if !SIMPLE_JSON_NO_LINQ_EXPRESSION
+=======
+#if !SIMPLE_JSON_NO_LINQ_EXPRESSION
+>>>>>>> After
+.CodeDom.Compiler;
+using System.Collections;
 #if !SIMPLE_JSON_NO_LINQ_EXPRESSION
 using System.Linq.Expressions;
 #endif

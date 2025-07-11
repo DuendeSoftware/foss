@@ -12,4 +12,5 @@ namespace Duende.AccessTokenManagement.Internal;
 [JsonSerializable(typeof(Uri))]
 [JsonSerializable(typeof(long))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
+[JsonSerializable(typeof(ClientCredentialsToken))]
 internal partial class DuendeAccessTokenSerializationContext : JsonSerializerContext;

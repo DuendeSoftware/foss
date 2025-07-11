@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <PackageId>Duende.AccessTokenManagement</PackageId>
@@ -6,7 +6,10 @@
     <RootNamespace>$(PackageId)</RootNamespace>
     <Description>Automatic access token management for OAuth client credential flows</Description>
     <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
     <PackageReadmePath>README.md</PackageReadmePath>
+    <PublishAot>true</PublishAot>
+    <TrimmerSingleWarn>true</TrimmerSingleWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel" />
