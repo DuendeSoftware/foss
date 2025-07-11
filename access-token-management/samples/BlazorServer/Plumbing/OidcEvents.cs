@@ -23,7 +23,10 @@ public class OidcEvents : OpenIdConnectEvents
             AccessTokenType = AccessTokenType.Parse(context.TokenEndpointResponse.TokenType),
             RefreshToken = RefreshToken.Parse(context.TokenEndpointResponse.RefreshToken),
             Scope = Scope.Parse(context.TokenEndpointResponse.Scope),
-            ClientId = ClientId.Parse(context.ProtocolMessage.ClientId),
+
+            // The clientid isn't always returned form the protocolresponse.
+            // Either get it from IOptions<OpenIdConnectOptions> or hard code it like below. 
+            ClientId = ClientId.Parse(context.TokenEndpointResponse.ClientId ?? "interactive.confidential.short"),
             IdentityToken = IdentityToken.Parse(context.TokenEndpointResponse.IdToken),
             Expiration = exp,
         });
