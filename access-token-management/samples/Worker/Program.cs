@@ -32,8 +32,10 @@ public class Program
             {
                 services.AddDistributedMemoryCache();
 
+                var demoClient = ClientCredentialsClientName.Parse("demo");
+                var dpopClient = ClientCredentialsClientName.Parse("demo.dpop");
                 services.AddClientCredentialsTokenManagement()
-                    .AddClient("demo", client =>
+                    .AddClient(demoClient, client =>
                     {
                         client.TokenEndpoint = new Uri("https://demo.duendesoftware.com/connect/token");
 
@@ -42,7 +44,7 @@ public class Program
 
                         client.Scope = Scope.Parse("api");
                     })
-                    .AddClient("demo.dpop", client =>
+                    .AddClient(dpopClient, client =>
                     {
                         client.TokenEndpoint = new Uri("https://demo.duendesoftware.com/connect/token");
 
@@ -52,7 +54,7 @@ public class Program
                         client.Scope = Scope.Parse("api");
                         client.DPoPJsonWebKey = CreateDPoPKey();
                     })
-                    .AddClient("demo.jwt", client =>
+                    .AddClient(ClientCredentialsClientName.Parse("demo.jwt"), client =>
                     {
                         client.TokenEndpoint = new Uri("https://demo.duendesoftware.com/connect/token");
                         client.ClientId = ClientId.Parse("m2m.short.jwt");
@@ -60,12 +62,12 @@ public class Program
                         client.Scope = Scope.Parse("api");
                     });
 
-                services.AddClientCredentialsHttpClient("client", ClientCredentialsClientName.Parse("demo"), client =>
+                services.AddClientCredentialsHttpClient("client", demoClient, client =>
                 {
                     client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
                 });
 
-                services.AddClientCredentialsHttpClient("client.dpop", ClientCredentialsClientName.Parse("demo.dpop"), client =>
+                services.AddClientCredentialsHttpClient("client.dpop", dpopClient, client =>
                 {
                     client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/dpop/");
                 });
@@ -74,7 +76,7 @@ public class Program
                     {
                         client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
                     })
-                    .AddClientCredentialsTokenHandler(ClientCredentialsClientName.Parse("demo"));
+                    .AddClientCredentialsTokenHandler(demoClient);
 
                 services.AddTransient<IClientAssertionService, ClientAssertionService>();
 

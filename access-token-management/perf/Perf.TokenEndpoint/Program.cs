@@ -35,7 +35,7 @@ services.AddDistributedMemoryCache();
 services.AddHttpClient().AddHttpClient("c1").AddHttpMessageHandler<ChaosMonkeyHandler>();
 services.AddClientCredentialsHttpClient("t2", ClientCredentialsClientName.Parse("c1"));
 services.AddClientCredentialsTokenManagement(opt => opt.CacheLifetimeBuffer = 0)
-    .AddClient("c1", opt =>
+    .AddClient(ClientCredentialsClientName.Parse("c1"), opt =>
     {
         opt.TokenEndpoint = new Uri(Services.IdentityServer.ActualUri(), "/connect/token");
         opt.ClientId = ClientId.Parse("tokenendpoint");

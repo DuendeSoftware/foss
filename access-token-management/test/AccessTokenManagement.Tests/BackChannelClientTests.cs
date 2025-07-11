@@ -26,7 +26,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 Some.ClientCredentialsClient(client);
             });
@@ -56,7 +56,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 Some.ClientCredentialsClient(client);
             });
@@ -90,7 +90,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -120,7 +120,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -151,7 +151,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -194,7 +194,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -256,7 +256,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -329,7 +329,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var services = new ServiceCollection();
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -356,7 +356,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         services.AddKeyedSingleton<HybridCache>(ServiceProviderKeys.ClientCredentialsTokenCache, replacementCache);
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");
@@ -429,7 +429,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         services.AddKeyedSingleton<HybridCache>(ServiceProviderKeys.ClientCredentialsTokenCache, replacementCache);
 
         services.AddClientCredentialsTokenManagement()
-            .AddClient("test", client =>
+            .AddClient(ClientCredentialsClientName.Parse("test"), client =>
             {
                 client.TokenEndpoint = new Uri("https://as");
                 client.ClientId = ClientId.Parse("id");

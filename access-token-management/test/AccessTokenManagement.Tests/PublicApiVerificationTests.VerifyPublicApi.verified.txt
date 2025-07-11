@@ -96,7 +96,7 @@
     {
         public ClientCredentialsTokenManagementBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
         public Microsoft.Extensions.DependencyInjection.IServiceCollection Services { get; }
-        public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClient(string name, System.Action<Duende.AccessTokenManagement.ClientCredentialsClient> configureOptions) { }
+        public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClient(Duende.AccessTokenManagement.ClientCredentialsClientName name, System.Action<Duende.AccessTokenManagement.ClientCredentialsClient> configureOptions) { }
     }
     public static class ClientCredentialsTokenManagementDefaults
     {
