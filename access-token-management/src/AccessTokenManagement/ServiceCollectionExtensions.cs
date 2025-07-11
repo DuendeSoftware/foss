@@ -40,7 +40,9 @@ public static class ServiceCollectionExtensions
     public static ClientCredentialsTokenManagementBuilder AddClientCredentialsTokenManagement(this IServiceCollection services)
     {
         services.TryAddTransient<IClientCredentialsTokenManager, ClientCredentialsTokenManager>();
-        services.AddHybridCache();
+        services.AddHybridCache()
+            // Register a serializer 
+            .AddSerializer<ClientCredentialsToken, AotTrimCompatibleClientCredentialsTokenSerializer>();
 
         // By default, resolve the default hybrid cache for the DefaultClientCredentialsTokenManager
         // without key. If desired, a consumers can register the distributed cache with a key

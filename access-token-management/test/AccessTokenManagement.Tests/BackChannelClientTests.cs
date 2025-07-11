@@ -3,9 +3,9 @@
 
 using System.Buffers;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using Duende.AccessTokenManagement.Framework;
-
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -48,6 +48,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         token.Succeeded.ShouldBeTrue();
 
         mockHttp.GetMatchCount(request).ShouldBe(1);
+
     }
 
     [Fact]
@@ -451,6 +452,60 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         replacementCache.CacheKey.ShouldBe("always_the_same");
 
+    }
+    // This test proves that we can also support custom encryption of the token. 
+    [Fact]
+    public async Task Can_use_custom_serializer()
+    {
+        var services = new ServiceCollection();
+
+        services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                Some.ClientCredentialsClient(client);
+            });
+
+        services.AddHybridCache().AddSerializer<ClientCredentialsToken, TestSerializer>();
+
+        var mockHttp = new MockHttpMessageHandler();
+        var request = mockHttp.When(The.TokenEndpoint.ToString())
+            .Respond((_) => Some.TokenHttpResponse());
+
+        services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
+
+        var provider = services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Getting the token twice should result in a single call (because it' cached)
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+
+        token.Token!.AccessToken.ToString().ShouldStartWith("_prefix_added_by_serializer");
+        token.Token!.AccessToken.ToString().ShouldEndWith("_suffix_added_by_serializer_");
+
+    }
+
+    private class TestSerializer : IHybridCacheSerializer<ClientCredentialsToken>
+    {
+        public ClientCredentialsToken Deserialize(ReadOnlySequence<byte> source)
+        {
+            var text = Encoding.UTF8.GetString(source);
+            return new ClientCredentialsToken
+            {
+                AccessToken = AccessToken.Parse(text + "_suffix_added_by_serializer_"),
+                AccessTokenType = null,
+                DPoPJsonWebKey = null,
+                Expiration = DateTimeOffset.Now,
+                Scope = null,
+                ClientId = default
+            };
+        }
+
+        public void Serialize(ClientCredentialsToken value, IBufferWriter<byte> target)
+        {
+            var bytes = Encoding.UTF8.GetBytes("_prefix_added_by_serializer_" + value.AccessToken.ToString());
+            target.Write(bytes);
+        }
     }
 
     [Theory]

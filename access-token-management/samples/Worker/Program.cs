@@ -3,30 +3,26 @@
 
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.DPoP;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace WorkerService;
 
 public class Program
 {
-    public static void Main(string[] args)
-    {
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-            .CreateLogger();
+    public static void Main(string[] args) =>
+        //Log.Logger = new LoggerConfiguration()
+        //    .MinimumLevel.Debug()
+        //    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+        //    .CreateLogger();
 
         CreateHostBuilder(args).Build().Run();
-    }
 
     public static IHostBuilder CreateHostBuilder(string[] args)
     {
         var host = Host.CreateDefaultBuilder(args)
-            .UseSerilog()
 
             .ConfigureServices((services) =>
             {
@@ -93,8 +89,10 @@ public class Program
         var key = new RsaSecurityKey(RSA.Create(2048));
         var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
         jwk.Alg = "PS256";
-        var jwkJson = JsonSerializer.Serialize(jwk);
+        var jwkJson = JsonSerializer.Serialize(jwk, WorkerSerializationContext.Default.JsonWebKey);
         return DPoPProofKey.Parse(jwkJson);
     }
 
 }
+[JsonSerializable(typeof(JsonWebKey))]
+internal partial class WorkerSerializationContext : JsonSerializerContext;

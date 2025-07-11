@@ -3,6 +3,8 @@
 
 #pragma warning disable 1591
 
+
+<<<<<<< TODO: Unmerged change from project 'IdentityModel.AspNetCore.OAuth2Introspection(net9.0)', Before:
 namespace IdentityModel.AspNetCore.OAuth2Introspection
 {
     public class ClaimLite
@@ -10,4 +12,18 @@ namespace IdentityModel.AspNetCore.OAuth2Introspection
         public string Type { get; set; }
         public string Value { get; set; }
     }
+=======
+namespace IdentityModel.AspNetCore.OAuth2Introspection;
+
+public class ClaimLite
+{
+    public string Type { get; set; }
+    public string Value { get; set; }
+>>>>>>> After
+namespace IdentityModel.AspNetCore.OAuth2Introspection;
+
+public class ClaimLite
+{
+    public string Type { get; set; }
+    public string Value { get; set; }
 }
