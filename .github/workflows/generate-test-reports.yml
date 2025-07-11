@@ -8,6 +8,7 @@ on:
     - 'access-token-management/ci'
     - 'identity-model/ci'
     - 'identity-model-oidc-client/ci'
+    - 'identity-model-introspection/ci'
     types:
     - completed
 jobs:
@@ -57,6 +58,16 @@ jobs:
         artifact: test-results
         name: Test Report - IdentityModel.OidcClient.Tests
         path: IdentityModel.OidcClient.Tests.trx
+        reporter: dotnet-trx
+        fail-on-error: true
+        fail-on-empty: true
+    - name: Test report - identity-model-introspection - Tests
+      if: github.event.workflow.name == 'identity-model-introspection/ci'
+      uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5
+      with:
+        artifact: test-results
+        name: Test Report - Tests
+        path: Tests.trx
         reporter: dotnet-trx
         fail-on-error: true
         fail-on-empty: true

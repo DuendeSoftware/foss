@@ -1,126 +1,122 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.IdentityModel.Client;
-using System;
-using System.Threading.Tasks;
 using Duende.AspNetCore.Authentication.OAuth2Introspection;
+using Duende.IdentityModel.Client;
 using Tests.Util;
-using Xunit;
 
-namespace Tests
+namespace Tests;
+
+public class Configuration
 {
-    public class Configuration
+    [Fact]
+    public void Empty_Options()
     {
-        [Fact]
-        public void Empty_Options()
+        Action act = () => PipelineFactory.CreateClient(options => { })
+            .GetAsync("http://test").GetAwaiter().GetResult();
+
+        act.ShouldThrow<InvalidOperationException>().Message.ShouldBe("You must either set Authority or IntrospectionEndpoint");
+    }
+
+    [Fact]
+    public void No_Token_Retriever()
+    {
+        Action act = () => PipelineFactory.CreateClient(options =>
         {
-            Action act = () => PipelineFactory.CreateClient(options => { })
-                .GetAsync("http://test").GetAwaiter().GetResult();
+            options.Authority = "http://foo";
+            options.ClientId = "scope";
+            options.TokenRetriever = null;
+        }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldThrow<InvalidOperationException>().Message.ShouldBe("You must either set Authority or IntrospectionEndpoint");
-        }
+        act.ShouldThrow<ArgumentException>()
+            .Message.ShouldStartWith("TokenRetriever must be set");
+    }
 
-        [Fact]
-        public void No_Token_Retriever()
+    [Fact]
+    public void Endpoint_But_No_Authority()
+    {
+        Action act = () => PipelineFactory.CreateClient(options =>
         {
-            Action act = () => PipelineFactory.CreateClient(options =>
-            {
-                options.Authority = "http://foo";
-                options.ClientId = "scope";
-                options.TokenRetriever = null;
-            }).GetAsync("http://test").GetAwaiter().GetResult();
+            options.IntrospectionEndpoint = "http://endpoint";
+            options.ClientId = "scope";
 
-            act.ShouldThrow<ArgumentException>()
-                .Message.ShouldStartWith("TokenRetriever must be set");
-        }
+        }).GetAsync("http://test").GetAwaiter().GetResult();
 
-        [Fact]
-        public void Endpoint_But_No_Authority()
+        act.ShouldNotThrow();
+    }
+
+    [Fact]
+    public void Caching_With_Caching_Service()
+    {
+        Action act = () => PipelineFactory.CreateClient(options =>
         {
-            Action act = () => PipelineFactory.CreateClient(options =>
-            {
-                options.IntrospectionEndpoint = "http://endpoint";
-                options.ClientId = "scope";
+            options.IntrospectionEndpoint = "http://endpoint";
+            options.ClientId = "scope";
+            options.EnableCaching = true;
 
-            }).GetAsync("http://test").GetAwaiter().GetResult();
+        }, addCaching: true).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldNotThrow();
-        }
+        act.ShouldNotThrow();
+    }
 
-        [Fact]
-        public void Caching_With_Caching_Service()
+    [Fact]
+    public void Caching_Without_Caching_Service()
+    {
+        Action act = () => PipelineFactory.CreateClient(options =>
         {
-            Action act = () => PipelineFactory.CreateClient(options =>
-            {
-                options.IntrospectionEndpoint = "http://endpoint";
-                options.ClientId = "scope";
-                options.EnableCaching = true;
+            options.IntrospectionEndpoint = "http://endpoint";
+            options.ClientId = "scope";
+            options.EnableCaching = true;
 
-            }, addCaching: true).GetAsync("http://test").GetAwaiter().GetResult();
+        }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            act.ShouldNotThrow();
-        }
+        act.ShouldThrow<ArgumentException>()
+            .Message.ShouldStartWith("Caching is enabled, but no IDistributedCache is found in the services collection");
+    }
 
-        [Fact]
-        public void Caching_Without_Caching_Service()
+    [Fact]
+    public void No_ClientName_But_Introspection_Handler()
+    {
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
+        Action act = () => PipelineFactory.CreateClient(options =>
         {
-            Action act = () => PipelineFactory.CreateClient(options =>
-            {
-                options.IntrospectionEndpoint = "http://endpoint";
-                options.ClientId = "scope";
-                options.EnableCaching = true;
+            options.IntrospectionEndpoint = "http://endpoint";
+        }, handler).GetAsync("http://test").GetAwaiter().GetResult();
 
-            }).GetAsync("http://test").GetAwaiter().GetResult();
+        act.ShouldNotThrow();
+    }
 
-            act.ShouldThrow<ArgumentException>()
-                .Message.ShouldStartWith("Caching is enabled, but no IDistributedCache is found in the services collection");
-        }
-
-        [Fact]
-        public void No_ClientName_But_Introspection_Handler()
+    [Fact]
+    public void Authority_No_Network_Delay_Load()
+    {
+        Action act = () => PipelineFactory.CreateClient(options =>
         {
-            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+            options.Authority = "http://localhost:6666";
+            options.ClientId = "scope";
+        }).GetAsync("http://test").GetAwaiter().GetResult();
 
-            Action act = () => PipelineFactory.CreateClient(options =>
-            {
-                options.IntrospectionEndpoint = "http://endpoint";
-            }, handler).GetAsync("http://test").GetAwaiter().GetResult();
+        act.ShouldNotThrow();
+    }
 
-            act.ShouldNotThrow();
-        }
+    [Fact]
+    public async Task Authority_Get_Introspection_Endpoint()
+    {
+        OAuth2IntrospectionOptions ops = null;
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
-        [Fact]
-        public void Authority_No_Network_Delay_Load()
+        var client = PipelineFactory.CreateClient(options =>
         {
-            Action act = () => PipelineFactory.CreateClient(options =>
-            {
-                options.Authority = "http://localhost:6666";
-                options.ClientId = "scope";
-            }).GetAsync("http://test").GetAwaiter().GetResult();
+            options.Authority = "https://authority.com/";
+            options.ClientId = "scope";
 
-            act.ShouldNotThrow();
-        }
+            options.DiscoveryPolicy.RequireKeySet = false;
+            ops = options;
+        }, handler);
 
-        [Fact]
-        public async Task Authority_Get_Introspection_Endpoint()
-        {
-            OAuth2IntrospectionOptions ops = null;
-            var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+        client.SetBearerToken("token");
+        await client.GetAsync("http://server/api");
 
-            var client = PipelineFactory.CreateClient(options =>
-            {
-                options.Authority = "https://authority.com/";
-                options.ClientId = "scope";
-
-                options.DiscoveryPolicy.RequireKeySet = false;
-                ops = options;
-            }, handler);
-
-            client.SetBearerToken("token");
-            await client.GetAsync("http://server/api");
-
-            ops.IntrospectionEndpoint.ShouldBe("https://authority.com/introspection_endpoint");
-        }
+        ops.IntrospectionEndpoint.ShouldBe("https://authority.com/introspection_endpoint");
     }
 }

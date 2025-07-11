@@ -24,7 +24,12 @@ Component[] components = [
     new("identity-model-oidc-client",
         ["IdentityModel.OidcClient", "IdentityModel.OidcClient.Extensions"],
         ["IdentityModel.OidcClient.Tests"],
-        "imoc")
+        "imoc"),
+
+    new("identity-model-introspection",
+        ["IdentityModel.OAuth2Introspection"],
+        ["Tests"],
+        "im-introspection"),
 ];
 
 foreach (var component in components)

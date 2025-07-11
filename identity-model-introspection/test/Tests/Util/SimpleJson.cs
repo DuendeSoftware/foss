@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 // VERSION:
@@ -34,10 +34,8 @@
 #define SIMPLE_JSON_TYPEINFO
 //#endif
 
-using System;
 using System.CodeDom.Compiler;
 using System.Collections;
-using System.Collections.Generic;
 #if !SIMPLE_JSON_NO_LINQ_EXPRESSION
 using System.Linq.Expressions;
 #endif
