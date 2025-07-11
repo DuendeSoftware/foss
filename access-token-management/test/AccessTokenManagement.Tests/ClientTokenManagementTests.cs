@@ -67,21 +67,30 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task Missing_client_secret_throw_exception()
     {
+
+        var mockedRequest = mockHttp.Expect("/connect/token")
+            .Respond(_ => Some.TokenHttpResponse());
+
+        services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
+
+
         services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
                 client.TokenEndpoint = new Uri("https://as/connect/token");
-                client.ClientId = ClientId.Parse("test");
+                client.ClientId = The.ClientId;
                 client.ClientSecret = null;
             });
 
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var action = async () => await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        mockHttp.VerifyNoOutstandingExpectation();
 
-        (await Should.ThrowAsync<OptionsValidationException>(action))
-            .Message.ShouldContain("ClientId");
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+
     }
 
     [Fact]

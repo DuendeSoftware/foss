@@ -95,11 +95,6 @@ public sealed class ClientCredentialsClient
                 errors.Add($"{nameof(options.TokenEndpoint)} cannot be null for {subject}");
             }
 
-            if (options.ClientSecret == null)
-            {
-                errors.Add($"{nameof(options.ClientSecret)} cannot be null for {subject}");
-            }
-
             if (errors.Any())
             {
                 return ValidateOptionsResult.Fail(errors);
