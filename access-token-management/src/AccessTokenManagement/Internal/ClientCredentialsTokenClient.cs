@@ -40,11 +40,6 @@ internal class ClientCredentialsTokenClient(
             throw new InvalidOperationException($"No TokenEndpoint configured for client {clientName}");
         }
 
-        if (client.ClientSecret == null)
-        {
-            throw new InvalidOperationException($"No ClientSecret configured for client {clientName}");
-        }
-
         using var logScope = logger.BeginScope(
             (OTelParameters.ClientId, client.ClientId)
         );
