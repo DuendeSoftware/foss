@@ -81,7 +81,12 @@ void GenerateCiWorkflow(Component component)
 
     job.StepSetupDotNet();
 
-    job.StepVerifyFormatting();
+    job.StepRestore();
+
+    // dotnet format is broken for slnx in .net p5.
+    // Uncomment this for p6
+    // https://github.com/dotnet/sdk/issues/49331
+    // job.StepVerifyFormatting();
 
     foreach (var testProject in component.Tests)
     {
@@ -254,7 +259,7 @@ public static class StepExtensions
     public static void StepSetupDotNet(this Job job)
         => job.Step()
             .Name("Setup .NET")
-            .ActionsSetupDotNet("3e891b0cb619bf60e2c25674b222b8940e2c1c25", ["6.0.x", "8.0.x", "9.0.203"]); // v4.1.0
+            .ActionsSetupDotNet("67a3573c9a986a3f9c594539f4ab511d57bb3ce9", ["6.0.x", "8.0.x", "9.0.301", "10.0.x"]); // v4.3.1
 
     public static Step IfRefMain(this Step step)
         => step.If("github.ref == 'refs/heads/main'");
@@ -355,10 +360,12 @@ public static class StepExtensions
     public static Step StepVerifyFormatting(this Job job)
         => job.Step()
             .Name("Verify Formatting")
-            .Run("""
-                 dotnet restore ../
-                 dotnet format ../ --verify-no-changes --no-restore
-                 """);
+            .Run("dotnet format ../ --verify-no-changes --no-restore");
+
+    public static Step StepRestore(this Job job)
+        => job.Step()
+            .Name("Restore")
+            .Run("dotnet restore ../");
 
     public static void StepUploadArtifacts(this Job job, string componentName, bool uploadAlways = false)
     {

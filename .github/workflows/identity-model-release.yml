@@ -42,12 +42,13 @@ jobs:
       if: github.event.inputs.branch != 'main'
       run: git checkout ${{ github.event.inputs.branch }}
     - name: Setup Dotnet
-      uses: actions/setup-dotnet@3e891b0cb619bf60e2c25674b222b8940e2c1c25
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
       with:
         dotnet-version: |-
           6.0.x
           8.0.x
-          9.0.203
+          9.0.301
+          10.0.x
     - name: Git Config
       run: |-
         git config --global user.email "github-bot@duendesoftware.com"
@@ -99,12 +100,13 @@ jobs:
         name: artifacts
         path: artifacts
     - name: Setup Dotnet
-      uses: actions/setup-dotnet@3e891b0cb619bf60e2c25674b222b8940e2c1c25
+      uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
       with:
         dotnet-version: |-
           6.0.x
           8.0.x
-          9.0.203
+          9.0.301
+          10.0.x
     - name: List files
       run: tree
       shell: bash
