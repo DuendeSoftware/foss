@@ -1132,7 +1132,7 @@ namespace Duende.IdentityModel.Client
             where T : Duende.IdentityModel.Client.ProtocolRequest, new () { }
         public void Prepare() { }
     }
-    public class ProtocolResponse
+    public class ProtocolResponse : System.IDisposable
     {
         public ProtocolResponse() { }
         public string? DPoPNonce { get; set; }
@@ -1146,6 +1146,7 @@ namespace Duende.IdentityModel.Client
         public bool IsError { get; }
         public System.Text.Json.JsonElement? Json { get; set; }
         public string? Raw { get; set; }
+        public void Dispose() { }
         protected virtual System.Threading.Tasks.Task InitializeAsync(object? initializationData = null) { }
         public string? TryGet(string name) { }
         public static T FromException<T>(System.Exception ex, string? errorMessage = null)
