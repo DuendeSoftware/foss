@@ -13,7 +13,7 @@ namespace BlazorServer.Plumbing;
 /// </summary>
 public class ServerSideTokenStore : IUserTokenStore
 {
-    private readonly ConcurrentDictionary<string, UserToken> _tokens = new();
+    private static readonly ConcurrentDictionary<string, UserToken> _tokens = new();
 
     public Task<UserToken> GetTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null)
     {

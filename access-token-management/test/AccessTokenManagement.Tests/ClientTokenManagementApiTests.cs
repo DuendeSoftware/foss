@@ -190,6 +190,32 @@ public class ClientTokenManagementApiTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task when_additional_proof_payload_claims_are_defined_they_should_be_included_in_dpop_proof()
+    {
+        string? proofToken = null;
+
+        ApiHost.ApiInvoked += ctx =>
+        {
+            proofToken = ctx.Request.Headers["DPoP"].FirstOrDefault()?.ToString();
+        };
+        var client = _clientFactory.CreateClient("test");
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Get, ApiHost.Url("/test"));
+        requestMessage.AddDPoPProofAdditionalPayloadClaims(new Dictionary<string, string>() {
+            { "claim_one", "one" },
+            { "claim_two", "two" },
+        });
+
+        var apiResult = await client.SendAsync(requestMessage);
+
+        proofToken.ShouldNotBeNull();
+        var payload = Base64UrlEncoder.Decode(proofToken!.Split('.')[1]);
+        var values = JsonSerializer.Deserialize<Dictionary<string, object>>(payload);
+        values!["claim_one"].ToString().ShouldBe("one");
+        values!["claim_two"].ToString().ShouldBe("two");
+    }
+
+    [Fact]
     public async Task when_api_issues_nonce_api_request_should_be_retried_with_new_nonce()
     {
         string? proofToken = null;

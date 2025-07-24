@@ -135,6 +135,7 @@ public class UserTokenEndpointService : IUserTokenEndpointService
         }
         else
         {
+            token.IdentityToken = response.IdentityToken;
             token.AccessToken = response.AccessToken;
             token.AccessTokenType = response.TokenType;
             token.DPoPJsonWebKey = dPoPJsonWebKey;

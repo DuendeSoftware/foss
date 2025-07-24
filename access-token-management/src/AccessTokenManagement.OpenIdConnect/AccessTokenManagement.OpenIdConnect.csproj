@@ -6,6 +6,7 @@
     <RootNamespace>$(PackageId)</RootNamespace>
     <Description>Automatic access token management for interactive OpenIdConnect-based ASP.NET Core applications</Description>
     <IsTrimmable>false</IsTrimmable>
+    <PackageReadmePath>README.md</PackageReadmePath>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

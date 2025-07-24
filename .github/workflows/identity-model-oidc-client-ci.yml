@@ -8,13 +8,13 @@ on:
     - .github/workflows/identity-model-oidc-client-**
     - identity-model-oidc-client/**
     - Directory.Packages.props
-  pull_request_target:
+  pull_request:
     paths:
     - .github/workflows/identity-model-oidc-client-**
     - identity-model-oidc-client/**
     - Directory.Packages.props
 env:
-  DOTNETT_NOLOGO: true
+  DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 jobs:
   build:
@@ -43,23 +43,14 @@ jobs:
           8.0.x
           9.0.x
     - name: Test - IdentityModel.OidcClient.Tests
-      run: dotnet test -c Release test/IdentityModel.OidcClient.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=Tests.trx" --collect:"XPlat Code Coverage"
-    - name: Test report - IdentityModel.OidcClient.Tests
+      run: dotnet test -c Release test/IdentityModel.OidcClient.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=IdentityModel.OidcClient.Tests.trx" --collect:"XPlat Code Coverage"
+    - name: Test report
       if: success() || failure()
-      uses: dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
       with:
-        name: Test Report - IdentityModel.OidcClient.Tests
-        path: identity-model-oidc-client/test/IdentityModel.OidcClient.Tests/TestResults/Tests.trx
-        reporter: dotnet-trx
-        fail-on-error: true
-        fail-on-empty: true
-    - name: Install Sectigo CodeSiging CA certificates
-      run: |-
-        sudo apt-get update
-        sudo apt-get install -y ca-certificates
-        sudo cp SectigoPublicCodeSigningRootCrossAAA.crt /usr/local/share/ca-certificates/
-        sudo update-ca-certificates
-      working-directory: .github/workflows
+        name: test-results
+        path: identity-model-oidc-client/test/IdentityModel.OidcClient.Tests/TestResults/IdentityModel.OidcClient.Tests.trx
+        retention-days: 5
     - name: Tool restore
       run: dotnet tool restore
     - name: Pack IdentityModel.OidcClient
@@ -67,13 +58,11 @@ jobs:
     - name: Pack IdentityModel.OidcClient.Extensions
       run: dotnet pack -c Release src/IdentityModel.OidcClient.Extensions -o artifacts
     - name: Sign packages
+      if: github.event_name == 'push'
       run: |-
         for file in artifacts/*.nupkg; do
-           dotnet NuGetKeyVaultSignTool sign "$file" --file-digest sha256 --timestamp-rfc3161 http://timestamp.digicert.com --azure-key-vault-url https://duendecodesigning.vault.azure.net/ --azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 --azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 --azure-key-vault-client-secret ${{ secrets.SignClientSecret }} --azure-key-vault-certificate CodeSigning
+           dotnet NuGetKeyVaultSignTool sign "$file" --file-digest sha256 --timestamp-rfc3161 http://timestamp.digicert.com --azure-key-vault-url https://duendecodesigninghsm.vault.azure.net/ --azure-key-vault-client-id 18e3de68-2556-4345-8076-a46fad79e474 --azure-key-vault-tenant-id ed3089f0-5401-4758-90eb-066124e2d907 --azure-key-vault-client-secret ${{ secrets.SignClientSecret }} --azure-key-vault-certificate NuGetPackageSigning
         done
-    - name: Push packages to MyGet
-      if: github.ref == 'refs/heads/main'
-      run: dotnet nuget push artifacts/*.nupkg --source https://www.myget.org/F/duende_identityserver/api/v2/package --api-key ${{ secrets.MYGET }} --skip-duplicate
     - name: Push packages to GitHub
       if: github.ref == 'refs/heads/main'
       run: dotnet nuget push artifacts/*.nupkg --source https://nuget.pkg.github.com/DuendeSoftware/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
@@ -81,7 +70,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Artifacts
-      if: github.ref == 'refs/heads/main'
+      if: github.event_name == 'push'
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
       with:
         name: artifacts

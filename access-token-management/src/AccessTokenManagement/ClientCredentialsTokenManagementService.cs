@@ -2,37 +2,19 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace Duende.AccessTokenManagement;
 
 /// <summary>
 /// Implements token management logic
 /// </summary>
-public class ClientCredentialsTokenManagementService : IClientCredentialsTokenManagementService
+public class ClientCredentialsTokenManagementService(
+    IClientCredentialsTokenEndpointService clientCredentialsTokenEndpointService,
+    IClientCredentialsTokenCache tokenCache,
+    ILogger<ClientCredentialsTokenManagementService> logger
+) : IClientCredentialsTokenManagementService
 {
-    private readonly ITokenRequestSynchronization _sync;
-    private readonly IClientCredentialsTokenEndpointService _clientCredentialsTokenEndpointService;
-    private readonly IClientCredentialsTokenCache _tokenCache;
-    private readonly ILogger<ClientCredentialsTokenManagementService> _logger;
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    /// <param name="sync"></param>
-    /// <param name="clientCredentialsTokenEndpointService"></param>
-    /// <param name="tokenCache"></param>
-    /// <param name="logger"></param>
-    public ClientCredentialsTokenManagementService(
-        ITokenRequestSynchronization sync,
-        IClientCredentialsTokenEndpointService clientCredentialsTokenEndpointService,
-        IClientCredentialsTokenCache tokenCache,
-        ILogger<ClientCredentialsTokenManagementService> logger)
-    {
-        _sync = sync;
-        _clientCredentialsTokenEndpointService = clientCredentialsTokenEndpointService;
-        _tokenCache = tokenCache;
-        _logger = logger;
-    }
 
     /// <inheritdoc/>
     public async Task<ClientCredentialsToken> GetAccessTokenAsync(
@@ -46,7 +28,10 @@ public class ClientCredentialsTokenManagementService : IClientCredentialsTokenMa
         {
             try
             {
-                var item = await _tokenCache.GetAsync(clientName, parameters, cancellationToken).ConfigureAwait(false);
+                var item = await tokenCache.GetAsync(
+                    clientName: clientName, 
+                    requestParameters: parameters, 
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (item != null)
                 {
                     return item;
@@ -54,39 +39,23 @@ public class ClientCredentialsTokenManagementService : IClientCredentialsTokenMa
             }
             catch (Exception e)
             {
-                _logger.LogError(e,
+                logger.LogError(e,
                     "Error trying to obtain token from cache for client {clientName}. Error = {error}. Will obtain new token.", 
                     clientName, e.Message);
             }
         }
 
-        return await _sync.SynchronizeAsync(clientName, async () =>
-        {
-            var token = await _clientCredentialsTokenEndpointService.RequestToken(clientName, parameters, cancellationToken).ConfigureAwait(false);
-            if (token.IsError)
-            {
-                _logger.LogError(
-                    "Error requesting access token for client {clientName}. Error = {error}.",
-                    clientName, token.Error);
-
-                return token;
-            }
-
-            try
-            {
-                await _tokenCache.SetAsync(clientName, token, parameters, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e,
-                    "Error trying to set token in cache for client {clientName}. Error = {error}", 
-                    clientName, e.Message);
-            }
-
-            return token;
-        }).ConfigureAwait(false);
+        return await tokenCache.GetOrCreateAsync(
+            clientName: clientName, 
+            requestParameters: parameters, 
+            factory: InvokeGetAccessToken, 
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task<ClientCredentialsToken> InvokeGetAccessToken(string clientName, TokenRequestParameters parameters, CancellationToken cancellationToken)
+    {
+        return await clientCredentialsTokenEndpointService.RequestToken(clientName, parameters, cancellationToken).ConfigureAwait(false);
+    }
 
     /// <inheritdoc/>
     public Task DeleteAccessTokenAsync(
@@ -95,6 +64,6 @@ public class ClientCredentialsTokenManagementService : IClientCredentialsTokenMa
         CancellationToken cancellationToken = default)
     {
         parameters ??= new TokenRequestParameters();
-        return _tokenCache.DeleteAsync(clientName, parameters, cancellationToken);
+        return tokenCache.DeleteAsync(clientName, parameters, cancellationToken);
     }
 }

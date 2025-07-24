@@ -12,4 +12,11 @@ public class UserToken : ClientCredentialsToken
     /// The refresh token
     /// </summary>
     public string? RefreshToken { get; set; }
+
+    /// <summary>
+    /// The identity token that may be populated by the OP when refreshing the access token. This
+    /// value is not stored, but available should some OP's require to send this value, for example
+    /// during logout. 
+    /// </summary>
+    public string? IdentityToken { get; set; }
 }

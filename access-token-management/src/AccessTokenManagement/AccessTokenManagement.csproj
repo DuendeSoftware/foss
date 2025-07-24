@@ -6,6 +6,7 @@
     <RootNamespace>$(PackageId)</RootNamespace>
     <Description>Automatic access token management for OAuth client credential flows</Description>
     <IsTrimmable>false</IsTrimmable>
+    <PackageReadmePath>README.md</PackageReadmePath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel" />

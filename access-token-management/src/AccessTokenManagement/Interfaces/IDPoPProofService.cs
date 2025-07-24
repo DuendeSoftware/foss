@@ -48,6 +48,11 @@ public class DPoPProofRequest
     /// The access token
     /// </summary>
     public string? AccessToken { get; set; }
+
+    /// <summary>
+    /// Additional claims to add to the DPoP proof payload
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? AdditionalPayloadClaims { get; set; }
 }
 
 /// <summary>

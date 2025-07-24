@@ -83,7 +83,28 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
 
         return services.AddOpenIdConnectAccessTokenManagement();
     }
-    
+    /// <summary>
+    /// Adds a typed HTTP client for the factory that automatically sends the current user access token
+    /// </summary>
+    /// <typeparam name="T">The typed http client</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="parameters"></param>
+    /// <param name="configureClient">Additional configuration with service provider instance.</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddUserAccessTokenHttpClient<T>(this IServiceCollection services,
+        UserTokenRequestParameters? parameters = null,
+        Action<IServiceProvider, HttpClient>? configureClient = null) where T : class
+    {
+        if (configureClient != null)
+        {
+            return services.AddHttpClient<T>(configureClient)
+                .AddUserAccessTokenHandler(parameters);
+        }
+
+        return services.AddHttpClient<T>()
+            .AddUserAccessTokenHandler(parameters);
+    }
+
     /// <summary>
     /// Adds a named HTTP client for the factory that automatically sends the current user access token
     /// </summary>
@@ -130,6 +151,28 @@ public static class OpenIdConnectTokenManagementServiceCollectionExtensions
             .AddUserAccessTokenHandler(parameters);
     }
     
+    /// <summary>
+    /// Adds a typed HTTP client for the factory that automatically sends the current client access token. The client access token is an access token that is not associated with any user, obtained with the client credentials flow.
+    /// </summary>
+    /// <typeparam name="T">The typed http client</typeparam>
+    /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+    /// <param name="parameters"></param>
+    /// <param name="configureClient">Additional configuration with service provider instance.</param>
+    /// <returns></returns>
+    public static IHttpClientBuilder AddClientAccessTokenHttpClient<T>(this IServiceCollection services,
+        UserTokenRequestParameters? parameters = null,
+        Action<HttpClient>? configureClient = null) where T : class
+    {
+        if (configureClient != null)
+        {
+            return services.AddHttpClient<T>(configureClient)
+                .AddClientAccessTokenHandler(parameters);
+        }
+
+        return services.AddHttpClient<T>()
+            .AddClientAccessTokenHandler(parameters);
+    }
+
     /// <summary>
     /// Adds a named HTTP client for the factory that automatically sends the current user access token
     /// </summary>

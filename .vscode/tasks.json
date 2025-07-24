@@ -2,72 +2,72 @@
     "version": "2.0.0",
     "tasks": [
         {
-          "label": "build",
+          "label": "build-atm",
           "type": "process",
           "command": "dotnet",
           "args": [
               "build",
-              "${workspaceFolder}",
+              "${workspaceFolder}/access-token-management",
               "/property:GenerateFullPaths=true",
               "/consoleloggerparameters:NoSummary"
           ],
           "problemMatcher": "$msCompile"
         },
         {
-          "label": "build-web",
+          "label": "build-atm-web",
           "type": "process",
           "command": "dotnet",
           "args": [
               "build",
-              "${workspaceFolder}/samples/Web/Web.csproj",
+              "${workspaceFolder}/access-token-management/samples/Web/Web.csproj",
               "/property:GenerateFullPaths=true",
               "/consoleloggerparameters:NoSummary"
           ],
           "problemMatcher": "$msCompile"
         },
         {
-          "label": "build-blazorServer",
+          "label": "build-atm-blazorServer",
           "type": "process",
           "command": "dotnet",
           "args": [
               "build",
-              "${workspaceFolder}/samples/BlazorServer/BlazorServer.csproj",
+              "${workspaceFolder}/access-token-management/samples/BlazorServer/BlazorServer.csproj",
               "/property:GenerateFullPaths=true",
               "/consoleloggerparameters:NoSummary"
           ],
           "problemMatcher": "$msCompile"
         },
         {
-          "label": "build-webJarJwt",
+          "label": "build-atm-webJarJwt",
           "type": "process",
           "command": "dotnet",
           "args": [
               "build",
-              "${workspaceFolder}/samples/WebJarJwt/WebJarJwt.csproj",
+              "${workspaceFolder}/access-token-management/samples/WebJarJwt/WebJarJwt.csproj",
               "/property:GenerateFullPaths=true",
               "/consoleloggerparameters:NoSummary"
           ],
           "problemMatcher": "$msCompile"
         },
         {
-          "label": "build-worker",
+          "label": "build-atm-worker",
           "type": "process",
           "command": "dotnet",
           "args": [
               "build",
-              "${workspaceFolder}/samples/Worker/Worker.csproj",
+              "${workspaceFolder}/access-token-management/samples/Worker/Worker.csproj",
               "/property:GenerateFullPaths=true",
               "/consoleloggerparameters:NoSummary"
           ],
           "problemMatcher": "$msCompile"
         },
         {
-          "label": "build-workerDI",
+          "label": "build-atm-workerDI",
           "type": "process",
           "command": "dotnet",
           "args": [
               "build",
-              "${workspaceFolder}/samples/WorkerDI/WorkerDI.csproj",
+              "${workspaceFolder}/access-token-management/samples/WorkerDI/WorkerDI.csproj",
               "/property:GenerateFullPaths=true",
               "/consoleloggerparameters:NoSummary"
           ],

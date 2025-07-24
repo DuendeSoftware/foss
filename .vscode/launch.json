@@ -1,0 +1,97 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "--- Access Token Management ---",
+            "type": "node",
+            "request": "launch",
+            "presentation": {
+                "group": "0_atm",
+                "order": 0
+            }
+        },
+        {
+            "name": "BlazorServer",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-atm-blazorServer",
+            "program": "${workspaceFolder}/access-token-management/samples/BlazorServer/bin/Debug/net8.0/BlazorServer.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/access-token-management/samples/BlazorServer",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "console": "externalTerminal",
+            "presentation": {
+                "group": "0_atm",
+            }
+          },
+          {
+            "name": "Web",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-atm-web",
+            "program": "${workspaceFolder}/access-token-management/samples/Web/bin/Debug/net8.0/Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/access-token-management/samples/Web",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "console": "externalTerminal",
+            "presentation": {
+                "group": "0_atm",
+            }
+        },
+        {
+            "name": "WebJarJwt",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-atm-webJarJwt",
+            "program": "${workspaceFolder}/access-token-management/samples/WebJarJwt/bin/Debug/net8.0/WebJarJwt.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/access-token-management/samples/WebJarJwt",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "console": "externalTerminal",
+            "presentation": {
+                "group": "0_atm",
+            }
+        },
+        {
+            "name": "Worker",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-atm-worker",
+            "program": "${workspaceFolder}/access-token-management/samples/Worker/bin/Debug/net8.0/Worker.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/access-token-management/samples/Worker",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "console": "externalTerminal",
+            "presentation": {
+                "group": "0_atm",
+            }
+        },
+        {
+            "name": "WorkerDI",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-atm-workerDI",
+            "program": "${workspaceFolder}/access-token-management/samples/WorkerDI/bin/Debug/net8.0/WorkerDI.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/access-token-management/samples/WorkerDI",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "console": "externalTerminal",
+            "presentation": {
+                "group": "0_atm",
+            }
+        }
+    ]
+}

@@ -308,7 +308,7 @@ public class StoreTokensInAuthenticationPropertiesTests
         AccessToken = Guid.NewGuid().ToString(),
         AccessTokenType = Guid.NewGuid().ToString(),
         RefreshToken = Guid.NewGuid().ToString(),
-        Expiration = new DateTimeOffset(new DateTime(Random.Shared.Next())),
+        Expiration = new DateTimeOffset(new DateTime(DateTime.Now.Ticks + Random.Shared.Next())),
         DPoPJsonWebKey = Guid.NewGuid().ToString()
     };
 
@@ -316,7 +316,7 @@ public class StoreTokensInAuthenticationPropertiesTests
     {
         AccessToken = Guid.NewGuid().ToString(),
         AccessTokenType = Guid.NewGuid().ToString(),
-        Expiration = new DateTimeOffset(new DateTime(Random.Shared.Next())),
+        Expiration = new DateTimeOffset(new DateTime(DateTime.Now.Ticks + Random.Shared.Next())),
 
         // These two values don't change when we switch resources
         RefreshToken = previousToken.RefreshToken,

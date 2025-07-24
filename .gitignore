@@ -205,8 +205,5 @@ tools/
 # Rider
 .idea
 
-# Visual Studio Code workspace options
-.vscode
-
 # Verify Tests
 *.received.*

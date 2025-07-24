@@ -1,0 +1,146 @@
+﻿namespace Duende.AccessTokenManagement.OpenIdConnect
+{
+    public class AuthenticationSessionUserAccessTokenStore : Duende.AccessTokenManagement.OpenIdConnect.IUserTokenStore
+    {
+        public AuthenticationSessionUserAccessTokenStore(Microsoft.AspNetCore.Http.IHttpContextAccessor contextAccessor, Duende.AccessTokenManagement.OpenIdConnect.IStoreTokensInAuthenticationProperties tokensInProps, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.AuthenticationSessionUserAccessTokenStore> logger) { }
+        public System.Threading.Tasks.Task ClearTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        protected virtual System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal> FilterPrincipalAsync(System.Security.Claims.ClaimsPrincipal principal) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> GetTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        public System.Threading.Tasks.Task StoreTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserToken token, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+    }
+    public class BlazorServerUserAccessor : Duende.AccessTokenManagement.OpenIdConnect.IUserAccessor
+    {
+        public BlazorServerUserAccessor(Duende.AccessTokenManagement.OpenIdConnect.CircuitServicesAccessor circuitServicesAccessor, Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContextAccessor, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.BlazorServerUserAccessor> logger) { }
+        public System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal> GetCurrentUserAsync() { }
+    }
+    public class CircuitServicesAccessor
+    {
+        public CircuitServicesAccessor() { }
+    }
+    public class ConfigureOpenIdConnectClientCredentialsOptions : Microsoft.Extensions.Options.IConfigureNamedOptions<Duende.AccessTokenManagement.ClientCredentialsClient>, Microsoft.Extensions.Options.IConfigureOptions<Duende.AccessTokenManagement.ClientCredentialsClient>
+    {
+        public ConfigureOpenIdConnectClientCredentialsOptions(Duende.AccessTokenManagement.OpenIdConnect.IOpenIdConnectConfigurationService configurationService, Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> options) { }
+        public void Configure(Duende.AccessTokenManagement.ClientCredentialsClient options) { }
+        public void Configure(string? name, Duende.AccessTokenManagement.ClientCredentialsClient options) { }
+    }
+    public class ConfigureOpenIdConnectOptions : Microsoft.Extensions.Options.IConfigureNamedOptions<Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions>, Microsoft.Extensions.Options.IConfigureOptions<Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions>
+    {
+        public ConfigureOpenIdConnectOptions(Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor, Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> userAccessTokenManagementOptions, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory) { }
+        public void Configure(Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions options) { }
+        public void Configure(string? name, Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions options) { }
+    }
+    public class HttpContextUserAccessor : Duende.AccessTokenManagement.OpenIdConnect.IUserAccessor
+    {
+        public HttpContextUserAccessor(Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor) { }
+        public System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal> GetCurrentUserAsync() { }
+    }
+    public interface IOpenIdConnectConfigurationService
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.OpenIdConnectClientConfiguration> GetOpenIdConnectConfigurationAsync(string? schemeName = null);
+    }
+    public interface IStoreTokensInAuthenticationProperties
+    {
+        System.Threading.Tasks.Task<string> GetSchemeAsync(Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+        Duende.AccessTokenManagement.OpenIdConnect.UserToken GetUserToken(Microsoft.AspNetCore.Authentication.AuthenticationProperties authenticationProperties, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+        void RemoveUserToken(Microsoft.AspNetCore.Authentication.AuthenticationProperties authenticationProperties, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+        void SetUserToken(Duende.AccessTokenManagement.OpenIdConnect.UserToken token, Microsoft.AspNetCore.Authentication.AuthenticationProperties authenticationProperties, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+    }
+    public interface IUserAccessor
+    {
+        System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal> GetCurrentUserAsync();
+    }
+    public interface IUserTokenEndpointService
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> RefreshAccessTokenAsync(Duende.AccessTokenManagement.OpenIdConnect.UserToken userToken, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters parameters, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task RevokeRefreshTokenAsync(Duende.AccessTokenManagement.OpenIdConnect.UserToken userToken, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters parameters, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IUserTokenManagementService
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> GetAccessTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
+        System.Threading.Tasks.Task RevokeRefreshTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default);
+    }
+    public interface IUserTokenRequestSynchronization
+    {
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> SynchronizeAsync(string name, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken>> func);
+    }
+    public interface IUserTokenStore
+    {
+        System.Threading.Tasks.Task ClearTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> GetTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+        System.Threading.Tasks.Task StoreTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserToken token, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null);
+    }
+    public class OpenIdConnectClientAccessTokenHandler : Duende.AccessTokenManagement.AccessTokenHandler
+    {
+        public OpenIdConnectClientAccessTokenHandler(Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.OpenIdConnectClientAccessTokenHandler> logger, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        protected override System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, System.Threading.CancellationToken cancellationToken) { }
+    }
+    public class OpenIdConnectClientConfiguration
+    {
+        public OpenIdConnectClientConfiguration() { }
+        public string? Authority { get; set; }
+        public string? ClientId { get; set; }
+        public string? ClientSecret { get; set; }
+        public System.Net.Http.HttpClient? HttpClient { get; set; }
+        public string? RevocationEndpoint { get; set; }
+        public string? Scheme { get; set; }
+        public string? TokenEndpoint { get; set; }
+    }
+    public class OpenIdConnectConfigurationService : Duende.AccessTokenManagement.OpenIdConnect.IOpenIdConnectConfigurationService
+    {
+        public OpenIdConnectConfigurationService(Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> userAccessTokenManagementOptions, Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions> oidcOptionsMonitor, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.OpenIdConnectClientConfiguration> GetOpenIdConnectConfigurationAsync(string? schemeName = null) { }
+    }
+    public static class OpenIdConnectTokenManagementDefaults
+    {
+        public const string ClientCredentialsClientNamePrefix = "Duende.TokenManagement.SchemeBasedClient:";
+    }
+    public class OpenIdConnectUserAccessTokenHandler : Duende.AccessTokenManagement.AccessTokenHandler
+    {
+        public OpenIdConnectUserAccessTokenHandler(Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Duende.AccessTokenManagement.IDPoPNonceStore dPoPNonceStore, Duende.AccessTokenManagement.OpenIdConnect.IUserAccessor userAccessor, Duende.AccessTokenManagement.OpenIdConnect.IUserTokenManagementService userTokenManagement, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.OpenIdConnectClientAccessTokenHandler> logger, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        protected override System.Threading.Tasks.Task<Duende.AccessTokenManagement.ClientCredentialsToken> GetAccessTokenAsync(bool forceRenewal, System.Threading.CancellationToken cancellationToken) { }
+    }
+    public class StoreTokensInAuthenticationProperties : Duende.AccessTokenManagement.OpenIdConnect.IStoreTokensInAuthenticationProperties
+    {
+        public StoreTokensInAuthenticationProperties(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> tokenManagementOptionsMonitor, Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions> cookieOptionsMonitor, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider schemeProvider, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.StoreTokensInAuthenticationProperties> logger) { }
+        protected virtual bool AppendChallengeSchemeToTokenNames(Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters) { }
+        public System.Threading.Tasks.Task<string> GetSchemeAsync(Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        public Duende.AccessTokenManagement.OpenIdConnect.UserToken GetUserToken(Microsoft.AspNetCore.Authentication.AuthenticationProperties authenticationProperties, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        public void RemoveUserToken(Microsoft.AspNetCore.Authentication.AuthenticationProperties authenticationProperties, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+        public void SetUserToken(Duende.AccessTokenManagement.OpenIdConnect.UserToken token, Microsoft.AspNetCore.Authentication.AuthenticationProperties authenticationProperties, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null) { }
+    }
+    public class UserAccessAccessTokenManagementService : Duende.AccessTokenManagement.OpenIdConnect.IUserTokenManagementService
+    {
+        public UserAccessAccessTokenManagementService(Duende.AccessTokenManagement.OpenIdConnect.IUserTokenRequestSynchronization sync, Duende.AccessTokenManagement.OpenIdConnect.IUserTokenStore userAccessTokenStore, System.TimeProvider clock, Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> options, Duende.AccessTokenManagement.OpenIdConnect.IUserTokenEndpointService tokenEndpointService, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.UserAccessAccessTokenManagementService> logger) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> GetAccessTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task RevokeRefreshTokenAsync(System.Security.Claims.ClaimsPrincipal user, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters? parameters = null, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public class UserToken : Duende.AccessTokenManagement.ClientCredentialsToken
+    {
+        public UserToken() { }
+        public string? IdentityToken { get; set; }
+        public string? RefreshToken { get; set; }
+    }
+    public class UserTokenEndpointService : Duende.AccessTokenManagement.OpenIdConnect.IUserTokenEndpointService
+    {
+        public UserTokenEndpointService(Duende.AccessTokenManagement.OpenIdConnect.IOpenIdConnectConfigurationService configurationService, Microsoft.Extensions.Options.IOptions<Duende.AccessTokenManagement.OpenIdConnect.UserTokenManagementOptions> options, Duende.AccessTokenManagement.IClientAssertionService clientAssertionService, Duende.AccessTokenManagement.IDPoPProofService dPoPProofService, Microsoft.Extensions.Logging.ILogger<Duende.AccessTokenManagement.OpenIdConnect.UserTokenEndpointService> logger) { }
+        public System.Threading.Tasks.Task<Duende.AccessTokenManagement.OpenIdConnect.UserToken> RefreshAccessTokenAsync(Duende.AccessTokenManagement.OpenIdConnect.UserToken userToken, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters parameters, System.Threading.CancellationToken cancellationToken = default) { }
+        public System.Threading.Tasks.Task RevokeRefreshTokenAsync(Duende.AccessTokenManagement.OpenIdConnect.UserToken userToken, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters parameters, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public class UserTokenManagementOptions
+    {
+        public UserTokenManagementOptions() { }
+        public string? ChallengeScheme { get; set; }
+        public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
+        public string? ClientCredentialsResource { get; set; }
+        public string? ClientCredentialsScope { get; set; }
+        public string? DPoPJsonWebKey { get; set; }
+        public System.TimeSpan RefreshBeforeExpiration { get; set; }
+        public bool UseChallengeSchemeScopedTokens { get; set; }
+    }
+    public class UserTokenRequestParameters : Duende.AccessTokenManagement.TokenRequestParameters
+    {
+        public UserTokenRequestParameters() { }
+        public string? ChallengeScheme { get; set; }
+        public string? SignInScheme { get; set; }
+    }
+}

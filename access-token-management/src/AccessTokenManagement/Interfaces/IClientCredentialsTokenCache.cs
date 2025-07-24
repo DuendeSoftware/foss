@@ -22,6 +22,12 @@ public interface IClientCredentialsTokenCache
         TokenRequestParameters requestParameters,
         CancellationToken cancellationToken = default);
 
+    Task<ClientCredentialsToken> GetOrCreateAsync(
+        string clientName,
+        TokenRequestParameters requestParameters,
+        Func<string, TokenRequestParameters, CancellationToken, Task<ClientCredentialsToken>> factory,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Retrieves a client access token from the cache
     /// </summary>
