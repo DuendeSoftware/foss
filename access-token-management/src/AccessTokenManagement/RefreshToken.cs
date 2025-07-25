@@ -2,10 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+[JsonConverter(typeof(StringValueJsonConverter<RefreshToken>))]
 public readonly record struct RefreshToken : IStronglyTypedValue<RefreshToken>
 {
     public const int MaxLength = 4 * 1024;
@@ -17,7 +19,7 @@ public readonly record struct RefreshToken : IStronglyTypedValue<RefreshToken>
     ];
 
     /// <summary>
-    /// You can't directly create this type. 
+    /// You can't directly create this type.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
     public RefreshToken() => throw new InvalidOperationException("Can't create null value");
