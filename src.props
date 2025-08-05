@@ -10,13 +10,16 @@
     <ImplicitUsings>true</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-		<WarningsAsErrors>8600;8601;8602;8603;8604;8625;8618;8619;8620</WarningsAsErrors>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">True</ContinuousIntegrationBuild>
     <Deterministic>true</Deterministic>
-    <NoWarn>$(NoWarn);CS1591,NU1507</NoWarn>
     <IsTestProject>false</IsTestProject>
     <IsPackable>true</IsPackable>
     <IsTrimmable Condition="'$(TargetFramework)' != 'netstandard2.0'">true</IsTrimmable>
+
+    <!--Missing XML comment for publicly visible type or member 'Type_or_Member'-->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!--There are 2 package sources defined in your configuration. When using central package management, please map your package sources with package source mapping or specify a single package source.-->
+    <NoWarn>$(NoWarn);NU1507</NoWarn>
 
     <!--NuGet-->
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -46,7 +49,6 @@
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<WarningsAsErrors />
   </PropertyGroup>
 
   <ItemGroup>
