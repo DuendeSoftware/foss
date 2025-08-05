@@ -166,6 +166,7 @@
         System.Threading.Tasks.Task DeleteAccessTokenAsync(Duende.AccessTokenManagement.ClientCredentialsClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
         System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.ClientCredentialsToken>> GetAccessTokenAsync(Duende.AccessTokenManagement.ClientCredentialsClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
     }
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.IdentityToken>))]
     public readonly struct IdentityToken : System.IEquatable<Duende.AccessTokenManagement.IdentityToken>
     {
         public const int MaxLength = 32768;
@@ -176,6 +177,7 @@
         public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.IdentityToken? parsed, out string[] errors) { }
         public static string op_Implicit(Duende.AccessTokenManagement.IdentityToken value) { }
     }
+    [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.RefreshToken>))]
     public readonly struct RefreshToken : System.IEquatable<Duende.AccessTokenManagement.RefreshToken>
     {
         public const int MaxLength = 4096;

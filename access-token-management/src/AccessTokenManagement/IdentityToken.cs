@@ -2,10 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+[JsonConverter(typeof(StringValueJsonConverter<IdentityToken>))]
 public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
 {
     public const int MaxLength = 32 * 1024;
@@ -17,7 +19,7 @@ public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
     ];
 
     /// <summary>
-    /// You can't directly create this type. 
+    /// You can't directly create this type.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
     public IdentityToken() => throw new InvalidOperationException("Can't create null value");
@@ -49,7 +51,7 @@ public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
     /// <summary>
     /// Parses a value to a <see cref="IdentityToken"/>. This will return null if the provided string
     /// is null or whitespace. This is a convenience method for when you want to parse a value that may
-    /// contain null or whitespace strings. 
+    /// contain null or whitespace strings.
     /// </summary>
     public static IdentityToken? ParseOrDefault(string? value) => StringParsers<IdentityToken>.ParseOrDefault(value);
 }
