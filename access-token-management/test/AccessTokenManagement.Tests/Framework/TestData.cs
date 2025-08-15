@@ -43,13 +43,11 @@ public partial class TestData
         return DPoPProofKey.Parse(jwkJson);
     }
 
-    private static string SameNameAsProperty([CallerMemberName] string? name = null)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            return string.Empty;
-        }
+    private static string SameNameAsProperty([CallerMemberName] string? name = null) =>
+        string.IsNullOrEmpty(name)
+            ? string.Empty
+            : PropertyRegex().Replace(name, "_$1").ToLower();
 
-        return Regex.Replace(name, "(?<!^)([A-Z])", "_$1").ToLower();
-    }
+    [GeneratedRegex("(?<!^)([A-Z])")]
+    private static partial Regex PropertyRegex();
 }

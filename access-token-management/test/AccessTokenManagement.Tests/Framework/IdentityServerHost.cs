@@ -22,20 +22,22 @@ public class IdentityServerHost : GenericHost
         OnConfigure += Configure;
     }
 
-    public List<Client> Clients { get; set; } = new();
-    public List<IdentityResource> IdentityResources { get; set; } = new()
-    {
+    public List<Client> Clients { get; } = [];
+
+    public List<IdentityResource> IdentityResources { get; } =
+    [
         new IdentityResources.OpenId(),
         new IdentityResources.Profile(),
-        new IdentityResources.Email(),
-    };
+        new IdentityResources.Email()
+    ];
 
-    public List<ApiScope> ApiScopes { get; set; } = new();
-    public List<ApiResource> ApiResources { get; set; } = new()
-    {
-        new ApiResource("urn:api1"),
-        new ApiResource("urn:api2")
-    };
+    public List<ApiScope> ApiScopes { get; } = [];
+
+    public List<ApiResource> ApiResources { get;} =
+    [
+        new("urn:api1"),
+        new("urn:api2")
+    ];
 
     private void ConfigureServices(IServiceCollection services)
     {
@@ -73,10 +75,7 @@ public class IdentityServerHost : GenericHost
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapGet("/account/login", _ =>
-            {
-                return Task.CompletedTask;
-            });
+            endpoints.MapGet("/account/login", _ => Task.CompletedTask);
 
             endpoints.MapGet("/account/logout", async context =>
             {

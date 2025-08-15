@@ -16,9 +16,8 @@ namespace Duende.AccessTokenManagement;
 
 public class BackChannelClientTests(ITestOutputHelper output)
 {
-    public TestData The { get; } = new();
-    public TestDataBuilder Some => new(The);
-
+    private TestData The { get; } = new();
+    private TestDataBuilder Some => new(The);
 
     [Fact]
     public async Task Will_use_cache()
@@ -48,7 +47,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         token.Succeeded.ShouldBeTrue();
 
         mockHttp.GetMatchCount(request).ShouldBe(1);
-
     }
 
     [Fact]
@@ -186,7 +184,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         }).GetToken();
 
         mockHttp.GetMatchCount(request).ShouldBe(2);
-
     }
 
     [Fact]
@@ -248,7 +245,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         await t2.ThrowOnTimeout();
 
         mockHttp.GetMatchCount(request).ShouldBe(2);
-
     }
 
     [Fact]
@@ -305,7 +301,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
             }).GetToken();
         });
 
-
         output.WriteLine("before delay");
 
         await Task.Delay(100);
@@ -316,7 +311,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         await t2.ThrowOnTimeout();
 
         mockHttp.GetMatchCount(request).ShouldBe(1);
-
     }
 
     [Fact]
@@ -380,7 +374,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         // Verify we actually used the cache
         replacementCache.GetOrCreateCount.ShouldBe(1);
     }
-
 
     [Fact]
     public async Task Can_use_custom_encryption()
@@ -482,7 +475,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         token.Token!.AccessToken.ToString().ShouldStartWith("_prefix_added_by_serializer");
         token.Token!.AccessToken.ToString().ShouldEndWith("_suffix_added_by_serializer_");
-
     }
 
     private class TestSerializer : IHybridCacheSerializer<ClientCredentialsToken>

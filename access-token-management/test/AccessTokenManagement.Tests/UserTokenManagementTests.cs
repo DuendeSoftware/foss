@@ -15,7 +15,7 @@ using OidcConstants = Duende.IdentityModel.OidcConstants;
 
 namespace Duende.AccessTokenManagement;
 
-public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output, "web")
+public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output)
 {
     [Fact]
     public async Task Anonymous_user_should_return_user_token_error()

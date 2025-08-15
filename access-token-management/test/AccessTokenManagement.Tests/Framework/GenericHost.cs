@@ -68,15 +68,7 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
                     }
                 });
 
-                if (IsDevelopment)
-                {
-                    builder.UseSetting("Environment", "Development");
-                }
-                else
-                {
-                    builder.UseSetting("Environment", "Production");
-                }
-
+                builder.UseSetting("Environment", IsDevelopment ? "Development" : "Production");
                 builder.ConfigureServices(ConfigureServices);
                 builder.Configure(ConfigureApp);
             });
@@ -93,7 +85,7 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
     public event Action<IServiceCollection> OnConfigureServices = _ => { };
     public event Action<IApplicationBuilder> OnConfigure = _ => { };
 
-    void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services)
     {
         services.AddLogging(options =>
         {
@@ -104,19 +96,15 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
         OnConfigureServices(services);
     }
 
-    void ConfigureApp(IApplicationBuilder app)
+    private void ConfigureApp(IApplicationBuilder app)
     {
-        _appServices = app.ApplicationServices;
-
         OnConfigure(app);
 
         ConfigureSignin(app);
         ConfigureSignout(app);
     }
 
-
-
-    void ConfigureSignout(IApplicationBuilder app) =>
+    private void ConfigureSignout(IApplicationBuilder app) =>
         app.Use(async (ctx, next) =>
         {
             if (ctx.Request.Path == "/__signout")
@@ -129,19 +117,12 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             await next();
         });
 
-    public async Task RevokeSessionCookieAsync()
-    {
-        var response = await BrowserClient.GetAsync(Url("__signout"));
-        response.StatusCode.ShouldBe((HttpStatusCode)204);
-    }
-
-
-    void ConfigureSignin(IApplicationBuilder app) =>
+    private void ConfigureSignin(IApplicationBuilder app) =>
         app.Use(async (ctx, next) =>
         {
             if (ctx.Request.Path == "/__signin")
             {
-                if (_userToSignIn is not object)
+                if (_userToSignIn is null)
                 {
                     throw new Exception("No User Configured for SignIn");
                 }
@@ -159,21 +140,18 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             await next();
         });
 
-    ClaimsPrincipal? _userToSignIn;
-    AuthenticationProperties? _propsToSignIn;
-
     public async Task IssueSessionCookieAsync(params Claim[] claims)
     {
         _userToSignIn = new ClaimsPrincipal(new ClaimsIdentity(claims, "test", "name", "role"));
         var response = await BrowserClient.GetAsync(Url("__signin"));
         response.StatusCode.ShouldBe((HttpStatusCode)204);
     }
+
     public Task IssueSessionCookieAsync(AuthenticationProperties props, params Claim[] claims)
     {
         _propsToSignIn = props;
         return IssueSessionCookieAsync(claims);
     }
-    public Task IssueSessionCookieAsync(string sub, params Claim[] claims) => IssueSessionCookieAsync(claims.Append(new Claim("sub", sub)).ToArray());
 
     public async ValueTask DisposeAsync()
     {

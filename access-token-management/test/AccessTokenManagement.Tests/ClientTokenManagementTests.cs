@@ -16,7 +16,7 @@ namespace Duende.AccessTokenManagement;
 
 public class ClientTokenManagementTests
 {
-    private ServiceCollection services = new();
+    private ServiceCollection services = [];
     private MockHttpMessageHandler mockHttp = new();
 
     public ClientTokenManagementTests()
@@ -25,8 +25,8 @@ public class ClientTokenManagementTests
         mockHttp.Fallback.Respond(req => throw new InvalidOperationException("no handler for " + req.RequestUri));
     }
 
-    public TestData The { get; } = new();
-    public TestDataBuilder Some => new(The);
+    private TestData The { get; } = new();
+    private TestDataBuilder Some => new(The);
 
     [Fact]
     public async Task Unknown_client_should_throw_exception()
@@ -192,6 +192,7 @@ public class ClientTokenManagementTests
             Expiration = The.CurrentDate.Add(TimeSpan.FromSeconds(300))
         });
     }
+
     [Fact]
     public async Task Missing_expires_in_response_should_create_long_lived_token()
     {
@@ -517,7 +518,7 @@ public class ClientTokenManagementTests
         mockHttp.Expect(The.TokenEndpoint.ToString())
             .With(m => m.Headers.Any(h => h.Key == "DPoP" && h.Value.FirstOrDefault() == "proof_token"))
             .Respond(HttpStatusCode.BadRequest,
-                new[] { new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce") },
+                [new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce")],
                 "application/json",
                 JsonSerializer.Serialize(new { error = "use_dpop_nonce" }));
 

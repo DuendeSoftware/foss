@@ -59,11 +59,9 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
         _clientOptions = Provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test");
     }
 
-    public class ApiHandler : DelegatingHandler
+    private class ApiHandler(HttpMessageHandler innerHandler) : DelegatingHandler
     {
-        private HttpMessageHandler? _innerHandler;
-
-        public ApiHandler(HttpMessageHandler innerHandler) => _innerHandler = innerHandler;
+        private HttpMessageHandler? _innerHandler = innerHandler;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
