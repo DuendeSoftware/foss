@@ -52,7 +52,7 @@ public class TestDataBuilder(TestData The)
         }
     }
 
-    public ClientCredentialsToken ClientCredentialsToken() => new ClientCredentialsToken()
+    public ClientCredentialsToken ClientCredentialsToken() => new ClientCredentialsToken
     {
         AccessToken = The.AccessToken,
         AccessTokenType = The.TokenType,

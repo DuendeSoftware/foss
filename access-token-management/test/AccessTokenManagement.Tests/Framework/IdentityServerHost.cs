@@ -23,7 +23,7 @@ public class IdentityServerHost : GenericHost
     }
 
     public List<Client> Clients { get; set; } = new List<Client>();
-    public List<IdentityResource> IdentityResources { get; set; } = new List<IdentityResource>()
+    public List<IdentityResource> IdentityResources { get; set; } = new List<IdentityResource>
     {
         new IdentityResources.OpenId(),
         new IdentityResources.Profile(),

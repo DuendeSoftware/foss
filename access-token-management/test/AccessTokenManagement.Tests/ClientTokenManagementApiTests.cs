@@ -200,7 +200,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
         var client = _clientFactory.CreateClient("test");
 
         var requestMessage = new HttpRequestMessage(HttpMethod.Get, ApiHost.Url("/test"));
-        requestMessage.AddDPoPProofAdditionalPayloadClaims(new Dictionary<string, string>() {
+        requestMessage.AddDPoPProofAdditionalPayloadClaims(new Dictionary<string, string> {
             { "claim_one", "one" },
             { "claim_two", "two" },
         });

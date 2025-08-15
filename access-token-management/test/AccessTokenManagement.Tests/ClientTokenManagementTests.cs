@@ -474,7 +474,7 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task client_with_dpop_key_should_send_proof_token()
     {
-        var proof = new TestDPoPProofService() { ProofToken = "proof_token" };
+        var proof = new TestDPoPProofService { ProofToken = "proof_token" };
         services.AddSingleton<IDPoPProofService>(proof);
 
         services.AddClientCredentialsTokenManagement()
@@ -506,7 +506,7 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task client_should_use_nonce_when_sending_dpop_proof()
     {
-        var proof = new TestDPoPProofService() { ProofToken = "proof_token", AppendNonce = true };
+        var proof = new TestDPoPProofService { ProofToken = "proof_token", AppendNonce = true };
         services.AddSingleton<IDPoPProofService>(proof);
 
         services.AddClientCredentialsTokenManagement()

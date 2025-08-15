@@ -170,7 +170,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
         {
             ForceTokenRenewal = new ForceTokenRenewal(false),
             Scope = Scope.Parse("scope1"),
@@ -178,7 +178,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         }).GetToken();
 
 
-        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
         {
             ForceTokenRenewal = new ForceTokenRenewal(false),
             Scope = Scope.Parse("scope2"),
@@ -217,7 +217,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t1 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
                 Scope = Scope.Parse("scope1"),
@@ -229,7 +229,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t2 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
                 Scope = Scope.Parse("scope2"),
@@ -279,10 +279,10 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t1 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
-                Parameters = new Parameters()
+                Parameters = new Parameters
                 {
                     { "tenant", "1" }
                 }
@@ -294,10 +294,10 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t2 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
-                Parameters = new Parameters()
+                Parameters = new Parameters
                 {
                     { "tenant", "2" }
                 }

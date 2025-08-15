@@ -20,7 +20,7 @@ public class TokenResultTests
     [Fact]
     public void Can_implicitly_convert_success_result_to_result()
     {
-        var result = new ClientCredentialsToken()
+        var result = new ClientCredentialsToken
         {
             ClientId = ClientId.Parse("client_id"),
             AccessToken = AccessToken.Parse("access_token"),

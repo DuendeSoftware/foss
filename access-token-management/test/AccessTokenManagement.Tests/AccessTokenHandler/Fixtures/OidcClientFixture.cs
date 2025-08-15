@@ -28,9 +28,9 @@ internal class OidcClientFixture : AccessTokenHandlingBaseFixture
             });
         Services.AddSingleton<IHttpContextAccessor>(sp =>
         {
-            return new FakeHttpContextAccessor()
+            return new FakeHttpContextAccessor
             {
-                HttpContext = new DefaultHttpContext()
+                HttpContext = new DefaultHttpContext
                 {
                     User = sp.GetRequiredService<FakeAuthenticationService>().Principal,
                     RequestServices = sp
@@ -44,8 +44,8 @@ internal class OidcClientFixture : AccessTokenHandlingBaseFixture
         });
 
 
-        Services.AddClientAccessTokenHttpClient("httpClient", new UserTokenRequestParameters()
-        {
+        Services.AddClientAccessTokenHttpClient("httpClient", new UserTokenRequestParameters
+            {
 
         })
             .ConfigureHttpClient(c =>

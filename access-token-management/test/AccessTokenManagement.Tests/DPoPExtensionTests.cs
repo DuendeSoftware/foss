@@ -14,7 +14,7 @@ public class DPoPExtensionTests
     public void GetDPoPNonceIsCaseInsensitive(string headerName)
     {
         var expected = "expected-server-nonce";
-        var message = new HttpResponseMessage()
+        var message = new HttpResponseMessage
         {
             Headers =
             {
