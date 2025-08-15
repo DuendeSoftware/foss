@@ -7,12 +7,12 @@ using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.AccessTokenManagement.OTel;
 
 namespace Duende.AccessTokenManagement;
+
 public class ConventionTests(ITestOutputHelper output)
 {
     public static readonly Assembly AtmAssembly = typeof(ClientCredentialsToken).Assembly;
     public static readonly Assembly AtmOidcAssembly = typeof(UserToken).Assembly;
-    public static readonly Type[] AllTypes =
-        AtmAssembly.GetTypes()
+    public static readonly Type[] AllTypes = AtmAssembly.GetTypes()
         .Union(AtmOidcAssembly.GetTypes())
         .ToArray();
 
@@ -28,7 +28,6 @@ public class ConventionTests(ITestOutputHelper output)
             stringFields.All(f => f.IsPrivate).ShouldBeTrue($"{type.Name} should have its string value as private.");
         }
     }
-
 
     [Fact]
     public void All_strongly_typed_strings_are_readonly_struct()
@@ -175,6 +174,7 @@ public class ConventionTests(ITestOutputHelper output)
 
         failures.ShouldBeEmpty();
     }
+
     public static bool IsInternal(Type type)
     {
         if (type.IsNested)
@@ -183,8 +183,6 @@ public class ConventionTests(ITestOutputHelper output)
         }
         return type.IsNestedPrivate || type.IsNotPublic;
     }
-
-
 
     private static List<Type> GetStrongTypedStringTypes()
     {

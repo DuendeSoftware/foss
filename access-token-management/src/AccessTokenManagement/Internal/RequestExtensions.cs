@@ -4,6 +4,7 @@
 using Duende.IdentityModel.Client;
 
 namespace Duende.AccessTokenManagement.Internal;
+
 internal static class RequestExtensions
 {
     private static readonly HttpRequestOptionsKey<ClientId> ClientIdOptionsKey = new("Duende.AccessTokenManagement.ClientId");

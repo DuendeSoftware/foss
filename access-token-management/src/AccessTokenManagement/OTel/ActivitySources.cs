@@ -4,6 +4,7 @@
 using System.Diagnostics;
 
 namespace Duende.AccessTokenManagement.OTel;
+
 public static class ActivitySources
 {
 
