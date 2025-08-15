@@ -33,7 +33,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When(The.TokenEndpoint.ToString())
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -64,7 +64,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When(The.TokenEndpoint.ToString())
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -100,7 +100,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => new HttpResponseMessage(HttpStatusCode.NotFound));
+            .Respond(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -162,7 +162,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -205,7 +205,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -267,7 +267,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -367,7 +367,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -401,7 +401,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -440,7 +440,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -469,7 +469,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When(The.TokenEndpoint.ToString())
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -528,7 +528,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -540,14 +540,14 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var cache = provider.GetRequiredService<HybridCache>();
         var cachedToken = await cache.GetOrCreateAsync<ClientCredentialsToken>("always_the_same",
-            (_) => ValueTask.FromResult((ClientCredentialsToken)null!));
+            _ => ValueTask.FromResult((ClientCredentialsToken)null!));
 
         cachedToken.ShouldNotBeNull();
 
         await cache.RemoveByTagAsync(clientName);
 
         cachedToken = await cache.GetOrCreateAsync<ClientCredentialsToken>("always_the_same",
-            (_) => ValueTask.FromResult((ClientCredentialsToken)null!));
+            _ => ValueTask.FromResult((ClientCredentialsToken)null!));
         cachedToken.ShouldBeNull();
     }
 

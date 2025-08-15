@@ -22,7 +22,7 @@ public class ClientTokenManagementTests
     public ClientTokenManagementTests()
     {
         services.AddSingleton<TimeProvider>(new FakeTimeProvider(() => The.CurrentDate));
-        mockHttp.Fallback.Respond((req) => throw new InvalidOperationException("no handler for " + req.RequestUri));
+        mockHttp.Fallback.Respond(req => throw new InvalidOperationException("no handler for " + req.RequestUri));
     }
 
     public TestData The { get; } = new();

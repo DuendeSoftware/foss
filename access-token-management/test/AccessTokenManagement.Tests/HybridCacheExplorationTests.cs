@@ -23,7 +23,7 @@ public class HybridCacheExplorationTests
 
         try
         {
-            item = await cache.GetOrCreateAsync<object>("key", (_) =>
+            item = await cache.GetOrCreateAsync<object>("key", _ =>
             {
                 count++;
                 throw new InvalidOperationException();
@@ -33,7 +33,7 @@ public class HybridCacheExplorationTests
         {
 
         }
-        item = await cache.GetOrCreateAsync<object>("key", (_) =>
+        item = await cache.GetOrCreateAsync<object>("key", _ =>
         {
             count++;
             return ValueTask.FromResult<object>(null!);
