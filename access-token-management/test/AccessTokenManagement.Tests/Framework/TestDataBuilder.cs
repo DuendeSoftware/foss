@@ -11,7 +11,6 @@ namespace Duende.AccessTokenManagement.Framework;
 
 public class TestDataBuilder(TestData The)
 {
-
     public Token Token() => new()
     {
         access_token = The.AccessToken.ToString(),
@@ -25,8 +24,6 @@ public class TestDataBuilder(TestData The)
         {
             Content = JsonContent.Create(tokenResponse ?? Token(), mediaType: MediaTypeHeaderValue.Parse("application/json"))
         };
-
-
 
     public void ClientCredentialsClient(
         ClientCredentialsClient toConfigure,

@@ -16,29 +16,26 @@ namespace Duende.AccessTokenManagement.Framework;
 
 public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "https://server") : IAsyncDisposable
 {
-
     protected readonly string BaseAddress = baseAddress.EndsWith("/")
         ? baseAddress.Substring(0, baseAddress.Length - 1)
         : baseAddress;
 
-    IServiceProvider _appServices = null!;
+    private ClaimsPrincipal? _userToSignIn;
+    private AuthenticationProperties? _propsToSignIn;
 
     public Assembly HostAssembly { get; set; } = null!;
+
     public bool IsDevelopment { get; set; } = false!;
 
     public TestServer Server { get; private set; } = null!;
-    public TestBrowserClient BrowserClient { get; set; } = null!;
-    public HttpClient HttpClient { get; set; } = null!;
-    public HttpMessageHandler HttpMessageHandler { get; set; } = null!;
+
+    public TestBrowserClient BrowserClient { get; private set; } = null!;
+
+    public HttpClient HttpClient { get; private set; } = null!;
+
+    public HttpMessageHandler HttpMessageHandler { get; private set; } = null!;
 
     private TestLoggerProvider Logger { get; } = new(writeOutput, baseAddress + " - ");
-
-
-
-    public T Resolve<T>()
-        where T : notnull =>
-        // not calling dispose on scope on purpose
-        _appServices.GetRequiredService<IServiceScopeFactory>().CreateScope().ServiceProvider.GetRequiredService<T>();
 
     public string Url(string? path = null)
     {

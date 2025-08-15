@@ -12,12 +12,17 @@ namespace Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 internal abstract class AccessTokenHandlingBaseFixture : IAsyncDisposable
 {
     public TestData The { get; } = new();
+
     public TestDataBuilder Some => new(The);
 
     public readonly ApiHttpMessageHandler ApiEndpoint = new();
+
     public readonly TokenHttpMessageHandler TokenEndpoint = new();
+
     protected ServiceCollection Services = null!;
+
     public ServiceProvider ServiceProvider { get; private set; } = null!;
+
     public HttpClient HttpClient { get; private set; } = null!;
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

@@ -12,7 +12,7 @@ namespace Duende.AccessTokenManagement;
 
 public class StoreTokensInAuthenticationPropertiesTests
 {
-    public TestData The { get; } = new();
+    private TestData The { get; } = new();
     public TestDataBuilder Some => new(The);
 
     [Fact]

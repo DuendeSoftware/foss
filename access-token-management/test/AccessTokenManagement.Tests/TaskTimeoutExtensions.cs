@@ -22,20 +22,18 @@ public static class TaskTimeoutExtensions
     {
         timeout = IncreaseTimeoutIfDebuggerAttached(timeout);
 
-        using (var cts = new CancellationTokenSource())
+        using var cts = new CancellationTokenSource();
+        var delayTask = Task.Delay(timeout, cts.Token);
+
+        var resultTask = await Task.WhenAny(task, delayTask);
+        if (resultTask == delayTask)
         {
-            var delayTask = Task.Delay(timeout, cts.Token);
-
-            var resultTask = await Task.WhenAny(task, delayTask);
-            if (resultTask == delayTask)
-            {
-                // Operation cancelled
-                throw new OperationCanceledException();
-            }
-
-            cts.Cancel();
-
-            await task;
+            // Operation cancelled
+            throw new OperationCanceledException();
         }
+
+        await cts.CancelAsync();
+
+        await task;
     }
 }

@@ -5,6 +5,7 @@ using Duende.AccessTokenManagement.Framework;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement;
+
 public class LogExpirationTests
 {
     /// <summary>
@@ -28,7 +29,6 @@ public class LogExpirationTests
 
         loggerProvider.LogEntries.Any(x => x.Contains("foo")).ShouldBeFalse();
         loggerProvider.LogEntries.Any(x => x.Contains("System.Func")).ShouldBeTrue();
-
     }
 
     /// <summary>
@@ -47,7 +47,6 @@ public class LogExpirationTests
 
         loggerProvider.LogEntries.Any(x => x.Contains("foo")).ShouldBeTrue();
     }
-
 }
 
 public static partial class TestLoggers
