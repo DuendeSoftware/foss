@@ -162,8 +162,8 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             await next();
         });
 
-    ClaimsPrincipal? _userToSignIn = default!;
-    AuthenticationProperties? _propsToSignIn = default!;
+    ClaimsPrincipal? _userToSignIn;
+    AuthenticationProperties? _propsToSignIn;
 
     public async Task IssueSessionCookieAsync(params Claim[] claims)
     {

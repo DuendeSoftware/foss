@@ -7,9 +7,9 @@ namespace Duende.AccessTokenManagement.Framework;
 
 public class FakeHybridCache : HybridCache
 {
-    public int GetOrCreateCount = 0;
+    public int GetOrCreateCount;
 
-    public string? CacheKey = null;
+    public string? CacheKey;
 
     public Action OnGetOrCreate = () => { };
 
