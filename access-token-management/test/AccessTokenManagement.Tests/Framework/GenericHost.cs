@@ -21,15 +21,15 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
         ? baseAddress.Substring(0, baseAddress.Length - 1)
         : baseAddress;
 
-    IServiceProvider _appServices = default!;
+    IServiceProvider _appServices = null!;
 
-    public Assembly HostAssembly { get; set; } = default!;
-    public bool IsDevelopment { get; set; } = default!;
+    public Assembly HostAssembly { get; set; } = null!;
+    public bool IsDevelopment { get; set; } = false!;
 
-    public TestServer Server { get; private set; } = default!;
-    public TestBrowserClient BrowserClient { get; set; } = default!;
-    public HttpClient HttpClient { get; set; } = default!;
-    public HttpMessageHandler HttpMessageHandler { get; set; } = default!;
+    public TestServer Server { get; private set; } = null!;
+    public TestBrowserClient BrowserClient { get; set; } = null!;
+    public HttpClient HttpClient { get; set; } = null!;
+    public HttpMessageHandler HttpMessageHandler { get; set; } = null!;
 
     private TestLoggerProvider Logger { get; } = new(writeOutput, baseAddress + " - ");
 

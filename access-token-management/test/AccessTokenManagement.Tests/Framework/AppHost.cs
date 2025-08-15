@@ -29,7 +29,7 @@ public class AppHost : GenericHost
         ApiHost apiHost,
         string clientId,
         string baseAddress = "https://app",
-        Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = default)
+        Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = null)
         : base(writeTestOutput, baseAddress)
     {
         _identityServerHost = identityServerHost;

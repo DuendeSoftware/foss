@@ -13,8 +13,8 @@ public class TestBrowserClient : HttpClient
     class CookieHandler : DelegatingHandler
     {
         public CookieContainer CookieContainer { get; } = new();
-        public Uri CurrentUri { get; private set; } = default!;
-        public HttpResponseMessage LastResponse { get; private set; } = default!;
+        public Uri CurrentUri { get; private set; } = null!;
+        public HttpResponseMessage LastResponse { get; private set; } = null!;
 
         public CookieHandler(HttpMessageHandler next)
             : base(next)

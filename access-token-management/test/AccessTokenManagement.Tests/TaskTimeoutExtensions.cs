@@ -15,7 +15,7 @@ public static class TaskTimeoutExtensions
             return TimeSpan.FromMinutes(10);
         }
 
-        return timeout == default ? TimeSpan.FromSeconds(2) : timeout;
+        return timeout == TimeSpan.Zero ? TimeSpan.FromSeconds(2) : timeout;
     }
 
     public static async Task ThrowOnTimeout(this Task task, TimeSpan timeout = default)
