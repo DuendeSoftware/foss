@@ -8,7 +8,7 @@ namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class ApiHttpMessageHandler : MockHttpMessageHandler
 {
-    public Uri Uri = new Uri("https://api");
+    public Uri Uri = new("https://api");
 
     public string LastUsedAccessToken = "";
 

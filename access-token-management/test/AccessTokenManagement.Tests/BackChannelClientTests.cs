@@ -16,8 +16,8 @@ namespace Duende.AccessTokenManagement;
 
 public class BackChannelClientTests(ITestOutputHelper output)
 {
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
+    public TestData The { get; } = new();
+    public TestDataBuilder Some => new(The);
 
 
     [Fact]

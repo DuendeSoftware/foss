@@ -11,8 +11,8 @@ namespace Duende.AccessTokenManagement.Framework;
 public class IntegrationTestBase : IAsyncDisposable
 {
 
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
+    public TestData The { get; } = new();
+    public TestDataBuilder Some => new(The);
 
     protected readonly IdentityServerHost IdentityServerHost;
     protected ApiHost ApiHost;

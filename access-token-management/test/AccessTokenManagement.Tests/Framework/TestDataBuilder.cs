@@ -12,7 +12,7 @@ namespace Duende.AccessTokenManagement.Framework;
 public class TestDataBuilder(TestData The)
 {
 
-    public Token Token() => new Token
+    public Token Token() => new()
     {
         access_token = The.AccessToken.ToString(),
         token_type = The.TokenType.ToString(),
@@ -21,7 +21,7 @@ public class TestDataBuilder(TestData The)
     };
 
     public HttpResponseMessage TokenHttpResponse(object? tokenResponse = null) =>
-        new HttpResponseMessage(HttpStatusCode.OK)
+        new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(tokenResponse ?? Token(), mediaType: MediaTypeHeaderValue.Parse("application/json"))
         };
@@ -52,7 +52,7 @@ public class TestDataBuilder(TestData The)
         }
     }
 
-    public ClientCredentialsToken ClientCredentialsToken() => new ClientCredentialsToken
+    public ClientCredentialsToken ClientCredentialsToken() => new()
     {
         AccessToken = The.AccessToken,
         AccessTokenType = The.TokenType,

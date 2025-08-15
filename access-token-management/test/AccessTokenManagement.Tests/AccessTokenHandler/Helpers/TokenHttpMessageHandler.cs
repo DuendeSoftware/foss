@@ -11,8 +11,8 @@ namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class TokenHttpMessageHandler : MockHttpMessageHandler, IAsyncDisposable
 {
-    public Uri Uri = new Uri("https://idp");
-    public Uri TokenEndpoint = new Uri("https://idp/connect/token");
+    public Uri Uri = new("https://idp");
+    public Uri TokenEndpoint = new("https://idp/connect/token");
 
     public int TokenSeed = 1;
     private IdentityServerHost? _host;

@@ -210,7 +210,7 @@ public class HtmlForm
     public HtmlForm(string? action = null) => Action = action;
 
     public string? Action { get; set; }
-    public Dictionary<string, string?> Inputs { get; set; } = new Dictionary<string, string?>();
+    public Dictionary<string, string?> Inputs { get; set; } = new();
 
     public string? this[string key]
     {

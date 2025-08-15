@@ -16,8 +16,8 @@ namespace Duende.AccessTokenManagement;
 
 public class ClientTokenManagementTests
 {
-    private ServiceCollection services = new ServiceCollection();
-    private MockHttpMessageHandler mockHttp = new MockHttpMessageHandler();
+    private ServiceCollection services = new();
+    private MockHttpMessageHandler mockHttp = new();
 
     public ClientTokenManagementTests()
     {
@@ -25,8 +25,8 @@ public class ClientTokenManagementTests
         mockHttp.Fallback.Respond((req) => throw new InvalidOperationException("no handler for " + req.RequestUri));
     }
 
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
+    public TestData The { get; } = new();
+    public TestDataBuilder Some => new(The);
 
     [Fact]
     public async Task Unknown_client_should_throw_exception()

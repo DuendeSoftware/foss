@@ -254,7 +254,7 @@ public class AppHost : GenericHost
 
 public class UserTokenModel
 {
-    public static UserTokenModel BuildFrom(UserToken token) => new UserTokenModel
+    public static UserTokenModel BuildFrom(UserToken token) => new()
     {
         AccessToken = token.AccessToken.ToString(),
         DPoPJsonWebKey = token.DPoPJsonWebKey?.ToString(),
@@ -278,7 +278,7 @@ public class UserTokenModel
 
 public class ClientCredentialsTokenModel
 {
-    public static ClientCredentialsTokenModel BuildFrom(ClientCredentialsToken token) => new ClientCredentialsTokenModel
+    public static ClientCredentialsTokenModel BuildFrom(ClientCredentialsToken token) => new()
     {
         AccessToken = token.AccessToken.ToString(),
         DPoPJsonWebKey = token.DPoPJsonWebKey?.ToString(),

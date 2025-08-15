@@ -22,8 +22,8 @@ public class IdentityServerHost : GenericHost
         OnConfigure += Configure;
     }
 
-    public List<Client> Clients { get; set; } = new List<Client>();
-    public List<IdentityResource> IdentityResources { get; set; } = new List<IdentityResource>
+    public List<Client> Clients { get; set; } = new();
+    public List<IdentityResource> IdentityResources { get; set; } = new()
     {
         new IdentityResources.OpenId(),
         new IdentityResources.Profile(),
