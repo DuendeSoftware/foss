@@ -3,11 +3,11 @@
 
 using System.Net;
 using System.Net.Http.Json;
-using Duende.AccessTokenManagement.Tests;
+using Duende.AccessTokenManagement.Framework;
 using Duende.IdentityModel;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class TokenHttpMessageHandler : MockHttpMessageHandler, IAsyncDisposable
 {

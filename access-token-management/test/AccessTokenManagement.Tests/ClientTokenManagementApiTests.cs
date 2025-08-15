@@ -4,7 +4,7 @@
 using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.DPoP.Internal;
-
+using Duende.AccessTokenManagement.Framework;
 using Duende.IdentityModel;
 using Duende.IdentityServer.Configuration;
 using Microsoft.AspNetCore.Authentication;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) : IntegrationTestBase(output), IAsyncLifetime
 {

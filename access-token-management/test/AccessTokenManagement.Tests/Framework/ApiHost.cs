@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class ApiHost : GenericHost
 {

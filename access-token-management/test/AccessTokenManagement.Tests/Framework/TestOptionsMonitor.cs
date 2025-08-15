@@ -3,7 +3,7 @@
 
 using Microsoft.Extensions.Options;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class TestOptionsMonitor<TOptions>(TOptions? currentValue = null) : IOptionsMonitor<TOptions>
     where TOptions : class, new()

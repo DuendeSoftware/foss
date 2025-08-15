@@ -4,7 +4,7 @@
 
 using Duende.IdentityModel.Client;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class TestClientAssertionService(string name, string assertionType, string assertionValue)
     : IClientAssertionService

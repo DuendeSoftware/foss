@@ -1,15 +1,13 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+using Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Framework;
-using Duende.AccessTokenManagement.Tests;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 
 internal abstract class AccessTokenHandlingBaseFixture : IAsyncDisposable
 {

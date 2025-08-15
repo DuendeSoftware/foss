@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "https://server") : IAsyncDisposable
 {

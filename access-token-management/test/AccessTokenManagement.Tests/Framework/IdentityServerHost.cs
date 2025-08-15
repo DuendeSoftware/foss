@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class IdentityServerHost : GenericHost
 {

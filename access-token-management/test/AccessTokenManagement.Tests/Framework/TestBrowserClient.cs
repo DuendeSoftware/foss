@@ -6,7 +6,7 @@ using System.Net;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class TestBrowserClient : HttpClient
 {

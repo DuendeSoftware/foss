@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public static class TaskTimeoutExtensions
 {

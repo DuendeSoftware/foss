@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 using Duende.AccessTokenManagement.OpenIdConnect;
-
 using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -13,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class AppHost : GenericHost
 {

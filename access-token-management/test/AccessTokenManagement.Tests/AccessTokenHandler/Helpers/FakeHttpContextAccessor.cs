@@ -3,7 +3,7 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 internal class FakeHttpContextAccessor : IHttpContextAccessor
 {

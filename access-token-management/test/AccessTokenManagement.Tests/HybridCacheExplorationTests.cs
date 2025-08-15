@@ -4,7 +4,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class HybridCacheExplorationTests
 {

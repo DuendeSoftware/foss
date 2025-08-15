@@ -5,7 +5,6 @@ using System.Net;
 using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Framework;
-
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -13,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class ClientTokenManagementTests
 {

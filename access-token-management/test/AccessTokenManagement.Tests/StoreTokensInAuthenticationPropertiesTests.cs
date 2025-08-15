@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class StoreTokensInAuthenticationPropertiesTests
 {

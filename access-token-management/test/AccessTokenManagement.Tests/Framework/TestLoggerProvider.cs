@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 public class TestLoggerProvider(WriteTestOutput writeOutput, string name) : ILoggerProvider
 {
     Stopwatch _watch = Stopwatch.StartNew();

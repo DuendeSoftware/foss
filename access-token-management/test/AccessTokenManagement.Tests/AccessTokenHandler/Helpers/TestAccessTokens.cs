@@ -4,8 +4,7 @@
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OpenIdConnect;
 
-
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class TestAccessTokens(DPoPProofKey? dPoPJsonWebKey)
 {

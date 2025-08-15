@@ -4,7 +4,7 @@
 using System.Net;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class ApiHttpMessageHandler : MockHttpMessageHandler
 {

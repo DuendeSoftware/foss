@@ -5,7 +5,7 @@
 using Duende.AccessTokenManagement.DPoP;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 
 internal class ClientCredentialsFixture : AccessTokenHandlingBaseFixture
 {

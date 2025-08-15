@@ -5,11 +5,12 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
+using Duende.AccessTokenManagement.Framework;
 using Duende.IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
     : IntegrationTestBase(output, "dpop", opt =>
