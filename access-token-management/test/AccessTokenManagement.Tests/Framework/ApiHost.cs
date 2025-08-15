@@ -13,7 +13,7 @@ public class ApiHost : GenericHost
     public int? ApiStatusCodeToReturn { get; set; }
 
     private readonly IdentityServerHost _identityServerHost;
-    public event Action<HttpContext> ApiInvoked = ctx => { };
+    public event Action<HttpContext> ApiInvoked = _ => { };
 
     public ApiHost(
         WriteTestOutput writeTestOutput,

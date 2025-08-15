@@ -29,7 +29,7 @@ public class TokenHttpMessageHandler : MockHttpMessageHandler, IAsyncDisposable
 
 
     public void RespondWithTokenType(string tokenType) => this.Expect(HttpMethod.Post, TokenEndpoint.ToString())
-            .Respond(request =>
+            .Respond(_ =>
             {
                 var initialTokenResponse = BuildAccessToken(tokenType: tokenType);
 
@@ -40,7 +40,7 @@ public class TokenHttpMessageHandler : MockHttpMessageHandler, IAsyncDisposable
             });
 
     public void DefaultRespondWithAccessToken() => this.When(HttpMethod.Post, TokenEndpoint.ToString())
-            .Respond(request =>
+            .Respond(_ =>
             {
                 var initialTokenResponse = BuildAccessToken();
 

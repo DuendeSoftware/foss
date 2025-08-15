@@ -14,7 +14,7 @@ public class LogExpirationTests
     [Fact]
     public void Logging_using_a_function_will_not_invoke_function()
     {
-        var loggerProvider = new TestLoggerProvider(s => { }, "test");
+        var loggerProvider = new TestLoggerProvider(_ => { }, "test");
         var loggerFactory = LoggerFactory.Create(builder => builder
             .SetMinimumLevel(LogLevel.Trace)
             .AddProvider(loggerProvider));
@@ -37,7 +37,7 @@ public class LogExpirationTests
     [Fact]
     public void Log_using_string_will_write_output()
     {
-        var loggerProvider = new TestLoggerProvider(s => { }, "test");
+        var loggerProvider = new TestLoggerProvider(_ => { }, "test");
         var loggerFactory = LoggerFactory.Create(builder => builder
             .SetMinimumLevel(LogLevel.Trace)
             .AddProvider(loggerProvider));

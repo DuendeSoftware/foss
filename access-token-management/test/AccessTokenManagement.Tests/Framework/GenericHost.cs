@@ -63,7 +63,7 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             {
                 builder.UseTestServer();
 
-                builder.ConfigureAppConfiguration((context, b) =>
+                builder.ConfigureAppConfiguration((context, _) =>
                 {
                     if (HostAssembly is not null)
                     {
@@ -93,8 +93,8 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
         HttpMessageHandler = Server.CreateHandler();
     }
 
-    public event Action<IServiceCollection> OnConfigureServices = services => { };
-    public event Action<IApplicationBuilder> OnConfigure = app => { };
+    public event Action<IServiceCollection> OnConfigureServices = _ => { };
+    public event Action<IApplicationBuilder> OnConfigure = _ => { };
 
     void ConfigureServices(IServiceCollection services)
     {
