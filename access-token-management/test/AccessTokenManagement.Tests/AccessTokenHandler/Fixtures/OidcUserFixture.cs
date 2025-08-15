@@ -47,10 +47,7 @@ internal class OidcUserFixture : AccessTokenHandlingBaseFixture
         });
 
 
-        Services.AddClientAccessTokenHttpClient("httpClient", new UserTokenRequestParameters
-            {
-
-        })
+        Services.AddClientAccessTokenHttpClient("httpClient", new UserTokenRequestParameters())
             .ConfigureHttpClient(c =>
             {
                 c.BaseAddress = ApiEndpoint.Uri;
