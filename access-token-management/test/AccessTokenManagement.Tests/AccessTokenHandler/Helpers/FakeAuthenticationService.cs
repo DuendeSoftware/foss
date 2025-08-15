@@ -7,11 +7,11 @@ using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class FakeAuthenticationService(IStoreTokensInAuthenticationProperties storeTokens, TestAccessTokens testTokens) : IAuthenticationService
 {
-    public ClaimsPrincipal Principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(JwtClaimTypes.Subject, "sub")], "test"));
+    public ClaimsPrincipal Principal = new(new ClaimsIdentity([new Claim(JwtClaimTypes.Subject, "sub")], "test"));
 
     public Task<AuthenticateResult> AuthenticateAsync(HttpContext context, string? scheme) =>
         Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(Principal, BuildProperties(), "oidc")));

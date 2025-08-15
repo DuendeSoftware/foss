@@ -3,7 +3,7 @@
 
 using Duende.AccessTokenManagement.DPoP;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class DPoPExtensionTests
 {
@@ -14,7 +14,7 @@ public class DPoPExtensionTests
     public void GetDPoPNonceIsCaseInsensitive(string headerName)
     {
         var expected = "expected-server-nonce";
-        var message = new HttpResponseMessage()
+        var message = new HttpResponseMessage
         {
             Headers =
             {

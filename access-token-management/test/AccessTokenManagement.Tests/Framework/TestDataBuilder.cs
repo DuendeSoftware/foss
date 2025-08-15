@@ -11,8 +11,7 @@ namespace Duende.AccessTokenManagement.Framework;
 
 public class TestDataBuilder(TestData The)
 {
-
-    public Token Token() => new Token
+    public Token Token() => new()
     {
         access_token = The.AccessToken.ToString(),
         token_type = The.TokenType.ToString(),
@@ -21,12 +20,10 @@ public class TestDataBuilder(TestData The)
     };
 
     public HttpResponseMessage TokenHttpResponse(object? tokenResponse = null) =>
-        new HttpResponseMessage(HttpStatusCode.OK)
+        new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(tokenResponse ?? Token(), mediaType: MediaTypeHeaderValue.Parse("application/json"))
         };
-
-
 
     public void ClientCredentialsClient(
         ClientCredentialsClient toConfigure,
@@ -52,7 +49,7 @@ public class TestDataBuilder(TestData The)
         }
     }
 
-    public ClientCredentialsToken ClientCredentialsToken() => new ClientCredentialsToken()
+    public ClientCredentialsToken ClientCredentialsToken() => new()
     {
         AccessToken = The.AccessToken,
         AccessTokenType = The.TokenType,
@@ -61,13 +58,4 @@ public class TestDataBuilder(TestData The)
         Scope = The.Scope,
         ClientId = The.ClientId
     };
-
-}
-
-public record Token
-{
-    public string? access_token { get; init; }
-    public string? token_type { get; init; }
-    public string? scope { get; init; }
-    public int? expires_in { get; init; }
 }

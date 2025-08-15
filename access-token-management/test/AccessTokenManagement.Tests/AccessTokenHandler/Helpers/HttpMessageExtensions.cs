@@ -5,7 +5,7 @@ using System.Net;
 using Duende.IdentityModel;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace Duende.AccessTokenManagement;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public static class HttpMessageExtensions
 {

@@ -6,14 +6,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class ApiHost : GenericHost
 {
     public int? ApiStatusCodeToReturn { get; set; }
 
     private readonly IdentityServerHost _identityServerHost;
-    public event Action<Microsoft.AspNetCore.Http.HttpContext> ApiInvoked = ctx => { };
+    public event Action<HttpContext> ApiInvoked = _ => { };
 
     public ApiHost(
         WriteTestOutput writeTestOutput,

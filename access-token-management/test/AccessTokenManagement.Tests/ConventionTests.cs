@@ -7,6 +7,7 @@ using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.AccessTokenManagement.OTel;
 
 namespace Duende.AccessTokenManagement;
+
 public class ConventionTests(ITestOutputHelper output)
 {
     public static readonly Assembly AtmAssembly = typeof(ClientCredentialsToken).Assembly;
@@ -28,7 +29,6 @@ public class ConventionTests(ITestOutputHelper output)
             stringFields.All(f => f.IsPrivate).ShouldBeTrue($"{type.Name} should have its string value as private.");
         }
     }
-
 
     [Fact]
     public void All_strongly_typed_strings_are_readonly_struct()

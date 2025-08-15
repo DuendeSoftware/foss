@@ -1,25 +1,22 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Security.Claims;
-using Duende.AccessTokenManagement.Framework;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
 using Duende.IdentityServer.Models;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
-public class IntegrationTestBase : IAsyncDisposable
+public abstract class IntegrationTestBase : IAsyncDisposable
 {
-
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
+    public TestData The { get; } = new();
+    public TestDataBuilder Some => new(The);
 
     protected readonly IdentityServerHost IdentityServerHost;
-    protected ApiHost ApiHost;
-    protected AppHost AppHost;
+    protected readonly ApiHost ApiHost;
+    protected readonly AppHost AppHost;
 
-    public IntegrationTestBase(ITestOutputHelper output, string clientId = "web", Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = null)
+    protected IntegrationTestBase(ITestOutputHelper output, string clientId = "web", Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = null)
     {
         IdentityServerHost = new IdentityServerHost(output.WriteLine);
 
@@ -76,8 +73,6 @@ public class IntegrationTestBase : IAsyncDisposable
 
         AppHost = new AppHost(output.WriteLine, IdentityServerHost, ApiHost, clientId, configureUserTokenManagementOptions: configureUserTokenManagementOptions);
     }
-
-    public async Task Login(string sub) => await IdentityServerHost.IssueSessionCookieAsync(new Claim("sub", sub));
 
     public virtual async ValueTask DisposeAsync()
     {

@@ -3,7 +3,7 @@
 
 using Duende.AccessTokenManagement.DPoP;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class TestDPoPNonceStore : IDPoPNonceStore
 {

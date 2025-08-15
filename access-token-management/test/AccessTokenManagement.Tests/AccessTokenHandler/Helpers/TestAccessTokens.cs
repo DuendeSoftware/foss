@@ -4,13 +4,12 @@
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OpenIdConnect;
 
-
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class TestAccessTokens(DPoPProofKey? dPoPJsonWebKey)
 {
     public UserToken UserToken =
-        new UserToken()
+        new()
         {
             ClientId = ClientId.Parse("clientId"),
             IdentityToken = IdentityToken.Parse("identity_token"),

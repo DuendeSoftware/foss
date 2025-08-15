@@ -12,13 +12,12 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class BackChannelClientTests(ITestOutputHelper output)
 {
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
-
+    private TestData The { get; } = new();
+    private TestDataBuilder Some => new(The);
 
     [Fact]
     public async Task Will_use_cache()
@@ -33,7 +32,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When(The.TokenEndpoint.ToString())
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -48,7 +47,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         token.Succeeded.ShouldBeTrue();
 
         mockHttp.GetMatchCount(request).ShouldBe(1);
-
     }
 
     [Fact]
@@ -64,7 +62,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When(The.TokenEndpoint.ToString())
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -100,7 +98,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => new HttpResponseMessage(HttpStatusCode.NotFound));
+            .Respond(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -162,7 +160,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -170,7 +168,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
         {
             ForceTokenRenewal = new ForceTokenRenewal(false),
             Scope = Scope.Parse("scope1"),
@@ -178,7 +176,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         }).GetToken();
 
 
-        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
         {
             ForceTokenRenewal = new ForceTokenRenewal(false),
             Scope = Scope.Parse("scope2"),
@@ -186,7 +184,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         }).GetToken();
 
         mockHttp.GetMatchCount(request).ShouldBe(2);
-
     }
 
     [Fact]
@@ -205,7 +202,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -217,7 +214,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t1 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
                 Scope = Scope.Parse("scope1"),
@@ -229,7 +226,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t2 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
                 Scope = Scope.Parse("scope2"),
@@ -248,7 +245,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         await t2.ThrowOnTimeout();
 
         mockHttp.GetMatchCount(request).ShouldBe(2);
-
     }
 
     [Fact]
@@ -267,7 +263,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -279,10 +275,10 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t1 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
-                Parameters = new Parameters()
+                Parameters = new Parameters
                 {
                     { "tenant", "1" }
                 }
@@ -294,17 +290,16 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var t2 = Task.Run(async () =>
         {
-            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters()
+            await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
             {
                 ForceTokenRenewal = new ForceTokenRenewal(false),
-                Parameters = new Parameters()
+                Parameters = new Parameters
                 {
                     { "tenant", "2" }
                 }
 
             }).GetToken();
         });
-
 
         output.WriteLine("before delay");
 
@@ -316,7 +311,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         await t2.ThrowOnTimeout();
 
         mockHttp.GetMatchCount(request).ShouldBe(1);
-
     }
 
     [Fact]
@@ -367,7 +361,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -380,7 +374,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
         // Verify we actually used the cache
         replacementCache.GetOrCreateCount.ShouldBe(1);
     }
-
 
     [Fact]
     public async Task Can_use_custom_encryption()
@@ -401,7 +394,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -440,7 +433,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -469,7 +462,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         var request = mockHttp.When(The.TokenEndpoint.ToString())
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -482,7 +475,6 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         token.Token!.AccessToken.ToString().ShouldStartWith("_prefix_added_by_serializer");
         token.Token!.AccessToken.ToString().ShouldEndWith("_suffix_added_by_serializer_");
-
     }
 
     private class TestSerializer : IHybridCacheSerializer<ClientCredentialsToken>
@@ -528,7 +520,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var mockHttp = new MockHttpMessageHandler();
         mockHttp.When("https://as/*")
-            .Respond((_) => Some.TokenHttpResponse());
+            .Respond(_ => Some.TokenHttpResponse());
 
         services.AddHttpClient("custom")
             .ConfigurePrimaryHttpMessageHandler(() => mockHttp);
@@ -540,14 +532,14 @@ public class BackChannelClientTests(ITestOutputHelper output)
 
         var cache = provider.GetRequiredService<HybridCache>();
         var cachedToken = await cache.GetOrCreateAsync<ClientCredentialsToken>("always_the_same",
-            (_) => ValueTask.FromResult((ClientCredentialsToken)null!));
+            _ => ValueTask.FromResult((ClientCredentialsToken)null!));
 
         cachedToken.ShouldNotBeNull();
 
         await cache.RemoveByTagAsync(clientName);
 
         cachedToken = await cache.GetOrCreateAsync<ClientCredentialsToken>("always_the_same",
-            (_) => ValueTask.FromResult((ClientCredentialsToken)null!));
+            _ => ValueTask.FromResult((ClientCredentialsToken)null!));
         cachedToken.ShouldBeNull();
     }
 

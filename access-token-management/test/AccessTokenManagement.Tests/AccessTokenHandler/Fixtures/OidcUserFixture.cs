@@ -1,15 +1,14 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+using Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OpenIdConnect;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 
 internal class OidcUserFixture : AccessTokenHandlingBaseFixture
 {
@@ -33,7 +32,7 @@ internal class OidcUserFixture : AccessTokenHandlingBaseFixture
         {
             var httpContextAccessor = new FakeHttpContextAccessor
             {
-                HttpContext = new DefaultHttpContext()
+                HttpContext = new DefaultHttpContext
                 {
                     User = sp.GetRequiredService<FakeAuthenticationService>().Principal,
                     RequestServices = sp
@@ -48,10 +47,7 @@ internal class OidcUserFixture : AccessTokenHandlingBaseFixture
         });
 
 
-        Services.AddClientAccessTokenHttpClient("httpClient", new UserTokenRequestParameters()
-        {
-
-        })
+        Services.AddClientAccessTokenHttpClient("httpClient", new UserTokenRequestParameters())
             .ConfigureHttpClient(c =>
             {
                 c.BaseAddress = ApiEndpoint.Uri;

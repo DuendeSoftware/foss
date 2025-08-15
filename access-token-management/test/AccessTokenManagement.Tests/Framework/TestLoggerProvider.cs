@@ -4,28 +4,17 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 public class TestLoggerProvider(WriteTestOutput writeOutput, string name) : ILoggerProvider
 {
-    Stopwatch _watch = Stopwatch.StartNew();
-
+    private readonly Stopwatch _watch = Stopwatch.StartNew();
     private readonly WriteTestOutput _writeOutput = writeOutput ?? throw new ArgumentNullException(nameof(writeOutput));
     private readonly string _name = name ?? throw new ArgumentNullException(nameof(name));
 
-    private class DebugLogger : ILogger, IDisposable
+    private class DebugLogger(TestLoggerProvider parent, string category) : ILogger, IDisposable
     {
-        private readonly TestLoggerProvider _parent;
-        private readonly string _category;
-
-        public DebugLogger(TestLoggerProvider parent, string category)
-        {
-            _parent = parent;
-            _category = category;
-        }
-
         public void Dispose()
-        {
-        }
+        { }
 
         public IDisposable BeginScope<TState>(TState state) where TState : notnull => this;
 
@@ -33,8 +22,8 @@ public class TestLoggerProvider(WriteTestOutput writeOutput, string name) : ILog
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            var msg = $"[{logLevel}] {_category} : {formatter(state, exception)}";
-            _parent.Log(msg);
+            var msg = $"[{logLevel}] {category} : {formatter(state, exception)}";
+            parent.Log(msg);
         }
     }
 

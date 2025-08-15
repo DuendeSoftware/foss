@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Web;
 using Duende.AccessTokenManagement.OpenIdConnect;
-
 using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -13,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class AppHost : GenericHost
 {
@@ -30,7 +29,7 @@ public class AppHost : GenericHost
         ApiHost apiHost,
         string clientId,
         string baseAddress = "https://app",
-        Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = default)
+        Action<UserTokenManagementOptions>? configureUserTokenManagementOptions = null)
         : base(writeTestOutput, baseAddress)
     {
         _identityServerHost = identityServerHost;
@@ -166,7 +165,7 @@ public class AppHost : GenericHost
                 await context.Response.WriteAsJsonAsync(getResult.FailedResult);
             });
 
-            endpoints.MapGet("/call_api", async (IHttpClientFactory factory, HttpContext context) =>
+            endpoints.MapGet("/call_api", async (IHttpClientFactory factory, HttpContext _) =>
             {
                 var http = factory.CreateClient("callApi");
                 var response = await http.GetAsync("test");
@@ -255,7 +254,7 @@ public class AppHost : GenericHost
 
 public class UserTokenModel
 {
-    public static UserTokenModel BuildFrom(UserToken token) => new UserTokenModel
+    public static UserTokenModel BuildFrom(UserToken token) => new()
     {
         AccessToken = token.AccessToken.ToString(),
         DPoPJsonWebKey = token.DPoPJsonWebKey?.ToString(),
@@ -279,7 +278,7 @@ public class UserTokenModel
 
 public class ClientCredentialsTokenModel
 {
-    public static ClientCredentialsTokenModel BuildFrom(ClientCredentialsToken token) => new ClientCredentialsTokenModel
+    public static ClientCredentialsTokenModel BuildFrom(ClientCredentialsToken token) => new()
     {
         AccessToken = token.AccessToken.ToString(),
         DPoPJsonWebKey = token.DPoPJsonWebKey?.ToString(),

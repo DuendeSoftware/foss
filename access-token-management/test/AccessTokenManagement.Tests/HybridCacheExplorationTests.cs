@@ -4,7 +4,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class HybridCacheExplorationTests
 {
@@ -19,11 +19,10 @@ public class HybridCacheExplorationTests
             .GetRequiredService<HybridCache>();
 
         var count = 0;
-        object item;
 
         try
         {
-            item = await cache.GetOrCreateAsync<object>("key", (_) =>
+            await cache.GetOrCreateAsync<object>("key", _ =>
             {
                 count++;
                 throw new InvalidOperationException();
@@ -33,7 +32,7 @@ public class HybridCacheExplorationTests
         {
 
         }
-        item = await cache.GetOrCreateAsync<object>("key", (_) =>
+        var item = await cache.GetOrCreateAsync<object>("key", _ =>
         {
             count++;
             return ValueTask.FromResult<object>(null!);

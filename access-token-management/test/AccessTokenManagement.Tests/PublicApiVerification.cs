@@ -48,7 +48,6 @@ public class PublicApiVerificationTests
             .Select(t => FormatTypeName(t))
             .OrderBy(x => x); ;
 
-
         await Verify(string.Join(Environment.NewLine, types));
     }
 
@@ -66,7 +65,6 @@ public class PublicApiVerificationTests
 
     private static string FormatTypeName(Type t)
     {
-
         var obsolete = (t.GetCustomAttributes().Any(x => x is ObsoleteAttribute) ? " (obsolete)" : "");
         return $"{t.FullName}{obsolete}";
     }

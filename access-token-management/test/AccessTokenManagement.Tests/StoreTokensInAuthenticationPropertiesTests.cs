@@ -8,12 +8,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class StoreTokensInAuthenticationPropertiesTests
 {
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
+    private TestData The { get; } = new();
+    public TestDataBuilder Some => new(The);
 
     [Fact]
     public async Task Should_be_able_to_store_and_retrieve_tokens()
@@ -350,9 +350,9 @@ public class StoreTokensInAuthenticationPropertiesTests
         resultForResource1Scheme1.Token?.TokenForSpecifiedParameters?.DPoPJsonWebKey.ShouldBeNull();
     }
 
-    private Random r = new Random(DateTimeOffset.Now.Millisecond);
+    private Random r = new(DateTimeOffset.Now.Millisecond);
 
-    private UserToken GenerateRandomUserToken() => new UserToken
+    private UserToken GenerateRandomUserToken() => new()
     {
         AccessToken = AccessToken.Parse(Guid.NewGuid().ToString()),
         AccessTokenType = AccessTokenType.Parse(r.NextInt64().ToString()),
@@ -364,7 +364,7 @@ public class StoreTokensInAuthenticationPropertiesTests
         DPoPJsonWebKey = The.JsonWebKey,
     };
 
-    private UserToken GenerateAnotherTokenForADifferentResource(UserToken previousToken) => new UserToken
+    private UserToken GenerateAnotherTokenForADifferentResource(UserToken previousToken) => new()
     {
         AccessToken = AccessToken.Parse(Guid.NewGuid().ToString()),
         AccessTokenType = AccessTokenType.Parse(r.NextInt64().ToString()),

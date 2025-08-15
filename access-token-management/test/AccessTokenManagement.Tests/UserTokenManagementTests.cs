@@ -4,8 +4,8 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
+using Duende.AccessTokenManagement.Framework;
 using Duende.AccessTokenManagement.OpenIdConnect;
-
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -13,9 +13,9 @@ using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 using OidcConstants = Duende.IdentityModel.OidcConstants;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
-public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output, "web")
+public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output)
 {
     [Fact]
     public async Task Anonymous_user_should_return_user_token_error()

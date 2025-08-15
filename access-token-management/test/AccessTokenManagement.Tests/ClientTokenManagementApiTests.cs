@@ -4,7 +4,7 @@
 using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.DPoP.Internal;
-
+using Duende.AccessTokenManagement.Framework;
 using Duende.IdentityModel;
 using Duende.IdentityServer.Configuration;
 using Microsoft.AspNetCore.Authentication;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) : IntegrationTestBase(output), IAsyncLifetime
 {
@@ -59,11 +59,9 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
         _clientOptions = Provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test");
     }
 
-    public class ApiHandler : DelegatingHandler
+    private class ApiHandler(HttpMessageHandler innerHandler) : DelegatingHandler
     {
-        private HttpMessageHandler? _innerHandler;
-
-        public ApiHandler(HttpMessageHandler innerHandler) => _innerHandler = innerHandler;
+        private HttpMessageHandler? _innerHandler = innerHandler;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -200,7 +198,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
         var client = _clientFactory.CreateClient("test");
 
         var requestMessage = new HttpRequestMessage(HttpMethod.Get, ApiHost.Url("/test"));
-        requestMessage.AddDPoPProofAdditionalPayloadClaims(new Dictionary<string, string>() {
+        requestMessage.AddDPoPProofAdditionalPayloadClaims(new Dictionary<string, string> {
             { "claim_one", "one" },
             { "claim_two", "two" },
         });

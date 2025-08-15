@@ -1,10 +1,11 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using Duende.AccessTokenManagement.Tests;
+using Duende.AccessTokenManagement.Framework;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement;
+
 public class LogExpirationTests
 {
     /// <summary>
@@ -14,7 +15,7 @@ public class LogExpirationTests
     [Fact]
     public void Logging_using_a_function_will_not_invoke_function()
     {
-        var loggerProvider = new TestLoggerProvider(s => { }, "test");
+        var loggerProvider = new TestLoggerProvider(_ => { }, "test");
         var loggerFactory = LoggerFactory.Create(builder => builder
             .SetMinimumLevel(LogLevel.Trace)
             .AddProvider(loggerProvider));
@@ -28,7 +29,6 @@ public class LogExpirationTests
 
         loggerProvider.LogEntries.Any(x => x.Contains("foo")).ShouldBeFalse();
         loggerProvider.LogEntries.Any(x => x.Contains("System.Func")).ShouldBeTrue();
-
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class LogExpirationTests
     [Fact]
     public void Log_using_string_will_write_output()
     {
-        var loggerProvider = new TestLoggerProvider(s => { }, "test");
+        var loggerProvider = new TestLoggerProvider(_ => { }, "test");
         var loggerFactory = LoggerFactory.Create(builder => builder
             .SetMinimumLevel(LogLevel.Trace)
             .AddProvider(loggerProvider));
@@ -47,7 +47,6 @@ public class LogExpirationTests
 
         loggerProvider.LogEntries.Any(x => x.Contains("foo")).ShouldBeTrue();
     }
-
 }
 
 public static partial class TestLoggers

@@ -4,15 +4,14 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
-public class TestSchemeProvider : IAuthenticationSchemeProvider
+public class TestSchemeProvider(string signInSchemeName = "testScheme") : IAuthenticationSchemeProvider
 {
-    public TestSchemeProvider(string signInSchemeName = "testScheme") => DefaultSignInScheme = new AuthenticationScheme(signInSchemeName, signInSchemeName, typeof(CookieAuthenticationHandler));
+    private readonly AuthenticationScheme? _defaultSignInScheme
+        = new(signInSchemeName, signInSchemeName, typeof(CookieAuthenticationHandler));
 
-    public AuthenticationScheme? DefaultSignInScheme { get; set; }
-
-    public Task<AuthenticationScheme?> GetDefaultSignInSchemeAsync() => Task.FromResult(DefaultSignInScheme);
+    public Task<AuthenticationScheme?> GetDefaultSignInSchemeAsync() => Task.FromResult(_defaultSignInScheme);
 
     #region Not Implemented (No tests have needed these yet)
 

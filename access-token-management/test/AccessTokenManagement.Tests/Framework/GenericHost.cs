@@ -12,33 +12,30 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "https://server") : IAsyncDisposable
 {
-
     protected readonly string BaseAddress = baseAddress.EndsWith("/")
         ? baseAddress.Substring(0, baseAddress.Length - 1)
         : baseAddress;
 
-    IServiceProvider _appServices = default!;
+    private ClaimsPrincipal? _userToSignIn;
+    private AuthenticationProperties? _propsToSignIn;
 
-    public Assembly HostAssembly { get; set; } = default!;
-    public bool IsDevelopment { get; set; } = default!;
+    public Assembly HostAssembly { get; set; } = null!;
 
-    public TestServer Server { get; private set; } = default!;
-    public TestBrowserClient BrowserClient { get; set; } = default!;
-    public HttpClient HttpClient { get; set; } = default!;
-    public HttpMessageHandler HttpMessageHandler { get; set; } = default!;
+    public bool IsDevelopment { get; set; } = false!;
+
+    public TestServer Server { get; private set; } = null!;
+
+    public TestBrowserClient BrowserClient { get; private set; } = null!;
+
+    public HttpClient HttpClient { get; private set; } = null!;
+
+    public HttpMessageHandler HttpMessageHandler { get; private set; } = null!;
 
     private TestLoggerProvider Logger { get; } = new(writeOutput, baseAddress + " - ");
-
-
-
-    public T Resolve<T>()
-        where T : notnull =>
-        // not calling dispose on scope on purpose
-        _appServices.GetRequiredService<IServiceScopeFactory>().CreateScope().ServiceProvider.GetRequiredService<T>();
 
     public string Url(string? path = null)
     {
@@ -63,7 +60,7 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             {
                 builder.UseTestServer();
 
-                builder.ConfigureAppConfiguration((context, b) =>
+                builder.ConfigureAppConfiguration((context, _) =>
                 {
                     if (HostAssembly is not null)
                     {
@@ -71,15 +68,7 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
                     }
                 });
 
-                if (IsDevelopment)
-                {
-                    builder.UseSetting("Environment", "Development");
-                }
-                else
-                {
-                    builder.UseSetting("Environment", "Production");
-                }
-
+                builder.UseSetting("Environment", IsDevelopment ? "Development" : "Production");
                 builder.ConfigureServices(ConfigureServices);
                 builder.Configure(ConfigureApp);
             });
@@ -93,10 +82,10 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
         HttpMessageHandler = Server.CreateHandler();
     }
 
-    public event Action<IServiceCollection> OnConfigureServices = services => { };
-    public event Action<IApplicationBuilder> OnConfigure = app => { };
+    public event Action<IServiceCollection> OnConfigureServices = _ => { };
+    public event Action<IApplicationBuilder> OnConfigure = _ => { };
 
-    void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services)
     {
         services.AddLogging(options =>
         {
@@ -107,19 +96,15 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
         OnConfigureServices(services);
     }
 
-    void ConfigureApp(IApplicationBuilder app)
+    private void ConfigureApp(IApplicationBuilder app)
     {
-        _appServices = app.ApplicationServices;
-
         OnConfigure(app);
 
         ConfigureSignin(app);
         ConfigureSignout(app);
     }
 
-
-
-    void ConfigureSignout(IApplicationBuilder app) =>
+    private void ConfigureSignout(IApplicationBuilder app) =>
         app.Use(async (ctx, next) =>
         {
             if (ctx.Request.Path == "/__signout")
@@ -132,19 +117,12 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             await next();
         });
 
-    public async Task RevokeSessionCookieAsync()
-    {
-        var response = await BrowserClient.GetAsync(Url("__signout"));
-        response.StatusCode.ShouldBe((HttpStatusCode)204);
-    }
-
-
-    void ConfigureSignin(IApplicationBuilder app) =>
+    private void ConfigureSignin(IApplicationBuilder app) =>
         app.Use(async (ctx, next) =>
         {
             if (ctx.Request.Path == "/__signin")
             {
-                if (_userToSignIn is not object)
+                if (_userToSignIn is null)
                 {
                     throw new Exception("No User Configured for SignIn");
                 }
@@ -162,21 +140,18 @@ public class GenericHost(WriteTestOutput writeOutput, string baseAddress = "http
             await next();
         });
 
-    ClaimsPrincipal? _userToSignIn = default!;
-    AuthenticationProperties? _propsToSignIn = default!;
-
     public async Task IssueSessionCookieAsync(params Claim[] claims)
     {
         _userToSignIn = new ClaimsPrincipal(new ClaimsIdentity(claims, "test", "name", "role"));
         var response = await BrowserClient.GetAsync(Url("__signin"));
         response.StatusCode.ShouldBe((HttpStatusCode)204);
     }
+
     public Task IssueSessionCookieAsync(AuthenticationProperties props, params Claim[] claims)
     {
         _propsToSignIn = props;
         return IssueSessionCookieAsync(claims);
     }
-    public Task IssueSessionCookieAsync(string sub, params Claim[] claims) => IssueSessionCookieAsync(claims.Append(new Claim("sub", sub)).ToArray());
 
     public async ValueTask DisposeAsync()
     {

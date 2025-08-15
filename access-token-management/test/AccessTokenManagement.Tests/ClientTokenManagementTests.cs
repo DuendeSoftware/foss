@@ -5,7 +5,6 @@ using System.Net;
 using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Framework;
-
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -13,21 +12,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public class ClientTokenManagementTests
 {
-    private ServiceCollection services = new ServiceCollection();
-    private MockHttpMessageHandler mockHttp = new MockHttpMessageHandler();
+    private ServiceCollection services = [];
+    private MockHttpMessageHandler mockHttp = new();
 
     public ClientTokenManagementTests()
     {
         services.AddSingleton<TimeProvider>(new FakeTimeProvider(() => The.CurrentDate));
-        mockHttp.Fallback.Respond((req) => throw new InvalidOperationException("no handler for " + req.RequestUri));
+        mockHttp.Fallback.Respond(req => throw new InvalidOperationException("no handler for " + req.RequestUri));
     }
 
-    public TestData The { get; } = new TestData();
-    public TestDataBuilder Some => new TestDataBuilder(The);
+    private TestData The { get; } = new();
+    private TestDataBuilder Some => new(The);
 
     [Fact]
     public async Task Unknown_client_should_throw_exception()
@@ -193,6 +192,7 @@ public class ClientTokenManagementTests
             Expiration = The.CurrentDate.Add(TimeSpan.FromSeconds(300))
         });
     }
+
     [Fact]
     public async Task Missing_expires_in_response_should_create_long_lived_token()
     {
@@ -475,7 +475,7 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task client_with_dpop_key_should_send_proof_token()
     {
-        var proof = new TestDPoPProofService() { ProofToken = "proof_token" };
+        var proof = new TestDPoPProofService { ProofToken = "proof_token" };
         services.AddSingleton<IDPoPProofService>(proof);
 
         services.AddClientCredentialsTokenManagement()
@@ -507,7 +507,7 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task client_should_use_nonce_when_sending_dpop_proof()
     {
-        var proof = new TestDPoPProofService() { ProofToken = "proof_token", AppendNonce = true };
+        var proof = new TestDPoPProofService { ProofToken = "proof_token", AppendNonce = true };
         services.AddSingleton<IDPoPProofService>(proof);
 
         services.AddClientCredentialsTokenManagement()
@@ -518,7 +518,7 @@ public class ClientTokenManagementTests
         mockHttp.Expect(The.TokenEndpoint.ToString())
             .With(m => m.Headers.Any(h => h.Key == "DPoP" && h.Value.FirstOrDefault() == "proof_token"))
             .Respond(HttpStatusCode.BadRequest,
-                new[] { new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce") },
+                [new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce")],
                 "application/json",
                 JsonSerializer.Serialize(new { error = "use_dpop_nonce" }));
 

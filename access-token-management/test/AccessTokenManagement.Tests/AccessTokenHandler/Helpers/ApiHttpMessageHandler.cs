@@ -4,16 +4,16 @@
 using System.Net;
 using RichardSzalay.MockHttp;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 
 public class ApiHttpMessageHandler : MockHttpMessageHandler
 {
-    public Uri Uri = new Uri("https://api");
+    public readonly Uri Uri = new("https://api");
 
     public string LastUsedAccessToken = "";
 
     public void ExpectCallWithoutNonce(string replyWithNonce) => this.Expect(Uri.ToString())
-            .Respond((request) =>
+            .Respond(request =>
             {
                 request.EnsureRequestUsesScheme("Bearer");
                 request.GetNonce().ShouldBeNull();
@@ -22,7 +22,7 @@ public class ApiHttpMessageHandler : MockHttpMessageHandler
             });
 
     public void ExpectCallWithNonce(string expectedNonce, string replyWithNonce) => this.Expect(Uri.ToString())
-            .Respond((request) =>
+            .Respond(request =>
             {
                 request.EnsureRequestUsesScheme("Bearer");
                 request.GetNonce().ShouldBe(expectedNonce);
@@ -31,15 +31,14 @@ public class ApiHttpMessageHandler : MockHttpMessageHandler
             });
 
     public void ExpectCallWithScheme(string expectedScheme) => this.Expect(Uri.ToString())
-            .Respond((request) =>
+            .Respond(request =>
             {
                 request.EnsureRequestUsesScheme(expectedScheme);
                 return new HttpResponseMessage(HttpStatusCode.OK);
             });
 
-
     public void DefaultRespondOkWithToken() =>
-        this.When(Uri.ToString()).Respond((request) =>
+        this.When(Uri.ToString()).Respond(request =>
         {
             request.EnsureRequestUsesScheme("Bearer");
 
@@ -51,7 +50,7 @@ public class ApiHttpMessageHandler : MockHttpMessageHandler
         });
 
     public void RespondOnceWithUnauthorized() =>
-        this.Expect(Uri.ToString()).Respond((request) =>
+        this.Expect(Uri.ToString()).Respond(request =>
         {
             request.EnsureRequestUsesScheme("Bearer");
             LastUsedAccessToken = request.Headers.Authorization?.Parameter ?? "";

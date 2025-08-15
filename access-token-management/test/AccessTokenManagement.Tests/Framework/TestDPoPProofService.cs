@@ -3,13 +3,14 @@
 
 using Duende.AccessTokenManagement.DPoP;
 
-
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement.Framework;
 
 public class TestDPoPProofService : IDPoPProofService
 {
-    public string? ProofToken { get; set; }
+    public string? ProofToken { get; init; }
+
     public string? Nonce { get; set; }
+
     public bool AppendNonce { get; set; }
 
     public Task<DPoPProof?> CreateProofTokenAsync(DPoPProofRequest request,

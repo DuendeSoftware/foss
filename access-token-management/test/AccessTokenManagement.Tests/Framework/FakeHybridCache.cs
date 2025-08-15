@@ -7,14 +7,14 @@ namespace Duende.AccessTokenManagement.Framework;
 
 public class FakeHybridCache : HybridCache
 {
-    public int GetOrCreateCount = 0;
+    public int GetOrCreateCount;
 
-    public string? CacheKey = null;
+    public string? CacheKey;
 
     public Action OnGetOrCreate = () => { };
 
     public override async ValueTask<T> GetOrCreateAsync<TState, T>(string key, TState state, Func<TState, CancellationToken, ValueTask<T>> factory, HybridCacheEntryOptions? options = null,
-        IEnumerable<string>? tags = null, CancellationToken cancellationToken = new CancellationToken())
+        IEnumerable<string>? tags = null, CancellationToken cancellationToken = new())
     {
         CacheKey = key;
         Interlocked.Increment(ref GetOrCreateCount);
@@ -23,10 +23,10 @@ public class FakeHybridCache : HybridCache
     }
 
     public override ValueTask SetAsync<T>(string key, T value, HybridCacheEntryOptions? options = null, IEnumerable<string>? tags = null,
-        CancellationToken cancellationToken = new CancellationToken()) =>
+        CancellationToken cancellationToken = new()) =>
         throw new NotImplementedException();
 
-    public override ValueTask RemoveAsync(string key, CancellationToken cancellationToken = new CancellationToken()) => throw new NotImplementedException();
+    public override ValueTask RemoveAsync(string key, CancellationToken cancellationToken = new()) => throw new NotImplementedException();
 
-    public override ValueTask RemoveByTagAsync(string tag, CancellationToken cancellationToken = new CancellationToken()) => throw new NotImplementedException();
+    public override ValueTask RemoveByTagAsync(string tag, CancellationToken cancellationToken = new()) => throw new NotImplementedException();
 }

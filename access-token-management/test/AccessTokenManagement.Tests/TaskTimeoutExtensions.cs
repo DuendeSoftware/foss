@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 
-namespace Duende.AccessTokenManagement.Tests;
+namespace Duende.AccessTokenManagement;
 
 public static class TaskTimeoutExtensions
 {
@@ -15,27 +15,25 @@ public static class TaskTimeoutExtensions
             return TimeSpan.FromMinutes(10);
         }
 
-        return timeout == default ? TimeSpan.FromSeconds(2) : timeout;
+        return timeout == TimeSpan.Zero ? TimeSpan.FromSeconds(2) : timeout;
     }
 
     public static async Task ThrowOnTimeout(this Task task, TimeSpan timeout = default)
     {
         timeout = IncreaseTimeoutIfDebuggerAttached(timeout);
 
-        using (var cts = new CancellationTokenSource())
+        using var cts = new CancellationTokenSource();
+        var delayTask = Task.Delay(timeout, cts.Token);
+
+        var resultTask = await Task.WhenAny(task, delayTask);
+        if (resultTask == delayTask)
         {
-            var delayTask = Task.Delay(timeout, cts.Token);
-
-            var resultTask = await Task.WhenAny(task, delayTask);
-            if (resultTask == delayTask)
-            {
-                // Operation cancelled
-                throw new OperationCanceledException();
-            }
-
-            cts.Cancel();
-
-            await task;
+            // Operation cancelled
+            throw new OperationCanceledException();
         }
+
+        await cts.CancelAsync();
+
+        await task;
     }
 }
