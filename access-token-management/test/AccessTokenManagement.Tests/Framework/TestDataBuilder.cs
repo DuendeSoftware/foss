@@ -58,13 +58,4 @@ public class TestDataBuilder(TestData The)
         Scope = The.Scope,
         ClientId = The.ClientId
     };
-
-}
-
-public record Token
-{
-    public string? access_token { get; init; }
-    public string? token_type { get; init; }
-    public string? scope { get; init; }
-    public int? expires_in { get; init; }
 }
