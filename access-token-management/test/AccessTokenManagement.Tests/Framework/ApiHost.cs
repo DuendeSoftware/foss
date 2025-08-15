@@ -13,7 +13,7 @@ public class ApiHost : GenericHost
     public int? ApiStatusCodeToReturn { get; set; }
 
     private readonly IdentityServerHost _identityServerHost;
-    public event Action<Microsoft.AspNetCore.Http.HttpContext> ApiInvoked = ctx => { };
+    public event Action<HttpContext> ApiInvoked = ctx => { };
 
     public ApiHost(
         WriteTestOutput writeTestOutput,
