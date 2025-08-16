@@ -1,4 +1,4 @@
-﻿// Copyright (c) Duende Software. All rights reserved.
+// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Microsoft.UI.Xaml;
@@ -18,7 +18,7 @@ public partial class App : MauiWinUIApplication
     /// </summary>
     public App()
     {
-        this.InitializeComponent();
+        InitializeComponent();
     }
 
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
