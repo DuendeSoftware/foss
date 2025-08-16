@@ -34,6 +34,25 @@ public class TokenRequestExtensionsResponseTests
         response.RefreshToken.ShouldBe("refresh_token");
         response.TryGet("custom").ShouldBe("custom");
     }
+    
+    [Fact]
+    public async Task Test_HttpResponse_is_null_after_disposal()
+    {
+        var document = File.ReadAllText(FileName.Create("success_token_response.json"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+
+        var client = new HttpClient(handler);
+        var response = await client.RequestTokenAsync(new TokenRequest
+        {
+            Address = Endpoint,
+            GrantType = "test",
+            ClientId = "client"
+        });
+
+        response.HttpResponse.ShouldNotBeNull();
+        response.Dispose();
+        response.HttpResponse.ShouldBeNull();
+    }
 
     [Fact]
     public async Task Valid_protocol_error_should_be_handled_correctly()
