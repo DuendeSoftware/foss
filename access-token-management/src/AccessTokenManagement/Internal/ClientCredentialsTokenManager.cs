@@ -22,11 +22,11 @@ internal class ClientCredentialsTokenManager(
 {
     // A flag that's written into the Data property of exceptions to distinguish
     // between exceptions that are thrown inside the cache and those that are thrown
-    // inside the factory. 
+    // inside the factory.
     private const string ThrownInsideFactoryExceptionKey = "Duende.AccessTokenManagement.ThrownInside";
 
     // We're assuming that the cache duration for access tokens will remain (relatively) stable
-    // First time we acquire an access token, don't yet know how long it will be valid, so we're assuming 
+    // First time we acquire an access token, don't yet know how long it will be valid, so we're assuming
     // a specific period. However, after that, we'll use the actual expiration time to set the cache duration.
     private readonly ConcurrentDictionary<ClientCredentialsCacheKey, TimeSpan> _cacheDurationAutoTuning = new();
 
@@ -73,8 +73,8 @@ internal class ClientCredentialsTokenManager(
         }
         catch (PreventCacheException ex)
         {
-            // This exception is thrown if there was a failure while retrieving an access token. We 
-            // don't want to cache this failure, so we throw an exception to bypass the cache action. 
+            // This exception is thrown if there was a failure while retrieving an access token. We
+            // don't want to cache this failure, so we throw an exception to bypass the cache action.
             logger.WillNotCacheTokenResultWithError(LogLevel.Debug, clientName, ex.Failure.Error, ex.Failure.ErrorDescription);
             return ex.Failure;
         }
@@ -85,7 +85,7 @@ internal class ClientCredentialsTokenManager(
             token = await RequestToken(cacheKey, clientName, parameters, ct);
         }
 
-        // Check if token has expired. Ideally, the cache lifetime auto-tuning should prevent this, 
+        // Check if token has expired. Ideally, the cache lifetime auto-tuning should prevent this,
         // but for the first request OR if the token lifetime is changed, we might end up here.
         if (!parameters.ForceTokenRenewal.Value
             && token.Expiration - TimeSpan.FromSeconds(_options.CacheLifetimeBuffer) <= time.GetUtcNow())
@@ -119,30 +119,30 @@ internal class ClientCredentialsTokenManager(
         }
         catch (Exception ex)
         {
-            // If there is a problem with retrieving data, then we want to bubble this back to the client. 
-            // However, we want to distinguish this from exceptions that happen inside the cache itself. 
-            // So, any exception that happens internally gets a special flag. 
+            // If there is a problem with retrieving data, then we want to bubble this back to the client.
+            // However, we want to distinguish this from exceptions that happen inside the cache itself.
+            // So, any exception that happens internally gets a special flag.
             ex.Data[ThrownInsideFactoryExceptionKey] = true;
             throw;
         }
 
         if (!tokenResult.WasSuccessful(out var token, out var failure))
         {
-            // Unfortunately, hybrid cache has no clean way to prevent failures from being cached. 
-            // So we have to use an exception here. 
+            // Unfortunately, hybrid cache has no clean way to prevent failures from being cached.
+            // So we have to use an exception here.
             throw new PreventCacheException(failure);
         }
 
         // See if we need to record how long this access token is valid, to be used the next time
-        // this access token is used. 
+        // this access token is used.
         if (_options.UseCacheAutoTuning
             && token.Expiration != DateTimeOffset.MaxValue)
         {
-            // Calculate how long this access token should be valid in the cache. 
+            // Calculate how long this access token should be valid in the cache.
             // Note, the expiration time was just calculated by adding time.GetUTcNow() to the token lifetime.
             // so for now it's safe to subtract this time from the expiration time.
-            _cacheDurationAutoTuning[cacheKey] = time.GetUtcNow()
-                                                 - token.Expiration
+            _cacheDurationAutoTuning[cacheKey] = token.Expiration
+                                                 - time.GetUtcNow()
                                                  - TimeSpan.FromSeconds(_options.CacheLifetimeBuffer);
 
             logger.CachingAccessToken(LogLevel.Debug, clientName, token.Expiration);

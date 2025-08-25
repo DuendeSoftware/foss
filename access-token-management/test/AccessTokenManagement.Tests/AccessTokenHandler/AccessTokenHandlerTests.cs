@@ -15,6 +15,7 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
     public enum FixtureType
     {
         ClientCredentials,
+        ClientCredentialsWithAutotuning,
         OidcUser,
         OidcClient
     }
@@ -42,6 +43,20 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
         await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
 
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_1");
+    }
+
+    [Fact]
+    public async Task Caching_of_tokens_is_optimized()
+    {
+        var fixture = await GetInitializedFixture(FixtureType.ClientCredentialsWithAutotuning);
+
+        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await Task.Delay(100);
+        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await Task.Delay(100);
+        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+
+        fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
     }
     [Theory]
     [MemberData(nameof(AllFixtures))]
@@ -112,6 +127,7 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
         AccessTokenHandlingBaseFixture item = type switch
         {
             FixtureType.ClientCredentials => new ClientCredentialsFixture(),
+            FixtureType.ClientCredentialsWithAutotuning => new ClientCredentialsFixtureWithAutotuning(),
             FixtureType.OidcClient => new OidcClientFixture(),
             FixtureType.OidcUser => new OidcUserFixture(),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
@@ -125,7 +141,8 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
 
     public static IEnumerable<object[]> AllFixtures()
     {
-        foreach (var value in Enum.GetValues<FixtureType>())
+        foreach (var value in Enum.GetValues<FixtureType>()
+                     .Where(v => v != FixtureType.ClientCredentialsWithAutotuning))
         {
             yield return [value];
         }
