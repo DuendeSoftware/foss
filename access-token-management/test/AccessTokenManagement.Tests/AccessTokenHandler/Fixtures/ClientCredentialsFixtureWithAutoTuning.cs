@@ -2,19 +2,30 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
 using Duende.AccessTokenManagement.DPoP;
+using Duende.AccessTokenManagement.Framework;
+using Duende.AccessTokenManagement.Tests;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
+namespace Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 
 internal class ClientCredentialsFixtureWithAutotuning : AccessTokenHandlingBaseFixture
 {
+    public TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+
     public override ValueTask InitializeAsync(DPoPProofKey? dPoPJsonWebKey)
     {
+        Services.AddDistributedMemoryCache();
+        Services.AddSingleton<IDistributedCache>(new FakeDistributedCache(new FakeTimeProvider(() => The.CurrentDate)));
         Services.AddClientCredentialsTokenManagement(options =>
             {
                 options.UseCacheAutoTuning = true;
-                options.DefaultCacheLifetime = TimeSpan.FromMilliseconds(200);
+
+                // explicitly set the local cache expiration very low. this makes sure the remote cache is used. 
+                options.LocalCacheExpiration = TimeSpan.FromMilliseconds(10);
+                options.DefaultCacheLifetime = CacheExpiration;
             })
             .AddClient("tokenClient", opt =>
             {

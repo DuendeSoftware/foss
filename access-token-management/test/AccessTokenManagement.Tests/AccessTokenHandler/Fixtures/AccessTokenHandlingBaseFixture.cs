@@ -5,7 +5,7 @@ using Duende.AccessTokenManagement.AccessTokenHandlers.Helpers;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Framework;
 using Duende.AccessTokenManagement.Tests;
-
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +13,8 @@ namespace Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
 
 internal abstract class AccessTokenHandlingBaseFixture : IAsyncDisposable
 {
+    public TimeSpan TokenExpiration = TimeSpan.FromSeconds(3600);
+
     public TestData The { get; } = new TestData();
     public TestDataBuilder Some => new TestDataBuilder(The);
 
@@ -29,9 +31,13 @@ internal abstract class AccessTokenHandlingBaseFixture : IAsyncDisposable
     public async ValueTask InitializeAsync(ITestOutputHelper output, DPoPProofKey? dPoPJsonWebKey)
     {
         ApiEndpoint.DefaultRespondOkWithToken();
-        TokenEndpoint.DefaultRespondWithAccessToken();
+        TokenEndpoint.DefaultRespondWithAccessToken((int)TokenExpiration.TotalSeconds);
 
         Services = new ServiceCollection();
+        Services.Configure<MemoryCacheOptions>(options =>
+        {
+            options.Clock = new FakeTimeProvider(() => The.CurrentDate);
+        });
         Services.AddLogging(log => log.AddProvider(new TestLoggerProvider(output.Write, "test")));
         Services.AddHttpClient("tokenHttpClient")
             .ConfigureHttpClient(c =>
