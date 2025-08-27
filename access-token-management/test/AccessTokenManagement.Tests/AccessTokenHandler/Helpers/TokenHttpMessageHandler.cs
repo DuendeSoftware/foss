@@ -39,10 +39,10 @@ public class TokenHttpMessageHandler : MockHttpMessageHandler, IAsyncDisposable
                 });
             });
 
-    public void DefaultRespondWithAccessToken() => this.When(HttpMethod.Post, TokenEndpoint.ToString())
+    public void DefaultRespondWithAccessToken(int? expireInSeconds = 3600) => this.When(HttpMethod.Post, TokenEndpoint.ToString())
             .Respond(request =>
             {
-                var initialTokenResponse = BuildAccessToken();
+                var initialTokenResponse = BuildAccessToken(expireInSeconds);
 
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
                 {

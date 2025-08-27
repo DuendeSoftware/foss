@@ -3,6 +3,7 @@
 
 using System.Net;
 using System.Text.Json;
+using Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 using Duende.AccessTokenManagement.AccessTokenHandlers.Fixtures;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.IdentityServer.Configuration;
@@ -46,18 +47,53 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task Caching_of_tokens_is_optimized()
+    public async Task Uses_auto_tuning_in_cache_expiration()
     {
-        var fixture = await GetInitializedFixture(FixtureType.ClientCredentialsWithAutotuning);
+        // hybrid cache doesn't allow us to set the cache expiration based on the
+        // lifetime of a token after it's retrieved. To circumvent this, we implemented cache autotuning. 
+        // Cache Auto tuning does the following:
+        // the first time a token is retrieved, the cache expiration from the default setting is used
+        // however, after that, it will remember the lifetime of the token, and use that to set the cache expiration
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
-        await Task.Delay(100);
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
-        await Task.Delay(100);
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        var fixture = (ClientCredentialsFixtureWithAutotuning)
+            await GetInitializedFixture(FixtureType.ClientCredentialsWithAutotuning);
 
-        fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
+        // We get an access token. The cache interval is not known, so we expect it to be cached for the default cache duration
+        await EnsureTokenNumber(fixture, 1);
+
+        // Ensure it's cached. 
+        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_1");
+        await EnsureTokenNumber(fixture, 1);
+
+        // Increase the time by too little time
+        AdvanceTimeBy(fixture, fixture.CacheExpiration - TimeSpan.FromSeconds(2));
+        await EnsureTokenNumber(fixture, 1);
+
+        // Increase the time by a bit more - now we expect the token to be expired, and a new one to be fetched
+        AdvanceTimeBy(fixture, TimeSpan.FromSeconds(2));
+        await EnsureTokenNumber(fixture, 2);
+
+        // Now increase the time by the cache expiration again. It should NOT be expired now
+        // because the auto tuning has kicked in and has used the token expiration lifetime
+        // (which is much longer)
+        AdvanceTimeBy(fixture, fixture.CacheExpiration);
+        await EnsureTokenNumber(fixture, 2);
+
+        // But if we wait for the token expiration, then it should expire. 
+        AdvanceTimeBy(fixture, fixture.TokenExpiration);
+        await EnsureTokenNumber(fixture, 3);
     }
+
+    private static void AdvanceTimeBy(AccessTokenHandlingBaseFixture fixture, TimeSpan by)
+        => fixture.The.CurrentDate += by;
+
+    private static async Task EnsureTokenNumber(AccessTokenHandlingBaseFixture fixture, int number)
+    {
+        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_" + number);
+    }
+
     [Theory]
     [MemberData(nameof(AllFixtures))]
     public async Task Will_refresh_token_when_access_token_is_rejected(FixtureType type)
