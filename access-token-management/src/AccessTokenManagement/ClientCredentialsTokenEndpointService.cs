@@ -168,9 +168,15 @@ public class ClientCredentialsTokenEndpointService : IClientCredentialsTokenEndp
 
         if (response.IsError)
         {
+            var error = response.Error;
+            if (!string.IsNullOrEmpty(response.ErrorDescription))
+            {
+                error += $". {response.ErrorDescription}";
+            }
+
             return new ClientCredentialsToken
             {
-                Error = response.Error
+                Error = error
             };
         }
         
