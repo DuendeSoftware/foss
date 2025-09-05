@@ -10,7 +10,7 @@ namespace Duende.IdentityModel.Client;
 /// <summary>
 /// A protocol response
 /// </summary>
-public class ProtocolResponse
+public class ProtocolResponse : IDisposable
 {
     /// <summary>
     /// Initializes a protocol response from an HTTP response
@@ -243,4 +243,13 @@ public class ProtocolResponse
     /// The returned DPoP nonce header.
     /// </summary>
     public string? DPoPNonce { get; set; }
+
+    /// <summary>
+    /// Dispose.
+    /// </summary>
+    public void Dispose()
+    {
+        HttpResponse?.Dispose();
+        HttpResponse = null;
+    }
 }
