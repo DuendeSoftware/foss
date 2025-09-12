@@ -17,6 +17,7 @@
     <Project Path="access-token-management/samples/WebJarJwt/WebJarJwt.csproj" />
     <Project Path="access-token-management/samples/Worker/Worker.csproj" />
     <Project Path="access-token-management/samples/WorkerDI/WorkerDI.csproj" />
+    <Project Path="access-token-management/samples/WorkerWithFusionCache/WorkerWithFusionCache.csproj" Id="60f4fbb6-cc5e-4191-ad99-590cd9b20b16" />
   </Folder>
   <Folder Name="/access-token-management/src/">
     <File Path="access-token-management/src/Directory.Build.props" />
