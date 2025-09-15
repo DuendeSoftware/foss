@@ -3,6 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Duende.IdentityModel;
+using Duende.IdentityModel.DPoP;
 
 namespace Duende.AccessTokenManagement.DPoP;
 
@@ -36,30 +37,26 @@ public static class DPoPExtensions
     public static void SetDPoPNonce(this HttpRequestMessage request, DPoPNonce nonce) => request.Options.Set(DPoPNonceOptionsKey, nonce);
 
     /// <summary>
-    /// Clears any existing DPoP nonce headers.
+    /// Clears any existing DPoP proof token headers.
     /// </summary>
     public static void ClearDPoPProofToken(this HttpRequestMessage request) =>
         // remove any old headers
         request.Headers.Remove(OidcConstants.HttpHeaders.DPoP);
 
     /// <summary>
-    /// Sets the DPoP nonce request header if nonce is not null.
+    /// Sets the DPoP proof token request header.
     /// </summary>
     public static void SetDPoPProofToken(this HttpRequestMessage request, DPoPProof proof) =>
-        // set new header
-        request.Headers.Add(OidcConstants.HttpHeaders.DPoP, proof.ToString());
+        // Set using the base method with proof token string
+        request.SetDPoPProofToken(proof.ToString());
 
     /// <summary>
-    /// Reads the DPoP nonce header from the response
+    /// Reads the DPoP nonce header from the response and parses it
     /// </summary>
-    public static DPoPNonce? GetDPoPNonce(this HttpResponseMessage response)
+    public static DPoPNonce? GetDPoPNonceValue(this HttpResponseMessage response)
     {
-        if (!response.Headers.TryGetValues(OidcConstants.HttpHeaders.DPoPNonce, out var values))
-        {
-            return null;
-        }
-
-        return DPoPNonce.ParseOrDefault(values.FirstOrDefault());
+        var nonceString = response.GetDPoPNonce();
+        return DPoPNonce.ParseOrDefault(nonceString);
     }
 
     /// <summary>
@@ -106,12 +103,12 @@ public static class DPoPExtensions
     }
 
     /// <summary>
-    /// Returns the URL without any query params
+    /// Returns the URL without any query params as a Uri object
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    public static Uri GetDPoPUrl(this HttpRequestMessage request) =>
-        new(request.RequestUri!.Scheme + "://" + request.RequestUri!.Authority + request.RequestUri!.LocalPath);
+    public static Uri GetDPoPUri(this HttpRequestMessage request) =>
+        new(request.GetDPoPUrl());
 
     /// <summary>
     /// Additional claims that will be added to the DPoP proof payload on generation

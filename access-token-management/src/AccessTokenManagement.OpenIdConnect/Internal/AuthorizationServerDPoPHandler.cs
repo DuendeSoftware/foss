@@ -55,7 +55,7 @@ internal class AuthorizationServerDPoPHandler(
         var response = await base.SendAsync(request, ct).ConfigureAwait(false);
 
         // The authorization server might send us a new nonce on either a success or failure
-        var dPoPNonce = response.GetDPoPNonce();
+        var dPoPNonce = response.GetDPoPNonceValue();
 
         if (dPoPNonce == null)
         {
@@ -101,7 +101,7 @@ internal class AuthorizationServerDPoPHandler(
 
         await dPoPNonceStore.StoreNonceAsync(new DPoPNonceContext
         {
-            Url = request.GetDPoPUrl(),
+            Url = request.GetDPoPUri(),
             Method = request.Method,
         }, dPoPNonce.Value, ct);
 
@@ -122,7 +122,7 @@ internal class AuthorizationServerDPoPHandler(
 
         var proofToken = await dPoPProofService.CreateProofTokenAsync(new DPoPProofRequest
         {
-            Url = request.GetDPoPUrl(),
+            Url = request.GetDPoPUri(),
             Method = request.Method,
             DPoPProofKey = jwk.Value,
             DPoPNonce = dpopNonce,

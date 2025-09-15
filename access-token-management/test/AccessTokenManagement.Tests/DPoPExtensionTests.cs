@@ -21,7 +21,7 @@ public class DPoPExtensionTests
                 { headerName, expected }
             }
         };
-        message.GetDPoPNonce().ShouldNotBeNull()
+        message.GetDPoPNonceValue().ShouldNotBeNull()
             .ToString().ShouldBe(expected);
     }
 }

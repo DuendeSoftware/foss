@@ -54,7 +54,7 @@ internal static class Resiliency
                     if (response.IsDPoPError())
                     {
                         metrics.DPoPNonceErrorRetry(response.RequestMessage?.GetClientId(), response.GetDPoPError());
-                        var dPoPNonce = response.GetDPoPNonce();
+                        var dPoPNonce = response.GetDPoPNonceValue();
 
                         // When we get a DPoP error, we need to retry with the nonce from the response.
                         if (dPoPNonce == null)

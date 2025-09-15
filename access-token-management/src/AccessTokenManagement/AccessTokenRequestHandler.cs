@@ -80,7 +80,7 @@ public sealed class AccessTokenRequestHandler(
         var dPoPProofRequest = new DPoPProofRequest
         {
             AccessToken = token.AccessToken,
-            Url = request.GetDPoPUrl(),
+            Url = request.GetDPoPUri(),
             Method = request.Method,
             DPoPProofKey = token.DPoPJsonWebKey.Value,
             DPoPNonce = request.GetDPoPNonce(),
@@ -107,7 +107,7 @@ public sealed class AccessTokenRequestHandler(
         {
             return;
         }
-        var dPoPNonce = response.GetDPoPNonce();
+        var dPoPNonce = response.GetDPoPNonceValue();
 
         if (dPoPNonce == null)
         {
@@ -116,7 +116,7 @@ public sealed class AccessTokenRequestHandler(
 
         var dPoPNonceContext = new DPoPNonceContext
         {
-            Url = request.GetDPoPUrl(),
+            Url = request.GetDPoPUri(),
             Method = request.Method,
         };
         logger.AuthorizationServerSuppliedNewNonce(LogLevel.Debug);
