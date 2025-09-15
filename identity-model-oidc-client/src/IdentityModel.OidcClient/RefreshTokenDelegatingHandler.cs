@@ -21,7 +21,6 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
     private string _accessTokenType;
     private string _refreshToken;
     private volatile bool _refreshInProgress;
-    private DateTime _refreshStartTime;
 
     private bool _disposed;
 
@@ -211,7 +210,6 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
 
                 // Mark refresh as in progress
                 _refreshInProgress = true;
-                _refreshStartTime = DateTime.UtcNow;
 
                 try
                 {
