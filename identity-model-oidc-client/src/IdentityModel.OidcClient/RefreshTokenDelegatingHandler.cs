@@ -13,13 +13,15 @@ namespace Duende.IdentityModel.OidcClient;
 /// </summary>
 public class RefreshTokenDelegatingHandler : DelegatingHandler
 {
-    private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+    private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
     private readonly OidcClient _oidcClient;
     private readonly ILogger _logger;
 
     private string _accessToken;
     private string _accessTokenType;
     private string _refreshToken;
+    private volatile bool _refreshInProgress;
+    private DateTime _refreshStartTime;
 
     private bool _disposed;
 
@@ -35,7 +37,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
     {
         get
         {
-            if (_lock.Wait(Timeout))
+            if (_lock.TryEnterReadLock(Timeout))
             {
                 try
                 {
@@ -43,7 +45,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
                 }
                 finally
                 {
-                    _lock.Release();
+                    _lock.ExitReadLock();
                 }
             }
 
@@ -58,7 +60,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
     {
         get
         {
-            if (_lock.Wait(Timeout))
+            if (_lock.TryEnterReadLock(Timeout))
             {
                 try
                 {
@@ -66,7 +68,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
                 }
                 finally
                 {
-                    _lock.Release();
+                    _lock.ExitReadLock();
                 }
             }
 
@@ -164,71 +166,117 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
 
     private async Task<bool> RefreshTokensAsync(CancellationToken cancellationToken)
     {
-        if (await _lock.WaitAsync(Timeout, cancellationToken).ConfigureAwait(false))
+        // First, check if a refresh is already in progress with a read lock
+        if (_lock.TryEnterReadLock(Timeout))
         {
-            if (_refreshToken.IsMissing())
-            {
-                return false;
-            }
-
             try
             {
-                var response = await _oidcClient.RefreshTokenAsync(
-                    _refreshToken,
-                    backChannelParameters: null,
-                    scope: null,
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                if (!response.IsError)
+                if (_refreshInProgress)
                 {
-                    _accessToken = response.AccessToken;
-                    if (!response.RefreshToken.IsMissing())
-                    {
-                        _refreshToken = response.RefreshToken;
-                    }
-
-#pragma warning disable 4014
-                    Task.Run(() =>
-                    {
-                        foreach (EventHandler<TokenRefreshedEventArgs> del in TokenRefreshed.GetInvocationList())
-                        {
-                            try
-                            {
-                                del(this, new TokenRefreshedEventArgs(response.AccessToken, response.RefreshToken, response.ExpiresIn, response.IdentityToken));
-                            }
-                            catch { }
-                        }
-                    }).ConfigureAwait(false);
-#pragma warning restore 4014
-
-                    return true;
+                    // Another thread is refreshing, wait a bit and return false to retry later
+                    return false;
                 }
-
-                _logger.LogError("Failed on RefreshTokensAsync: {error} - {description}", response.Error, response.ErrorDescription);
+                
+                if (_refreshToken.IsMissing())
+                {
+                    return false;
+                }
             }
             finally
             {
-                _lock.Release();
+                _lock.ExitReadLock();
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        // Try to acquire write lock to perform the refresh
+        if (_lock.TryEnterWriteLock(Timeout))
+        {
+            try
+            {
+                // Double-check if another thread has already started refreshing
+                if (_refreshInProgress)
+                {
+                    return false;
+                }
+
+                // Check again if refresh token is available under write lock
+                if (_refreshToken.IsMissing())
+                {
+                    return false;
+                }
+
+                // Mark refresh as in progress
+                _refreshInProgress = true;
+                _refreshStartTime = DateTime.UtcNow;
+
+                try
+                {
+                    var response = await _oidcClient.RefreshTokenAsync(
+                        _refreshToken,
+                        backChannelParameters: null,
+                        scope: null,
+                        cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                    if (!response.IsError)
+                    {
+                        _accessToken = response.AccessToken;
+                        if (!response.RefreshToken.IsMissing())
+                        {
+                            _refreshToken = response.RefreshToken;
+                        }
+
+#pragma warning disable 4014
+                        Task.Run(() =>
+                        {
+                            foreach (EventHandler<TokenRefreshedEventArgs> del in TokenRefreshed.GetInvocationList())
+                            {
+                                try
+                                {
+                                    del(this, new TokenRefreshedEventArgs(response.AccessToken, response.RefreshToken, response.ExpiresIn, response.IdentityToken));
+                                }
+                                catch { }
+                            }
+                        }).ConfigureAwait(false);
+#pragma warning restore 4014
+
+                        return true;
+                    }
+
+                    _logger.LogError("Failed on RefreshTokensAsync: {error} - {description}", response.Error, response.ErrorDescription);
+                }
+                finally
+                {
+                    // Always clear the refresh-in-progress flag
+                    _refreshInProgress = false;
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
 
         return false;
     }
 
-    private async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
+    private Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
     {
-        if (await _lock.WaitAsync(Timeout, cancellationToken).ConfigureAwait(false))
+        if (_lock.TryEnterReadLock(Timeout))
         {
             try
             {
-                return _accessToken;
+                return Task.FromResult(_accessToken);
             }
             finally
             {
-                _lock.Release();
+                _lock.ExitReadLock();
             }
         }
 
-        return null;
+        return Task.FromResult<string>(null);
     }
 }

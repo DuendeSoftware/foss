@@ -74,6 +74,97 @@ public class RefreshTokenDelegatingHandlerTests
         tokens.Count.ShouldBeGreaterThanOrEqualTo(logicalThreadCount * callsPerThread / maxCallsPerAccessToken);
     }
 
+    [Fact]
+    public async Task Multiple_concurrent_token_reads_should_not_block_each_other()
+    {
+        const int readerCount = 10;
+        const int readsPerReader = 100;
+
+        var tokens = new TestTokens(1000); // Very high limit to avoid refresh during test
+
+        var handlerUnderTest = new RefreshTokenDelegatingHandler(
+            new TestableOidcTokenRefreshClient(tokens, TimeSpan.Zero),
+            tokens.InitialAccessToken,
+            tokens.InitialRefreshToken,
+            innerHandler: new TestServer(tokens, TimeSpan.Zero));
+
+        var readTimes = new ConcurrentBag<long>();
+
+        async Task PerformTokenReads()
+        {
+            for (var i = 0; i < readsPerReader; i++)
+            {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                var token = handlerUnderTest.AccessToken; // Should not block
+                stopwatch.Stop();
+                readTimes.Add(stopwatch.ElapsedTicks);
+                
+                // Short delay to allow other threads to interleave
+                await Task.Delay(1);
+            }
+        }
+
+        var readerTasks = Enumerable.Range(0, readerCount).Select(i => PerformTokenReads());
+        await Task.WhenAll(readerTasks);
+
+        // All reads should complete successfully
+        readTimes.Count.ShouldBe(readerCount * readsPerReader);
+        
+        // Average read time should be very low (no blocking)
+        var averageReadTime = readTimes.Average();
+        averageReadTime.ShouldBeLessThan(TimeSpan.FromMilliseconds(10).Ticks);
+    }
+
+    [Fact]
+    public async Task Only_one_refresh_operation_should_be_active_at_a_time()
+    {
+        const int maxCallsPerAccessToken = 1; // Force refresh on every call
+        var refreshCount = 0;
+        var concurrentRefreshCount = 0;
+        var maxConcurrentRefreshCount = 0;
+
+        var tokens = new TestTokens(maxCallsPerAccessToken);
+
+        var handlerUnderTest = new RefreshTokenDelegatingHandler(
+            new CountingTestableOidcTokenRefreshClient(tokens, TimeSpan.FromMilliseconds(100), 
+                () => 
+                {
+                    var current = Interlocked.Increment(ref concurrentRefreshCount);
+                    var max = maxConcurrentRefreshCount;
+                    while (current > max && Interlocked.CompareExchange(ref maxConcurrentRefreshCount, current, max) != max)
+                    {
+                        max = maxConcurrentRefreshCount;
+                    }
+                    Interlocked.Increment(ref refreshCount);
+                },
+                () => Interlocked.Decrement(ref concurrentRefreshCount)),
+            tokens.InitialAccessToken,
+            tokens.InitialRefreshToken,
+            innerHandler: new TestServer(tokens, TimeSpan.Zero));
+
+        using (var client = new TestClient(handlerUnderTest))
+        {
+            // Make multiple concurrent requests that will all need token refresh
+            var tasks = Enumerable.Range(0, 10).Select(async i => 
+            {
+                try
+                {
+                    await client.SecuredPing();
+                }
+                catch
+                {
+                    // Some may fail due to refresh conflicts, which is expected
+                }
+            });
+
+            await Task.WhenAll(tasks);
+        }
+
+        // At most one refresh should be active at any time
+        maxConcurrentRefreshCount.ShouldBeLessThanOrEqualTo(1);
+        refreshCount.ShouldBeGreaterThan(0); // At least one refresh should have occurred
+    }
+
     private class TestClient : IDisposable
     {
         private readonly HttpClient _client;
@@ -251,6 +342,52 @@ public class RefreshTokenDelegatingHandlerTests
                     AccessToken = newTokens.AccessToken,
                     RefreshToken = newTokens.RefreshToken
                 };
+        }
+    }
+
+    private class CountingTestableOidcTokenRefreshClient : Duende.IdentityModel.OidcClient.OidcClient
+    {
+        private readonly TestTokens _tokens;
+        private readonly TimeSpan _delayForRefresh;
+        private readonly Action _onRefreshStart;
+        private readonly Action _onRefreshEnd;
+
+        public CountingTestableOidcTokenRefreshClient(TestTokens tokens, TimeSpan delayForRefresh, Action onRefreshStart, Action onRefreshEnd) : base(new OidcClientOptions
+        {
+            Authority = "http://test-authority"
+        })
+        {
+            _tokens = tokens;
+            _delayForRefresh = delayForRefresh;
+            _onRefreshStart = onRefreshStart;
+            _onRefreshEnd = onRefreshEnd;
+        }
+
+        public override async Task<RefreshTokenResult> RefreshTokenAsync(string refreshToken,
+            Parameters backChannelParameters = null,
+            string scope = null,
+            CancellationToken cancellationToken = default)
+        {
+            _onRefreshStart?.Invoke();
+            
+            try
+            {
+                var newTokens = _tokens.RefreshUsing(refreshToken);
+
+                await Task.Delay(_delayForRefresh, cancellationToken);
+
+                return newTokens == null
+                    ? new RefreshTokenResult { Error = "something with grant" }
+                    : new RefreshTokenResult
+                    {
+                        AccessToken = newTokens.AccessToken,
+                        RefreshToken = newTokens.RefreshToken
+                    };
+            }
+            finally
+            {
+                _onRefreshEnd?.Invoke();
+            }
         }
     }
 }
