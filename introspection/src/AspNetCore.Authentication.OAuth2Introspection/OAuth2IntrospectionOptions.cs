@@ -34,12 +34,12 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// <summary>
     /// Specifies the id of the introspection client (required).
     /// </summary>
-    public string ClientId { get; set; }
+    public string? ClientId { get; set; }
 
     /// <summary>
     /// Specifies the shared secret of the introspection client.
     /// </summary>
-    public string ClientSecret { get; set; }
+    public string? ClientSecret { get; set; }
 
     internal readonly SemaphoreSlim AssertionUpdateLock = new SemaphoreSlim(1, 1);
 
