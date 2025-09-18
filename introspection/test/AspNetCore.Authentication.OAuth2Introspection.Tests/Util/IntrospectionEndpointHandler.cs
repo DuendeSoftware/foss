@@ -21,9 +21,13 @@ public class IntrospectionEndpointHandler : DelegatingHandler
     public bool SentIntrospectionRequest { get; set; } = false;
 
     public Dictionary<string, object> AdditionalValues { get; set; } = new Dictionary<string, object>();
+
     public Dictionary<string, string> LastRequest { get; set; } = new Dictionary<string, string>();
-    public string IntrospectionEndpoint { get; set; }
-    public string DiscoveryEndpoint { get; set; }
+
+    public string? IntrospectionEndpoint { get; set; }
+
+    public string? DiscoveryEndpoint { get; set; }
+
     public bool IsDiscoveryFailureTest { get; set; } = false;
 
     public IntrospectionEndpointHandler(Behavior behavior, TimeSpan? ttl = null)
