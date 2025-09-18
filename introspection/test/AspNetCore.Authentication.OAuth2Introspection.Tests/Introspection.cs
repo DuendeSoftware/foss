@@ -507,7 +507,7 @@ public class Introspection
 
             o.Events.OnSendingRequest = e =>
             {
-                e.TokenIntrospectionRequest.Parameters = Parameters.FromObject(new { additionalParameter = "42" });
+                e.TokenIntrospectionRequest.Parameters = Parameters.FromObject(new { additionalParameter = "42" })!;
                 return Task.CompletedTask;
             };
 

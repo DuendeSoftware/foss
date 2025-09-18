@@ -43,11 +43,12 @@ internal static class PipelineFactory
                 {
                     var user = context.User;
 
-                    if (user.Identity.IsAuthenticated)
+                    if (user.Identity!.IsAuthenticated)
                     {
+                        var token = await context.GetTokenAsync("access_token");
                         var responseObject = new Dictionary<string, string>
                         {
-                            {"token", await context.GetTokenAsync("access_token") }
+                            {"token", token! }
                         };
 
                         var json = JsonSerializer.Serialize(responseObject);

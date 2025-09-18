@@ -38,24 +38,23 @@ public class IntrospectionEndpointHandler : DelegatingHandler
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (request.RequestUri.AbsoluteUri.Contains("well-known"))
+        if (request.RequestUri is null)
         {
-            return SendDiscoveryAsync(request, cancellationToken);
+            base.SendAsync(request, cancellationToken);
         }
-        else
-        {
-            return SendIntrospectionAsync(request, cancellationToken);
-        }
+        return request.RequestUri!.AbsoluteUri.Contains("well-known")
+            ? SendDiscoveryAsync(request, cancellationToken)
+            : SendIntrospectionAsync(request, cancellationToken);
     }
 
-    protected Task<HttpResponseMessage> SendDiscoveryAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected Task<HttpResponseMessage> SendDiscoveryAsync(HttpRequestMessage request, CancellationToken _)
     {
         if (IsDiscoveryFailureTest)
         {
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
         }
 
-        if (request.RequestUri.AbsoluteUri.ToString() == "https://authority.com/.well-known/openid-configuration")
+        if (request.RequestUri!.AbsoluteUri == "https://authority.com/.well-known/openid-configuration")
         {
             DiscoveryEndpoint = request.RequestUri.AbsoluteUri;
 
@@ -81,7 +80,7 @@ public class IntrospectionEndpointHandler : DelegatingHandler
     protected Task<HttpResponseMessage> SendIntrospectionAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         SentIntrospectionRequest = true;
-        IntrospectionEndpoint = request.RequestUri.AbsoluteUri;
+        IntrospectionEndpoint = request.RequestUri!.AbsoluteUri;
 
         LastRequest = ExtractFormContent(request);
 
@@ -134,6 +133,8 @@ public class IntrospectionEndpointHandler : DelegatingHandler
         }
     }
 
-    private static Dictionary<string, string> ExtractFormContent(HttpRequestMessage request) => request.Content.ReadAsStringAsync().Result.Split("&")
-            .Select(item => item.Split("=")).ToDictionary(item => item[0], item => Uri.UnescapeDataString(item[1]));
+    private static Dictionary<string, string> ExtractFormContent(HttpRequestMessage request)
+        => request.Content!.ReadAsStringAsync().Result.Split("&")
+            .Select(item => item.Split("="))
+            .ToDictionary(item => item[0], item => Uri.UnescapeDataString(item[1]));
 }
