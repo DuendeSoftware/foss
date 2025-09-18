@@ -44,7 +44,7 @@ public class IntrospectionEndpointHandler : DelegatingHandler
     {
         if (request.RequestUri is null)
         {
-            base.SendAsync(request, cancellationToken);
+            return base.SendAsync(request, cancellationToken);
         }
         return request.RequestUri!.AbsoluteUri.Contains("well-known")
             ? SendDiscoveryAsync(request, cancellationToken)
