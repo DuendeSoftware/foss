@@ -14,7 +14,10 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 
 internal static class PipelineFactory
 {
-    public static TestServer CreateServer(Action<OAuth2IntrospectionOptions> options, DelegatingHandler backChannelHandler, bool addCaching = false) => new TestServer(new WebHostBuilder()
+    public static TestServer CreateServer(
+        Action<OAuth2IntrospectionOptions> options,
+        DelegatingHandler? backChannelHandler = null,
+        bool addCaching = false) => new(new WebHostBuilder()
             .ConfigureServices(services =>
             {
                 if (addCaching)
@@ -59,7 +62,14 @@ internal static class PipelineFactory
                 });
             }));
 
-    public static HttpClient CreateClient(Action<OAuth2IntrospectionOptions> options, DelegatingHandler handler = null, bool addCaching = false) => CreateServer(options, handler, addCaching).CreateClient();
+    public static HttpClient CreateClient(
+        Action<OAuth2IntrospectionOptions> options,
+        DelegatingHandler? handler = null,
+        bool addCaching = false)
+        => CreateServer(options, handler, addCaching).CreateClient();
 
-    public static HttpMessageHandler CreateHandler(Action<OAuth2IntrospectionOptions> options, DelegatingHandler handler = null, bool addCaching = false) => CreateServer(options, handler, addCaching).CreateHandler();
+    public static HttpMessageHandler CreateHandler(
+        Action<OAuth2IntrospectionOptions> options,
+        DelegatingHandler? handler = null,
+        bool addCaching = false) => CreateServer(options, handler, addCaching).CreateHandler();
 }

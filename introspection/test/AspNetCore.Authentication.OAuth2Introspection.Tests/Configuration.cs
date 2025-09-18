@@ -87,7 +87,7 @@ public class Configuration
     [Fact]
     public async Task Authority_Get_Introspection_Endpoint()
     {
-        OAuth2IntrospectionOptions ops = null;
+        OAuth2IntrospectionOptions ops = null!;
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
 
         var client = PipelineFactory.CreateClient(options =>
