@@ -237,7 +237,7 @@ public class Introspection
 
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         validatedCalled.HasValue.ShouldBeTrue();
-        validatedCalled.Value.ShouldBeTrue();
+        validatedCalled!.Value.ShouldBeTrue();
         failureCalled.ShouldBeNull();
     }
 
@@ -331,7 +331,7 @@ public class Introspection
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         validatedCalled.ShouldBeNull();
         failureCalled.HasValue.ShouldBeTrue();
-        failureCalled.Value.ShouldBeTrue();
+        failureCalled!.Value.ShouldBeTrue();
     }
 
     [Fact]
