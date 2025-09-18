@@ -523,7 +523,8 @@ public class Introspection
 
     private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
     {
-        var cache = testServer.Services.GetService<IDistributedCache>();
+        var cache = testServer.Services.GetRequiredService<IDistributedCache>();
+
         var cacheItem = cache.GetString($"{cacheKeyPrefix}{token.ToSha256()}");
 
         cacheItem.ShouldNotBeNullOrEmpty();
