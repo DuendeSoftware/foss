@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-    <Nullable>disable</Nullable>
     <RootNamespace>Duende.AspNetCore.Authentication.OAuth2Introspection</RootNamespace>
  </PropertyGroup>
 
