@@ -18,20 +18,6 @@ public class Configuration
     }
 
     [Fact]
-    public void No_Token_Retriever()
-    {
-        var act = () => PipelineFactory.CreateClient(options =>
-        {
-            options.Authority = "http://foo";
-            options.ClientId = "scope";
-            options.TokenRetriever = null;
-        }).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldThrow<ArgumentException>()
-            .Message.ShouldStartWith("TokenRetriever must be set");
-    }
-
-    [Fact]
     public void Endpoint_But_No_Authority()
     {
         var act = () => PipelineFactory.CreateClient(options =>

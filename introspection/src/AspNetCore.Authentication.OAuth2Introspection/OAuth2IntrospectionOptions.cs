@@ -147,10 +147,5 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
         {
             throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
         }
-
-        if (TokenRetriever == null)
-        {
-            throw new ArgumentException("TokenRetriever must be set", nameof(TokenRetriever));
-        }
     }
 }
