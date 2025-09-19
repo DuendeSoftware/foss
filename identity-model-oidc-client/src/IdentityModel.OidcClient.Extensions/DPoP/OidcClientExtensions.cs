@@ -31,7 +31,7 @@ public static class OidcClientExtensions
     /// Configure back-channel handlers for DPoP
     /// </summary>
     /// <param name="options">The OidcClient options</param>
-    /// <param name="proofTokenFactory">An instance of an implementation of <c ref="IDPoPProofTokenFactory"/></param>
+    /// <param name="proofTokenFactory">An instance of an implementation of <see cref="IDPoPProofTokenFactory"/></param>
     /// <param name="tokenEndpointInnerHandler">The inner handler for the token endpoint (optional)</param>
     /// <param name="apiInnerHandler">The inner handler for API calls (optional)</param>
     public static void ConfigureDPoP(this OidcClientOptions options,
@@ -75,7 +75,7 @@ public static class OidcClientExtensions
     /// Creates a handler for API calls using DPoP and automatic refresh token management
     /// </summary>
     /// <param name="client">The OidcClient instance</param>
-    /// <param name="proofTokenFactory">An instance of an implementation of <c ref="IDPoPProofTokenFactory"/></param>
+    /// <param name="proofTokenFactory">An instance of an implementation of <see cref="IDPoPProofTokenFactory"/></param>
     /// <param name="refreshToken">The refresh token</param>
     /// <param name="apiInnerHandler">The inner handler (optional)</param>
     /// <returns></returns>
