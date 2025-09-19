@@ -8,15 +8,15 @@ namespace Duende.IdentityModel.OidcClient.DPoP;
 /// </summary>
 public class ProofTokenMessageHandler : DelegatingHandler
 {
-    private readonly DPoPProofTokenFactory _proofTokenFactory;
+    private readonly IDPoPProofTokenFactory _proofTokenFactory;
     private string? _nonce;
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public ProofTokenMessageHandler(string proofKey, HttpMessageHandler innerHandler)
+    public ProofTokenMessageHandler(IDPoPProofTokenFactory dPoPProofTokenFactory, HttpMessageHandler innerHandler)
     {
-        _proofTokenFactory = new DPoPProofTokenFactory(proofKey);
+        _proofTokenFactory = dPoPProofTokenFactory ?? throw new ArgumentNullException(nameof(dPoPProofTokenFactory));
         InnerHandler = innerHandler ?? throw new ArgumentNullException(nameof(innerHandler));
     }
 
