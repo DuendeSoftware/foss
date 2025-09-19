@@ -54,7 +54,7 @@ public class ClientAssertionService : IClientAssertionService
             {
                 { JwtClaimTypes.JwtId, Guid.NewGuid().ToString() },
                 { JwtClaimTypes.Subject, config.ClientId.ToString()! },
-                { JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime() }
+                { JwtClaimTypes.IssuedAt, DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
             },
 
             AdditionalHeaderClaims = new Dictionary<string, object>

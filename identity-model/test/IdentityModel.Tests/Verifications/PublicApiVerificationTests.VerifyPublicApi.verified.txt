@@ -36,13 +36,6 @@
             Hex = 2,
         }
     }
-    public static class DateTimeExtensions
-    {
-        [System.Obsolete("Please use DateTimeOffset.FromUnixTimeSeconds() instead.")]
-        public static System.DateTime ToDateTimeFromEpoch(this long date) { }
-        [System.Obsolete("Please use DateTimeOffset.ToUnixTimeSeconds() instead.")]
-        public static long ToEpochTime(this System.DateTime dateTime) { }
-    }
     public static class Identity
     {
         public static System.Security.Claims.ClaimsIdentity Anonymous { get; }

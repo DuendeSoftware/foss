@@ -48,7 +48,7 @@ public class ClientAssertionService(IOptionsMonitor<ClientCredentialsClient> opt
                 {
                     { JwtClaimTypes.JwtId, Guid.NewGuid().ToString() },
                     { JwtClaimTypes.Subject, options1.ClientId?.ToString()! },
-                    { JwtClaimTypes.IssuedAt, DateTime.UtcNow.ToEpochTime() }
+                    { JwtClaimTypes.IssuedAt, DateTimeOffset.UtcNow.ToUnixTimeSeconds() }
                 }
             };
 
