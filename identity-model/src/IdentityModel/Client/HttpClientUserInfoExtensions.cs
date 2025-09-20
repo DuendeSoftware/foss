@@ -17,7 +17,8 @@ public static class HttpClientUserInfoExtensions
     /// <param name="request">The request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns></returns>
-    public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request, CancellationToken cancellationToken = default)
+    public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request,
+        CancellationToken cancellationToken = default)
     {
         if (request.Token.IsMissing())
         {
@@ -26,9 +27,9 @@ public static class HttpClientUserInfoExtensions
 
         var clone = request.Clone();
 
-        clone.Method = HttpMethod.Get;
         clone.SetBearerToken(request.Token!);
         clone.Prepare();
+        clone.Method = clone.Content == null ? HttpMethod.Get : HttpMethod.Post;
 
         HttpResponseMessage response;
         try

@@ -167,4 +167,55 @@ public class UserInfoExtensionsTests
         var expectedContent = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2lkZW50aXR5LmV4YW1wbGUuY29tIiwiYXVkIjoiaHR0cHM6Ly9hcHAuZXhhbXBsZS5jb20iLCJzdWIiOiIyNDgyODk3NjEwMDEiLCJuYW1lIjoiSmFuZSBEb2UiLCJnaXZlbl9uYW1lIjoiSmFuZSIsImZhbWlseV9uYW1lIjoiRG9lIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiai5kb2UiLCJlbWFpbCI6ImphbmVkb2VAZXhhbXBsZS5jb20iLCJwaWN0dXJlIjoiaHR0cDovL2V4YW1wbGUuY29tL2phbmVkb2UvbWUuanBnIn0.WmamfT6SSfVrJ6iBqPprRvbjKlQpd_8OcjLSbKbfMTQ";
         response.Raw.ShouldBe(expectedContent);
     }
+
+    [Fact]
+    public async Task Request_without_body_content_should_use_GET()
+    {
+        var document = await File.ReadAllTextAsync(FileName.Create("success_userinfo_response.jwt"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK)
+        {
+            MediaType = "application/jwt"
+        };
+
+        var client = new HttpClient(handler);
+        var response = await client.GetUserInfoAsync(new UserInfoRequest
+        {
+            Address = Endpoint,
+            Token = "token"
+        });
+
+        var httpRequest = handler.Request;
+
+        httpRequest.Method.ShouldBe(HttpMethod.Get);
+        httpRequest.RequestUri.ShouldBe(new Uri(Endpoint));
+        httpRequest.Content.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Request_with_body_content_should_use_POST()
+    {
+        var document = await File.ReadAllTextAsync(FileName.Create("success_userinfo_response.jwt"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK)
+        {
+            MediaType = "application/jwt"
+        };
+
+        var client = new HttpClient(handler);
+        var response = await client.GetUserInfoAsync(new UserInfoRequest
+        {
+            Address = Endpoint,
+            Token = "token",
+            ClientAssertion = new ClientAssertion
+            {
+                Type = "test",
+                Value = "value"
+            }
+        });
+
+        var httpRequest = handler.Request;
+
+        httpRequest.Method.ShouldBe(HttpMethod.Post);
+        httpRequest.RequestUri.ShouldBe(new Uri(Endpoint));
+        httpRequest.Content.ShouldNotBeNull();
+    }
 }
