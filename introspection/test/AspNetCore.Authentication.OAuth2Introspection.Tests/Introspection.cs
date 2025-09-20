@@ -237,7 +237,7 @@ public class Introspection
 
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         validatedCalled.HasValue.ShouldBeTrue();
-        validatedCalled.Value.ShouldBeTrue();
+        validatedCalled!.Value.ShouldBeTrue();
         failureCalled.ShouldBeNull();
     }
 
@@ -331,7 +331,7 @@ public class Introspection
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         validatedCalled.ShouldBeNull();
         failureCalled.HasValue.ShouldBeTrue();
-        failureCalled.Value.ShouldBeTrue();
+        failureCalled!.Value.ShouldBeTrue();
     }
 
     [Fact]
@@ -507,7 +507,7 @@ public class Introspection
 
             o.Events.OnSendingRequest = e =>
             {
-                e.TokenIntrospectionRequest.Parameters = Parameters.FromObject(new { additionalParameter = "42" });
+                e.TokenIntrospectionRequest.Parameters = Parameters.FromObject(new { additionalParameter = "42" })!;
                 return Task.CompletedTask;
             };
 
@@ -523,7 +523,8 @@ public class Introspection
 
     private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
     {
-        var cache = testServer.Services.GetService<IDistributedCache>();
+        var cache = testServer.Services.GetRequiredService<IDistributedCache>();
+
         var cacheItem = cache.GetString($"{cacheKeyPrefix}{token.ToSha256()}");
 
         cacheItem.ShouldNotBeNullOrEmpty();

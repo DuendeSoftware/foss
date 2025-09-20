@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-    <Nullable>disable</Nullable>
     <RootNamespace>Duende.AspNetCore.Authentication.OAuth2Introspection</RootNamespace>
  </PropertyGroup>
 
@@ -12,5 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="PublicApiGenerator" />
+    <PackageReference Include="Verify.XunitV3" />
   </ItemGroup>
 </Project>

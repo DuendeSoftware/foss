@@ -7,6 +7,7 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Infrastructure;
 
 public class ClaimLite
 {
-    public string Type { get; set; }
-    public string Value { get; set; }
+    public required string Type { get; init; }
+
+    public required string Value { get; init; }
 }

@@ -9,19 +9,15 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Context;
 /// <summary>
 /// Context for the TokenValidated event
 /// </summary>
-public class TokenValidatedContext : ResultContext<OAuth2IntrospectionOptions>
+public class TokenValidatedContext(
+    HttpContext context,
+    AuthenticationScheme scheme,
+    OAuth2IntrospectionOptions options,
+    string securityToken)
+    : ResultContext<OAuth2IntrospectionOptions>(context, scheme, options)
 {
-    /// <summary>
-    /// ctor
-    /// </summary>
-    public TokenValidatedContext(
-        HttpContext context,
-        AuthenticationScheme scheme,
-        OAuth2IntrospectionOptions options)
-        : base(context, scheme, options) { }
-
     /// <summary>
     /// The security token
     /// </summary>
-    public string SecurityToken { get; set; }
+    public string SecurityToken => securityToken;
 }

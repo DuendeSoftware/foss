@@ -15,7 +15,7 @@ public static class TokenRetrieval
     /// Reads the token from the authorization header.
     /// </summary>
     /// <param name="scheme">The scheme (defaults to Bearer).</param>
-    public static Func<HttpRequest, string> FromAuthorizationHeader(
+    public static Func<HttpRequest, string?> FromAuthorizationHeader(
         string scheme = OAuth2IntrospectionDefaults.AuthenticationScheme)
     {
         var schemePrefix = scheme + " ";
@@ -42,7 +42,7 @@ public static class TokenRetrieval
     /// Reads the token from a query string parameter.
     /// </summary>
     /// <param name="name">The name (defaults to access_token).</param>
-    public static Func<HttpRequest, string> FromQueryString(string name = "access_token") => request =>
+    public static Func<HttpRequest, string?> FromQueryString(string name = "access_token") => request =>
     {
         if (request.Query.TryGetValue(name, out var value) && value.Count > 0)
         {

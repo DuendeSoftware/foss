@@ -6,7 +6,6 @@
     <PackageId>Duende.AspNetCore.Authentication.OAuth2Introspection</PackageId>
     <Description>ASP.NET Core authentication handler for validating tokens using OAuth 2.0 introspection</Description>
     <PackageTags>OAuth2;OAuth 2.0;Introspection;Security;Identity;IdentityServer</PackageTags>
-    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

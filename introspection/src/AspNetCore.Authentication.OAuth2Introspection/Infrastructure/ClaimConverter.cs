@@ -17,7 +17,7 @@ public class ClaimConverter : JsonConverter<Claim>
     public override Claim Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 #pragma warning restore IL2046
     {
-        var source = JsonSerializer.Deserialize<ClaimLite>(ref reader, options);
+        var source = JsonSerializer.Deserialize<ClaimLite>(ref reader, options)!;
         var target = new Claim(source.Type, source.Value);
 
         return target;

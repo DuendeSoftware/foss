@@ -23,27 +23,27 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// Sets the base-path of the token provider.
     /// If set, the OpenID Connect discovery document will be used to find the introspection endpoint.
     /// </summary>
-    public string Authority { get; set; }
+    public string? Authority { get; set; }
 
     /// <summary>
     /// Sets the URL of the introspection endpoint.
     /// If set, Authority is ignored.
     /// </summary>
-    public string IntrospectionEndpoint { get; set; }
+    public string? IntrospectionEndpoint { get; set; }
 
     /// <summary>
     /// Specifies the id of the introspection client (required).
     /// </summary>
-    public string ClientId { get; set; }
+    public string? ClientId { get; set; }
 
     /// <summary>
     /// Specifies the shared secret of the introspection client.
     /// </summary>
-    public string ClientSecret { get; set; }
+    public string? ClientSecret { get; set; }
 
-    internal readonly SemaphoreSlim AssertionUpdateLock = new SemaphoreSlim(1, 1);
+    internal readonly SemaphoreSlim AssertionUpdateLock = new(1, 1);
 
-    internal ClientAssertion ClientAssertion { get; set; }
+    internal ClientAssertion? ClientAssertion { get; set; }
 
     internal DateTime ClientAssertionExpirationTime { get; set; }
 
@@ -77,12 +77,12 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// If not set, the authentication scheme name is used as the authentication
     /// type (defaults to null).
     /// </summary>
-    public string AuthenticationType { get; set; }
+    public string? AuthenticationType { get; set; }
 
     /// <summary>
     /// Specifies the policy for the discovery client
     /// </summary>
-    public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
+    public DiscoveryPolicy DiscoveryPolicy { get; set; } = new();
 
     /// <summary>
     /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
@@ -117,18 +117,18 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// <summary>
     /// Specifies the method how to retrieve the token from the HTTP request
     /// </summary>
-    public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
+    public Func<HttpRequest, string?> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
 
     /// <summary>
     /// Gets or sets the <see cref="OAuth2IntrospectionEvents"/> used to handle authentication events.
     /// </summary>
     public new OAuth2IntrospectionEvents Events
     {
-        get => (OAuth2IntrospectionEvents)base.Events;
+        get => (OAuth2IntrospectionEvents)base.Events!;
         set => base.Events = value;
     }
 
-    internal AsyncLazy<HttpClient> IntrospectionClient { get; set; }
+    internal AsyncLazy<HttpClient> IntrospectionClient { get; set; } = null!;
 
     /// <summary>
     /// Check that the options are valid. Should throw an exception if things are not ok.
@@ -146,11 +146,6 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
         if (Authority.IsMissing() && IntrospectionEndpoint.IsMissing())
         {
             throw new InvalidOperationException("You must either set Authority or IntrospectionEndpoint");
-        }
-
-        if (TokenRetriever == null)
-        {
-            throw new ArgumentException("TokenRetriever must be set", nameof(TokenRetriever));
         }
     }
 }

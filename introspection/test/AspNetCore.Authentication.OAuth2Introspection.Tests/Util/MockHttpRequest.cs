@@ -7,23 +7,23 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 
 internal class MockHttpRequest : HttpRequest
 {
-    public override Stream Body { get; set; }
+    public override Stream Body { get; set; } = null!;
     public override long? ContentLength { get; set; }
-    public override string ContentType { get; set; }
-    public override IRequestCookieCollection Cookies { get; set; }
-    public override IFormCollection Form { get; set; }
-    public override bool HasFormContentType { get; }
+    public override string? ContentType { get; set; }
+    public override IRequestCookieCollection Cookies { get; set; } = null!;
+    public override IFormCollection Form { get; set; } = null!;
+    public override bool HasFormContentType { get; } = false;
     public override IHeaderDictionary Headers { get; } = new HeaderDictionary();
     public override HostString Host { get; set; }
-    public override HttpContext HttpContext { get; }
+    public override HttpContext HttpContext { get; } = null!;
     public override bool IsHttps { get; set; }
-    public override string Method { get; set; }
+    public override string Method { get; set; } = null!;
     public override PathString Path { get; set; }
     public override PathString PathBase { get; set; }
-    public override string Protocol { get; set; }
-    public override IQueryCollection Query { get; set; }
+    public override string Protocol { get; set; } = null!;
+    public override IQueryCollection Query { get; set; } = null!;
     public override QueryString QueryString { get; set; }
-    public override string Scheme { get; set; }
+    public override string Scheme { get; set; } = null!;
 
     public override Task<IFormCollection> ReadFormAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

@@ -21,7 +21,7 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 /// </summary>
 public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
 {
-    private readonly IDistributedCache _cache;
+    private readonly IDistributedCache? _cache;
     private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
     private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
@@ -38,7 +38,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         IOptionsMonitor<OAuth2IntrospectionOptions> options,
         UrlEncoder urlEncoder,
         ILoggerFactory loggerFactory,
-        IDistributedCache cache = null)
+        IDistributedCache? cache = null)
         : base(options, loggerFactory, urlEncoder)
     {
         _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
@@ -51,7 +51,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
     /// </summary>
     protected new OAuth2IntrospectionEvents Events
     {
-        get => (OAuth2IntrospectionEvents)base.Events;
+        get => (OAuth2IntrospectionEvents)base.Events!;
         set => base.Events = value;
     }
 
@@ -84,7 +84,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         }
 
         // if caching is enable - let's check if we have a cached introspection
-        if (Options.EnableCaching)
+        if (Options.EnableCaching && _cache is not null)
         {
             var claims = await _cache.GetClaimsAsync(Options, token).ConfigureAwait(false);
             if (claims != null)
@@ -118,13 +118,13 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
             if (response.IsError)
             {
-                Log.IntrospectionError(_logger, response.Error, null);
+                Log.IntrospectionError(_logger, response.Error!, null);
                 return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error, Context, Scheme, Events, Options);
             }
 
             if (response.IsActive)
             {
-                if (Options.EnableCaching)
+                if (Options.EnableCaching && _cache is not null)
                 {
                     await _cache.SetClaimsAsync(Options, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                 }
@@ -133,7 +133,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             }
             else
             {
-                if (Options.EnableCaching)
+                if (Options.EnableCaching && _cache is not null)
                 {
                     // add an exp claim - otherwise caching will not work
                     var claimsWithExp = response.Claims.ToList();
@@ -159,10 +159,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         OAuth2IntrospectionEvents events,
         OAuth2IntrospectionOptions options)
     {
-        var authenticationFailedContext = new AuthenticationFailedContext(httpContext, scheme, options)
-        {
-            Error = error
-        };
+        var authenticationFailedContext = new AuthenticationFailedContext(httpContext, scheme, options, error);
 
         await events.AuthenticationFailed(authenticationFailedContext);
 
@@ -179,10 +176,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
         using var request = await CreateTokenIntrospectionRequest(token, context, scheme, events, options);
 
-        var requestSendingContext = new SendingRequestContext(context, scheme, options)
-        {
-            TokenIntrospectionRequest = request,
-        };
+        var requestSendingContext = new SendingRequestContext(context, scheme, options, request);
 
         await events.SendingRequest(requestSendingContext);
 
@@ -196,19 +190,16 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         OAuth2IntrospectionEvents events,
         OAuth2IntrospectionOptions options)
     {
+        var clientAssertion = options.ClientAssertion ?? new ClientAssertion();
         if (options.ClientSecret == null && options.ClientAssertionExpirationTime <= DateTime.UtcNow)
         {
             await options.AssertionUpdateLock.WaitAsync();
-
             try
             {
                 if (options.ClientAssertionExpirationTime <= DateTime.UtcNow)
                 {
-                    var updateClientAssertionContext = new UpdateClientAssertionContext(context, scheme, options)
-                    {
-                        ClientAssertion = options.ClientAssertion ?? new ClientAssertion()
-                    };
-
+                    var updateClientAssertionContext =
+                        new UpdateClientAssertionContext(context, scheme, options, clientAssertion);
                     await events.UpdateClientAssertion(updateClientAssertionContext);
 
                     options.ClientAssertion = updateClientAssertionContext.ClientAssertion;
@@ -227,9 +218,9 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             Token = token,
             TokenTypeHint = options.TokenTypeHint,
             Address = options.IntrospectionEndpoint,
-            ClientId = options.ClientId,
+            ClientId = options.ClientId!,
             ClientSecret = options.ClientSecret,
-            ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
+            ClientAssertion = clientAssertion,
             ClientCredentialStyle = options.ClientCredentialStyle,
             AuthorizationHeaderStyle = options.AuthorizationHeaderStyle,
         };
@@ -247,10 +238,9 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         var id = new ClaimsIdentity(claims, authenticationType, options.NameClaimType, options.RoleClaimType);
         var principal = new ClaimsPrincipal(id);
 
-        var tokenValidatedContext = new TokenValidatedContext(httpContext, scheme, options)
+        var tokenValidatedContext = new TokenValidatedContext(httpContext, scheme, options, token)
         {
             Principal = principal,
-            SecurityToken = token
         };
 
         await events.TokenValidated(tokenValidatedContext);
@@ -263,11 +253,15 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         {
             tokenValidatedContext.Properties.StoreTokens(new[]
             {
-                new AuthenticationToken { Name = "access_token", Value = token }
+                new AuthenticationToken
+                {
+                    Name = "access_token",
+                    Value = token
+                }
             });
         }
 
         tokenValidatedContext.Success();
-        return tokenValidatedContext.Result;
+        return tokenValidatedContext.Result!;
     }
 }
