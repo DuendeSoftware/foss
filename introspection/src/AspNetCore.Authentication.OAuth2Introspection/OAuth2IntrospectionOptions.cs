@@ -82,7 +82,7 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// <summary>
     /// Specifies the policy for the discovery client
     /// </summary>
-    public DiscoveryPolicy DiscoveryPolicy { get; set; } = new DiscoveryPolicy();
+    public DiscoveryPolicy DiscoveryPolicy { get; set; } = new();
 
     /// <summary>
     /// Specifies whether tokens that contain dots (most likely a JWT) are skipped
@@ -117,7 +117,7 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// <summary>
     /// Specifies the method how to retrieve the token from the HTTP request
     /// </summary>
-    public Func<HttpRequest, string> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
+    public Func<HttpRequest, string?> TokenRetriever { get; set; } = TokenRetrieval.FromAuthorizationHeader();
 
     /// <summary>
     /// Gets or sets the <see cref="OAuth2IntrospectionEvents"/> used to handle authentication events.
@@ -128,7 +128,7 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
         set => base.Events = value;
     }
 
-    internal AsyncLazy<HttpClient> IntrospectionClient { get; set; }
+    internal AsyncLazy<HttpClient> IntrospectionClient { get; set; } = null!;
 
     /// <summary>
     /// Check that the options are valid. Should throw an exception if things are not ok.

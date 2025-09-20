@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -16,10 +17,12 @@ internal static class StringExtensions
             : input + "/";
 
     [DebuggerStepThrough]
-    public static bool IsMissing(this string? value) => string.IsNullOrWhiteSpace(value);
+    public static bool IsMissing([NotNullWhen(false)]this string? value)
+        => string.IsNullOrWhiteSpace(value);
 
     [DebuggerStepThrough]
-    public static bool IsPresent(this string? value) => !string.IsNullOrWhiteSpace(value);
+    public static bool IsPresent([NotNullWhen(true)] this string? value)
+        => !string.IsNullOrWhiteSpace(value);
 
     internal static string Sha256(this string input)
     {

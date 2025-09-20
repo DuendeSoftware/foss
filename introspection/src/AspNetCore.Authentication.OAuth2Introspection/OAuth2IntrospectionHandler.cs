@@ -200,7 +200,6 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
                 {
                     var updateClientAssertionContext =
                         new UpdateClientAssertionContext(context, scheme, options, clientAssertion);
-                   
                     await events.UpdateClientAssertion(updateClientAssertionContext);
 
                     options.ClientAssertion = updateClientAssertionContext.ClientAssertion;
@@ -219,7 +218,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             Token = token,
             TokenTypeHint = options.TokenTypeHint,
             Address = options.IntrospectionEndpoint,
-            ClientId = options.ClientId,
+            ClientId = options.ClientId!,
             ClientSecret = options.ClientSecret,
             ClientAssertion = clientAssertion,
             ClientCredentialStyle = options.ClientCredentialStyle,
