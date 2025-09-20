@@ -21,7 +21,7 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 /// </summary>
 public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
 {
-    private readonly IDistributedCache _cache;
+    private readonly IDistributedCache? _cache;
     private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
     private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
@@ -38,7 +38,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         IOptionsMonitor<OAuth2IntrospectionOptions> options,
         UrlEncoder urlEncoder,
         ILoggerFactory loggerFactory,
-        IDistributedCache cache = null)
+        IDistributedCache? cache = null)
         : base(options, loggerFactory, urlEncoder)
     {
         _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
@@ -51,7 +51,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
     /// </summary>
     protected new OAuth2IntrospectionEvents Events
     {
-        get => (OAuth2IntrospectionEvents)base.Events;
+        get => (OAuth2IntrospectionEvents)base.Events!;
         set => base.Events = value;
     }
 
@@ -84,7 +84,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         }
 
         // if caching is enable - let's check if we have a cached introspection
-        if (Options.EnableCaching)
+        if (Options.EnableCaching && _cache is not null)
         {
             var claims = await _cache.GetClaimsAsync(Options, token).ConfigureAwait(false);
             if (claims != null)
@@ -118,13 +118,13 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
             if (response.IsError)
             {
-                Log.IntrospectionError(_logger, response.Error, null);
+                Log.IntrospectionError(_logger, response.Error!, null);
                 return await ReportNonSuccessAndReturn("Error returned from introspection endpoint: " + response.Error, Context, Scheme, Events, Options);
             }
 
             if (response.IsActive)
             {
-                if (Options.EnableCaching)
+                if (Options.EnableCaching && _cache is not null)
                 {
                     await _cache.SetClaimsAsync(Options, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
                 }
@@ -133,7 +133,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             }
             else
             {
-                if (Options.EnableCaching)
+                if (Options.EnableCaching && _cache is not null)
                 {
                     // add an exp claim - otherwise caching will not work
                     var claimsWithExp = response.Claims.ToList();
@@ -263,11 +263,15 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         {
             tokenValidatedContext.Properties.StoreTokens(new[]
             {
-                new AuthenticationToken { Name = "access_token", Value = token }
+                new AuthenticationToken
+                {
+                    Name = "access_token",
+                    Value = token
+                }
             });
         }
 
         tokenValidatedContext.Success();
-        return tokenValidatedContext.Result;
+        return tokenValidatedContext.Result!;
     }
 }

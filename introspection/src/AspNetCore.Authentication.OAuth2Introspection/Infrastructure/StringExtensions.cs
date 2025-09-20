@@ -11,20 +11,15 @@ internal static class StringExtensions
 {
     [DebuggerStepThrough]
     public static string EnsureTrailingSlash(this string input)
-    {
-        if (!input.EndsWith("/"))
-        {
-            return input + "/";
-        }
-
-        return input;
-    }
+        => input.EndsWith("/")
+            ? input
+            : input + "/";
 
     [DebuggerStepThrough]
-    public static bool IsMissing(this string value) => string.IsNullOrWhiteSpace(value);
+    public static bool IsMissing(this string? value) => string.IsNullOrWhiteSpace(value);
 
     [DebuggerStepThrough]
-    public static bool IsPresent(this string value) => !string.IsNullOrWhiteSpace(value);
+    public static bool IsPresent(this string? value) => !string.IsNullOrWhiteSpace(value);
 
     internal static string Sha256(this string input)
     {
@@ -33,12 +28,10 @@ internal static class StringExtensions
             return string.Empty;
         }
 
-        using (var sha = SHA256.Create())
-        {
-            var bytes = Encoding.UTF8.GetBytes(input);
-            var hash = sha.ComputeHash(bytes);
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(input);
+        var hash = sha.ComputeHash(bytes);
 
-            return Convert.ToBase64String(hash);
-        }
+        return Convert.ToBase64String(hash);
     }
 }

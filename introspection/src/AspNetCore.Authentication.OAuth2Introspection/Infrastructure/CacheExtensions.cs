@@ -29,24 +29,29 @@ internal static class CacheExtensions
 
     [RequiresUnreferencedCode(
         "Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(ReadOnlySpan<Byte>, JsonSerializerOptions)")]
-    public static async Task<IEnumerable<Claim>> GetClaimsAsync(this IDistributedCache cache,
-        OAuth2IntrospectionOptions options, string token)
+    public static async Task<IEnumerable<Claim>?> GetClaimsAsync(
+        this IDistributedCache cache,
+        OAuth2IntrospectionOptions options,
+        string token)
     {
         var cacheKey = options.CacheKeyGenerator(options, token);
         var bytes = await cache.GetAsync(cacheKey).ConfigureAwait(false);
 
-        if (bytes == null)
-        {
-            return null;
-        }
+        var claims = bytes == null
+            ? null
+            : JsonSerializer.Deserialize<IEnumerable<Claim>>(bytes, Options);
 
-        return JsonSerializer.Deserialize<IEnumerable<Claim>>(bytes, Options);
+        return claims;
     }
 
-    [RequiresUnreferencedCode(
-        "Calls System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<TValue>(TValue, JsonSerializerOptions)")]
-    public static async Task SetClaimsAsync(this IDistributedCache cache, OAuth2IntrospectionOptions options,
-        string token, IEnumerable<Claim> claims, TimeSpan duration, ILogger logger)
+    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<TValue>(TValue, JsonSerializerOptions)")]
+    public static async Task SetClaimsAsync(
+        this IDistributedCache cache,
+        OAuth2IntrospectionOptions options,
+        string token,
+        IEnumerable<Claim> claims,
+        TimeSpan duration,
+        ILogger logger)
     {
         var expClaim = claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Expiration);
         var now = DateTimeOffset.UtcNow;

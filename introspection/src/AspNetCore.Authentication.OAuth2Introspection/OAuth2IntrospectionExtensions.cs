@@ -36,9 +36,10 @@ public static class OAuth2IntrospectionExtensions
     /// <param name="services">The services.</param>
     /// <param name="configureOptions">The configure options.</param>
     /// <returns></returns>
-    public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder services, Action<OAuth2IntrospectionOptions> configureOptions)
+    public static AuthenticationBuilder AddOAuth2Introspection(
+        this AuthenticationBuilder services,
+        Action<OAuth2IntrospectionOptions>? configureOptions)
         => services.AddOAuth2Introspection(OAuth2IntrospectionDefaults.AuthenticationScheme, configureOptions: configureOptions);
-
 
     /// <summary>
     /// Adds the OAuth 2.0 introspection handler.
@@ -47,11 +48,16 @@ public static class OAuth2IntrospectionExtensions
     /// <param name="authenticationScheme">The authentication scheme.</param>
     /// <param name="configureOptions">The configure options.</param>
     /// <returns></returns>
-    public static AuthenticationBuilder AddOAuth2Introspection(this AuthenticationBuilder builder, string authenticationScheme, Action<OAuth2IntrospectionOptions> configureOptions)
+    public static AuthenticationBuilder AddOAuth2Introspection(
+        this AuthenticationBuilder builder,
+        string authenticationScheme,
+        Action<OAuth2IntrospectionOptions>? configureOptions)
     {
         builder.Services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
-
-        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>());
-        return builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, configureOptions);
+        var serviceDescriptor = ServiceDescriptor
+            .Singleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>();
+        builder.Services.TryAddEnumerable(serviceDescriptor);
+        builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, configureOptions);
+        return builder;
     }
 }
