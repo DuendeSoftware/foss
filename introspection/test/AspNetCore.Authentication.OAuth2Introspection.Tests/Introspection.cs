@@ -161,11 +161,9 @@ public class Introspection
     [Theory]
     [InlineData(5000, "testAssertion1", "testAssertion1")]
     [InlineData(-5000, "testAssertion1", "testAssertion2")]
-    public Task ActiveToken_With_ClientAssertion(int ttl, string assertion1, string assertion2)
+    public async Task ActiveToken_With_ClientAssertion(int ttl, string assertion1, string assertion2)
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-        throw new NotImplementedException("Fix later");
-        /*var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
         var count = 0;
 
         var client = PipelineFactory.CreateClient(o =>
@@ -203,7 +201,7 @@ public class Introspection
         request = handler.LastRequest;
         request.ShouldContainKeyAndValue("client_id", clientId);
         request.ShouldContainKeyAndValue("client_assertion_type", "testType");
-        request.ShouldContainKeyAndValue("client_assertion", assertion2);*/
+        request.ShouldContainKeyAndValue("client_assertion", assertion2);
     }
 
     [Fact]

@@ -20,10 +20,10 @@ public class UpdateClientAssertionContext(
     /// <summary>
     /// The client assertion
     /// </summary>
-    public ClientAssertion ClientAssertion => clientAssertion;
+    public ClientAssertion ClientAssertion { get; set; } = clientAssertion;
 
     /// <summary>
     /// The client assertion expiration time
     /// </summary>
-    public DateTime ClientAssertionExpirationTime => Options.ClientAssertionExpirationTime;
+    public DateTime ClientAssertionExpirationTime { get; set; } = options.ClientAssertionExpirationTime;
 }

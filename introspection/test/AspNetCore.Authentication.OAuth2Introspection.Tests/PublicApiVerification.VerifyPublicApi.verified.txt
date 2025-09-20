@@ -2,22 +2,22 @@
 {
     public class AuthenticationFailedContext : Microsoft.AspNetCore.Authentication.ResultContext<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>
     {
-        public AuthenticationFailedContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options) { }
-        public string Error { get; set; }
+        public AuthenticationFailedContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options, string error) { }
+        public string Error { get; }
     }
     public class SendingRequestContext : Microsoft.AspNetCore.Authentication.BaseContext<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>
     {
-        public SendingRequestContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options) { }
-        public Duende.IdentityModel.Client.TokenIntrospectionRequest TokenIntrospectionRequest { get; set; }
+        public SendingRequestContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options, Duende.IdentityModel.Client.TokenIntrospectionRequest tokenIntrospectionRequest) { }
+        public Duende.IdentityModel.Client.TokenIntrospectionRequest TokenIntrospectionRequest { get; }
     }
     public class TokenValidatedContext : Microsoft.AspNetCore.Authentication.ResultContext<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>
     {
-        public TokenValidatedContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options) { }
-        public string SecurityToken { get; set; }
+        public TokenValidatedContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options, string securityToken) { }
+        public string SecurityToken { get; }
     }
     public class UpdateClientAssertionContext : Microsoft.AspNetCore.Authentication.ResultContext<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>
     {
-        public UpdateClientAssertionContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options) { }
+        public UpdateClientAssertionContext(Microsoft.AspNetCore.Http.HttpContext context, Microsoft.AspNetCore.Authentication.AuthenticationScheme scheme, Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions options, Duende.IdentityModel.Client.ClientAssertion clientAssertion) { }
         public Duende.IdentityModel.Client.ClientAssertion ClientAssertion { get; set; }
         public System.DateTime ClientAssertionExpirationTime { get; set; }
     }
@@ -41,13 +41,13 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Infrastructure
     public class ClaimLite
     {
         public ClaimLite() { }
-        public string Type { get; set; }
-        public string Value { get; set; }
+        public required string Type { get; init; }
+        public required string Value { get; init; }
     }
     public static class TokenRetrieval
     {
-        public static System.Func<Microsoft.AspNetCore.Http.HttpRequest, string> FromAuthorizationHeader(string scheme = "Bearer") { }
-        public static System.Func<Microsoft.AspNetCore.Http.HttpRequest, string> FromQueryString(string name = "access_token") { }
+        public static System.Func<Microsoft.AspNetCore.Http.HttpRequest, string?> FromAuthorizationHeader(string scheme = "Bearer") { }
+        public static System.Func<Microsoft.AspNetCore.Http.HttpRequest, string?> FromQueryString(string name = "access_token") { }
     }
 }
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection
@@ -74,12 +74,12 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection
     {
         public static Microsoft.AspNetCore.Authentication.AuthenticationBuilder AddOAuth2Introspection(this Microsoft.AspNetCore.Authentication.AuthenticationBuilder builder) { }
         public static Microsoft.AspNetCore.Authentication.AuthenticationBuilder AddOAuth2Introspection(this Microsoft.AspNetCore.Authentication.AuthenticationBuilder builder, string authenticationScheme) { }
-        public static Microsoft.AspNetCore.Authentication.AuthenticationBuilder AddOAuth2Introspection(this Microsoft.AspNetCore.Authentication.AuthenticationBuilder services, System.Action<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions> configureOptions) { }
-        public static Microsoft.AspNetCore.Authentication.AuthenticationBuilder AddOAuth2Introspection(this Microsoft.AspNetCore.Authentication.AuthenticationBuilder builder, string authenticationScheme, System.Action<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions> configureOptions) { }
+        public static Microsoft.AspNetCore.Authentication.AuthenticationBuilder AddOAuth2Introspection(this Microsoft.AspNetCore.Authentication.AuthenticationBuilder services, System.Action<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>? configureOptions) { }
+        public static Microsoft.AspNetCore.Authentication.AuthenticationBuilder AddOAuth2Introspection(this Microsoft.AspNetCore.Authentication.AuthenticationBuilder builder, string authenticationScheme, System.Action<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>? configureOptions) { }
     }
     public class OAuth2IntrospectionHandler : Microsoft.AspNetCore.Authentication.AuthenticationHandler<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>
     {
-        public OAuth2IntrospectionHandler(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions> options, System.Text.Encodings.Web.UrlEncoder urlEncoder, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, Microsoft.Extensions.Caching.Distributed.IDistributedCache cache = null) { }
+        public OAuth2IntrospectionHandler(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions> options, System.Text.Encodings.Web.UrlEncoder urlEncoder, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, Microsoft.Extensions.Caching.Distributed.IDistributedCache? cache = null) { }
         protected new Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionEvents Events { get; set; }
         protected override System.Threading.Tasks.Task<object> CreateEventsAsync() { }
         [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Calls methods on CacheExtensions that are annotated with RequiresUnreferencedCode" +
@@ -89,24 +89,24 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection
     public class OAuth2IntrospectionOptions : Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions
     {
         public OAuth2IntrospectionOptions() { }
-        public string AuthenticationType { get; set; }
-        public string Authority { get; set; }
+        public string? AuthenticationType { get; set; }
+        public string? Authority { get; set; }
         public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
         public System.TimeSpan CacheDuration { get; set; }
         public System.Func<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions, string, string> CacheKeyGenerator { get; set; }
         public string CacheKeyPrefix { get; set; }
         public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
+        public string? ClientId { get; set; }
+        public string? ClientSecret { get; set; }
         public Duende.IdentityModel.Client.DiscoveryPolicy DiscoveryPolicy { get; set; }
         public bool EnableCaching { get; set; }
         public new Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionEvents Events { get; set; }
-        public string IntrospectionEndpoint { get; set; }
+        public string? IntrospectionEndpoint { get; set; }
         public string NameClaimType { get; set; }
         public string RoleClaimType { get; set; }
         public bool SaveToken { get; set; }
         public bool SkipTokensWithDots { get; set; }
-        public System.Func<Microsoft.AspNetCore.Http.HttpRequest, string> TokenRetriever { get; set; }
+        public System.Func<Microsoft.AspNetCore.Http.HttpRequest, string?> TokenRetriever { get; set; }
         public string TokenTypeHint { get; set; }
         public override void Validate() { }
     }
