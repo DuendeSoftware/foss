@@ -10,24 +10,20 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Context;
 /// <summary>
 /// Context for the UpdateClientAssertion event
 /// </summary>
-public class UpdateClientAssertionContext : ResultContext<OAuth2IntrospectionOptions>
+public class UpdateClientAssertionContext(
+    HttpContext context,
+    AuthenticationScheme scheme,
+    OAuth2IntrospectionOptions options,
+    ClientAssertion clientAssertion)
+    : ResultContext<OAuth2IntrospectionOptions>(context, scheme, options)
 {
-    /// <summary>
-    /// ctor
-    /// </summary>
-    public UpdateClientAssertionContext(
-        HttpContext context,
-        AuthenticationScheme scheme,
-        OAuth2IntrospectionOptions options)
-        : base(context, scheme, options) { }
-
     /// <summary>
     /// The client assertion
     /// </summary>
-    public ClientAssertion ClientAssertion { get; set; }
+    public ClientAssertion ClientAssertion => clientAssertion;
 
     /// <summary>
     /// The client assertion expiration time
     /// </summary>
-    public DateTime ClientAssertionExpirationTime { get; set; }
+    public DateTime ClientAssertionExpirationTime => Options.ClientAssertionExpirationTime;
 }

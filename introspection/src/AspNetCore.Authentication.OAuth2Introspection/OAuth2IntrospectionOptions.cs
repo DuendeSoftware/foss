@@ -122,9 +122,9 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     /// <summary>
     /// Gets or sets the <see cref="OAuth2IntrospectionEvents"/> used to handle authentication events.
     /// </summary>
-    public new OAuth2IntrospectionEvents? Events
+    public new OAuth2IntrospectionEvents Events
     {
-        get => base.Events as OAuth2IntrospectionEvents;
+        get => (OAuth2IntrospectionEvents)base.Events!;
         set => base.Events = value;
     }
 

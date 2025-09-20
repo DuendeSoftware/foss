@@ -9,19 +9,14 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Context;
 /// <summary>
 /// Context for the AuthenticationFailed event
 /// </summary>
-public class AuthenticationFailedContext : ResultContext<OAuth2IntrospectionOptions>
+public class AuthenticationFailedContext(HttpContext context,
+    AuthenticationScheme scheme,
+    OAuth2IntrospectionOptions options,
+    string error)
+    : ResultContext<OAuth2IntrospectionOptions>(context, scheme, options)
 {
-    /// <summary>
-    /// ctor
-    /// </summary>
-    public AuthenticationFailedContext(
-        HttpContext context,
-        AuthenticationScheme scheme,
-        OAuth2IntrospectionOptions options)
-        : base(context, scheme, options) { }
-
     /// <summary>
     /// The error
     /// </summary>
-    public string Error { get; set; }
+    public string Error => error;
 }

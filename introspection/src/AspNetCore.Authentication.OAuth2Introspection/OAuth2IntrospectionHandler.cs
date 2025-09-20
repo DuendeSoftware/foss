@@ -159,10 +159,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         OAuth2IntrospectionEvents events,
         OAuth2IntrospectionOptions options)
     {
-        var authenticationFailedContext = new AuthenticationFailedContext(httpContext, scheme, options)
-        {
-            Error = error
-        };
+        var authenticationFailedContext = new AuthenticationFailedContext(httpContext, scheme, options, error);
 
         await events.AuthenticationFailed(authenticationFailedContext);
 
@@ -179,10 +176,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         var introspectionClient = await options.IntrospectionClient.Value.ConfigureAwait(false);
         using var request = await CreateTokenIntrospectionRequest(token, context, scheme, events, options);
 
-        var requestSendingContext = new SendingRequestContext(context, scheme, options)
-        {
-            TokenIntrospectionRequest = request,
-        };
+        var requestSendingContext = new SendingRequestContext(context, scheme, options, request);
 
         await events.SendingRequest(requestSendingContext);
 
@@ -196,19 +190,17 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         OAuth2IntrospectionEvents events,
         OAuth2IntrospectionOptions options)
     {
+        var clientAssertion = options.ClientAssertion ?? new ClientAssertion();
         if (options.ClientSecret == null && options.ClientAssertionExpirationTime <= DateTime.UtcNow)
         {
             await options.AssertionUpdateLock.WaitAsync();
-
             try
             {
                 if (options.ClientAssertionExpirationTime <= DateTime.UtcNow)
                 {
-                    var updateClientAssertionContext = new UpdateClientAssertionContext(context, scheme, options)
-                    {
-                        ClientAssertion = options.ClientAssertion ?? new ClientAssertion()
-                    };
-
+                    var updateClientAssertionContext =
+                        new UpdateClientAssertionContext(context, scheme, options, clientAssertion);
+                   
                     await events.UpdateClientAssertion(updateClientAssertionContext);
 
                     options.ClientAssertion = updateClientAssertionContext.ClientAssertion;
@@ -229,7 +221,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             Address = options.IntrospectionEndpoint,
             ClientId = options.ClientId,
             ClientSecret = options.ClientSecret,
-            ClientAssertion = options.ClientAssertion ?? new ClientAssertion(),
+            ClientAssertion = clientAssertion,
             ClientCredentialStyle = options.ClientCredentialStyle,
             AuthorizationHeaderStyle = options.AuthorizationHeaderStyle,
         };
@@ -247,10 +239,9 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         var id = new ClaimsIdentity(claims, authenticationType, options.NameClaimType, options.RoleClaimType);
         var principal = new ClaimsPrincipal(id);
 
-        var tokenValidatedContext = new TokenValidatedContext(httpContext, scheme, options)
+        var tokenValidatedContext = new TokenValidatedContext(httpContext, scheme, options, token)
         {
             Principal = principal,
-            SecurityToken = token
         };
 
         await events.TokenValidated(tokenValidatedContext);
