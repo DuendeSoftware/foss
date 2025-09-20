@@ -115,7 +115,7 @@ public class DynamicClientRegistrationDocument
     /// URL using the https scheme to be used in calculating Pseudonymous Identifiers by the OpenID provider.
     /// </summary>
     /// <remarks>
-    /// The URL references a file with a single JSON array of <c>redirect_uri</c> values. 
+    /// The URL references a file with a single JSON array of <c>redirect_uri</c> values.
     /// </remarks>
     [JsonPropertyName(OidcConstants.ClientMetadata.SectorIdentifierUri)]
     public Uri? SectorIdentifierUri { get; set; }
@@ -277,7 +277,7 @@ public class DynamicClientRegistrationDocument
     /// Custom client metadata fields to include in the serialization.
     /// </summary>
     [JsonExtensionData]
-    public IDictionary<string, JsonElement>? Extensions { get; set; } = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+    public IDictionary<string, JsonElement> Extensions { get; set; } = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
 
     [JsonPropertyName(OidcConstants.ClientMetadata.IntrospectionSignedResponseAlgorithm)]
     public string? IntrospectionSignedResponseAlgorithm { get; set; }

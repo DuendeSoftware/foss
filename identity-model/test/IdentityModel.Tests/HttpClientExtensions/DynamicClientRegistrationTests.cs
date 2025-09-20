@@ -166,7 +166,7 @@ public class DynamicClientRegistrationTests
         {
             Address = Endpoint,
             Document = JsonSerializer.Deserialize<DynamicClientRegistrationDocument>(
-                "{\"extension\":\"data\"}")
+                "{\"custom_field\":\"data\"}")
         };
         request.Document.Extensions.ShouldNotBeEmpty();
 
@@ -178,5 +178,32 @@ public class DynamicClientRegistrationTests
 
         // Mostly we just want to make sure that serialization didn't throw
         response.ShouldNotBeNull();
+
+        //ensure the extension made it into the request
+        var requestContent = await handler.Request?.Content?.ReadAsStringAsync()!;
+        var requestContentJson = JsonSerializer.Deserialize<JsonElement>(requestContent);
+        requestContentJson.GetProperty("custom_field").GetString().ShouldBe("data");
+    }
+
+    [Fact]
+    public void Extensions_should_not_be_null_after_deserializing_json_without_custom_client_metadata()
+    {
+        var json = "{}";
+
+        var doc = JsonSerializer.Deserialize<DynamicClientRegistrationDocument>(json);
+
+        doc.Extensions.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Extensions_should_contain_data_after_deserialization()
+    {
+        var json = "{\"custom_field\":\"123\"}";
+
+        var doc = JsonSerializer.Deserialize<DynamicClientRegistrationDocument>(json);
+
+        doc.Extensions.ShouldNotBeEmpty();
+        doc.Extensions.Count.ShouldBe(1);
+        doc.Extensions["custom_field"].GetString().ShouldBe("123");
     }
 }

@@ -933,7 +933,7 @@ namespace Duende.IdentityModel.Client
         [System.Text.Json.Serialization.JsonPropertyName("default_max_age")]
         public int? DefaultMaxAge { get; set; }
         [System.Text.Json.Serialization.JsonExtensionData]
-        public System.Collections.Generic.IDictionary<string, System.Text.Json.JsonElement>? Extensions { get; set; }
+        public System.Collections.Generic.IDictionary<string, System.Text.Json.JsonElement> Extensions { get; set; }
         [System.Text.Json.Serialization.JsonPropertyName("frontchannel_logout_session_required")]
         public bool? FrontChannelLogoutSessionRequired { get; set; }
         [System.Text.Json.Serialization.JsonPropertyName("frontchannel_logout_uri")]
