@@ -1,8 +1,10 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Net;
 using Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 using Duende.IdentityModel.Client;
+using Microsoft.Extensions.Options;
 
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
@@ -38,57 +40,61 @@ public class Configuration
     }
 
     [Fact]
-    public void Caching_With_Caching_Service()
+    public async Task Caching_With_Caching_Service()
     {
-        var act = () => PipelineFactory.CreateClient(options =>
+        var act = async () =>
         {
-            options.IntrospectionEndpoint = "http://endpoint";
-            options.ClientId = "scope";
-            options.EnableCaching = true;
+            await using var fixture = await TestServerFixture.Start(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.ClientId = "scope";
+                options.EnableCaching = true;
+            }, addCaching: true, ct: _ct);
+        };
 
-        }, addCaching: true).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldNotThrow();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
-    public void Caching_Without_Caching_Service()
+    public async Task Caching_Without_Caching_Service()
     {
-        var act = () => PipelineFactory.CreateClient(options =>
+        var act = async () =>
         {
-            options.IntrospectionEndpoint = "http://endpoint";
-            options.ClientId = "scope";
-            options.EnableCaching = true;
-
-        }).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldThrow<ArgumentException>()
-            .Message.ShouldStartWith("Caching is enabled, but no IDistributedCache is found in the services collection");
+            await using var fixture = await TestServerFixture.Start(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.ClientId = "scope";
+                options.EnableCaching = true;
+            }, ct: _ct);
+        };
+        var exception = await act.ShouldThrowAsync<ArgumentException>();
+        exception.Message.ShouldStartWith("Caching is enabled, but no IDistributedCache is found in the services collection");
     }
 
     [Fact]
-    public void No_ClientName_But_Introspection_Handler()
+    public async Task No_ClientName_But_Introspection_Handler()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-        var act = () => PipelineFactory.CreateClient(options =>
+        await using var fixture = await TestServerFixture.Start(options =>
         {
             options.IntrospectionEndpoint = "http://endpoint";
-        }, handler).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldNotThrow();
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
+        var response = await client.GetAsync("", _ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public void Authority_No_Network_Delay_Load()
+    public async Task Authority_No_Network_Delay_Load()
     {
-        var act = () => PipelineFactory.CreateClient(options =>
+        await using var fixture = await TestServerFixture.Start(options =>
         {
-            options.Authority = "http://localhost:6666";
+            options.IntrospectionEndpoint = "http://endpoint";
             options.ClientId = "scope";
-        }).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldNotThrow();
+        }, ct: _ct);
+        using var client = fixture.CreateClient();
+        var response = await client.GetAsync("", _ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -96,18 +102,17 @@ public class Configuration
     {
         OAuth2IntrospectionOptions ops = null!;
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-        var client = PipelineFactory.CreateClient(options =>
+        await using var fixture = await TestServerFixture.Start(options =>
         {
             options.Authority = "https://authority.com/";
             options.ClientId = "scope";
-
             options.DiscoveryPolicy.RequireKeySet = false;
             ops = options;
-        }, handler);
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
 
         client.SetBearerToken("token");
-        await client.GetAsync("http://server/api");
+        await client.GetAsync("", _ct);
 
         ops.IntrospectionEndpoint.ShouldBe("https://authority.com/introspection_endpoint");
     }
