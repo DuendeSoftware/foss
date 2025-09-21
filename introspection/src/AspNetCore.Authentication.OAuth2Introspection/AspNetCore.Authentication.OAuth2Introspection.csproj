@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <RootNamespace>Duende.AspNetCore.Authentication.OAuth2Introspection</RootNamespace>
     <AssemblyName>Duende.AspNetCore.Authentication.OAuth2Introspection</AssemblyName>
     <PackageId>Duende.AspNetCore.Authentication.OAuth2Introspection</PackageId>
