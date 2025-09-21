@@ -6,7 +6,6 @@ using System.Text.Json;
 using Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,28 +13,29 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 public class Introspection
 {
-
-    private static readonly string clientId = "client";
-    private static readonly string clientSecret = "secret";
+    private static readonly string ClientId = "client";
+    private static readonly string ClientSecret = "secret";
 
     private readonly Action<OAuth2IntrospectionOptions> _options = o =>
     {
         o.Authority = "https://authority.com";
         o.DiscoveryPolicy.RequireKeySet = false;
 
-        o.ClientId = clientId;
-        o.ClientSecret = clientSecret;
+        o.ClientId = ClientId;
+        o.ClientSecret = ClientSecret;
     };
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
 
     [Fact]
     public async Task Unauthorized_Client()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Unauthorized);
-
-        var client = PipelineFactory.CreateClient(o => _options(o), handler);
+        await using var fixture = await TestServerFixture.Start(_options, handler, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
+
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
@@ -43,16 +43,16 @@ public class Introspection
     public async Task ActiveToken()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-        var client = PipelineFactory.CreateClient(_options, handler);
+        await using var fixture = await TestServerFixture.Start(_options, handler, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var request = handler.LastRequest;
-        request.ShouldContainKeyAndValue("client_id", clientId);
-        request.ShouldContainKeyAndValue("client_secret", clientSecret);
+        request.ShouldContainKeyAndValue("client_id", ClientId);
+        request.ShouldContainKeyAndValue("client_secret", ClientSecret);
     }
 
     [Theory]
@@ -66,10 +66,8 @@ public class Introspection
         var waitForTheFirstIntrospectionToStart = new ManualResetEvent(initialState: false);
         var waitForTheSecondRequestToStart = new ManualResetEvent(initialState: false);
         var handler = new IntrospectionEndpointHandler(behavior);
-
         var requestCount = 0;
-
-        var messageHandler = PipelineFactory.CreateHandler(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
 
@@ -81,26 +79,26 @@ public class Introspection
                 {
                     waitForTheSecondRequestToStart.WaitOne();
                     waitForTheFirstIntrospectionToStart.Set();
-                    await Task.Delay(200); // wait for second request to reach the IntrospectionDictionary
+                    await Task.Delay(200, _ct); // wait for second request to reach the IntrospectionDictionary
                 }
             };
-        }, handler);
+        }, handler, ct: _ct);
 
-        var client1 = new HttpClient(messageHandler);
+        using var client1 = fixture.CreateClient();
         var request1 = Task.Run(async () =>
         {
             client1.SetBearerToken(token);
-            return await client1.GetAsync("http://test");
-        });
+            return await client1.GetAsync("", _ct);
+        }, _ct);
 
-        var client2 = new HttpClient(messageHandler);
+        using var client2 = fixture.CreateClient();
         var request2 = Task.Run(async () =>
         {
             waitForTheSecondRequestToStart.Set();
             waitForTheFirstIntrospectionToStart.WaitOne();
             client2.SetBearerToken(token);
-            return await client2.GetAsync("http://test");
-        });
+            return await client2.GetAsync("", _ct);
+        }, _ct);
 
         await Task.WhenAll(request1, request2);
 
@@ -121,36 +119,34 @@ public class Introspection
         var waitForTheFirstIntrospectionToStart = new ManualResetEvent(initialState: false);
         var waitForTheSecondRequestToStart = new ManualResetEvent(initialState: false);
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-        var messageHandler = PipelineFactory.CreateHandler(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
-            o.Events.OnSendingRequest = async context =>
+            o.Events.OnSendingRequest = async _ =>
             {
                 waitForTheSecondRequestToStart.WaitOne();
                 waitForTheFirstIntrospectionToStart.Set();
-                cts.Cancel();
-                await Task.Delay(200); // wait for second request to reach the IntrospectionDictionary
+                await cts.CancelAsync();
+                await Task.Delay(200, _ct); // wait for second request to reach the IntrospectionDictionary
             };
-        }, handler);
+        }, handler, ct: _ct);
 
-        var client1 = new HttpClient(messageHandler);
+        using var client1 = fixture.CreateClient();
         var request1 = Task.Run(async () =>
         {
             client1.SetBearerToken(token);
-            var doRequest = () => client1.GetAsync("http://test", cts.Token);
+            var doRequest = () => client1.GetAsync("", cts.Token);
             await doRequest.ShouldThrowAsync<OperationCanceledException>();
-        });
+        }, _ct);
 
-        var client2 = new HttpClient(messageHandler);
+        using var client2 = fixture.CreateClient();
         var request2 = Task.Run(async () =>
         {
             waitForTheSecondRequestToStart.Set();
             waitForTheFirstIntrospectionToStart.WaitOne();
             client2.SetBearerToken(token);
-            return await client2.GetAsync("http://test");
-        });
+            return await client2.GetAsync("", _ct);
+        }, _ct);
 
         await Task.WhenAll(request1, request2);
 
@@ -165,12 +161,10 @@ public class Introspection
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
         var count = 0;
-
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
             o.ClientSecret = null;
-
             o.Events.OnUpdateClientAssertion = e =>
             {
                 count++;
@@ -180,26 +174,26 @@ public class Introspection
                     Value = "testAssertion" + count
                 };
                 e.ClientAssertionExpirationTime = DateTime.UtcNow.AddMilliseconds(ttl);
-
                 return Task.CompletedTask;
             };
-        }, handler);
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var request = handler.LastRequest;
-        request.ShouldContainKeyAndValue("client_id", clientId);
+        request.ShouldContainKeyAndValue("client_id", ClientId);
         request.ShouldContainKeyAndValue("client_assertion_type", "testType");
         request.ShouldContainKeyAndValue("client_assertion", assertion1);
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         request = handler.LastRequest;
-        request.ShouldContainKeyAndValue("client_id", clientId);
+        request.ShouldContainKeyAndValue("client_id", ClientId);
         request.ShouldContainKeyAndValue("client_assertion_type", "testType");
         request.ShouldContainKeyAndValue("client_assertion", assertion2);
     }
@@ -210,30 +204,25 @@ public class Introspection
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
         bool? validatedCalled = null;
         bool? failureCalled = null;
-
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.Events.OnTokenValidated = e =>
             {
                 validatedCalled = true;
-
                 return Task.CompletedTask;
             };
 
             o.Events.OnAuthenticationFailed = e =>
             {
                 failureCalled = true;
-
                 return Task.CompletedTask;
             };
-
-        }, handler);
-
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
 
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         validatedCalled.HasValue.ShouldBeTrue();
@@ -245,21 +234,20 @@ public class Introspection
     public async Task ActiveToken_With_Caching_Ttl_Longer_Than_Duration()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-
-        }, handler, true);
+        }, handler, addCaching:true, ct: _ct);
+        using var client = fixture.CreateClient();
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -267,21 +255,20 @@ public class Introspection
     public async Task ActiveToken_With_Caching_Ttl_Shorter_Than_Duration()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
-
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
+        }, handler, addCaching: true, ct: _ct);
+        using var client = fixture.CreateClient();
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -289,11 +276,12 @@ public class Introspection
     public async Task InactiveToken()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
-
-        var client = PipelineFactory.CreateClient(o => _options(o), handler);
+        await using var fixture = await TestServerFixture.Start(_options, handler, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
+
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
@@ -303,11 +291,9 @@ public class Introspection
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
         bool? validatedCalled = null;
         bool? failureCalled = null;
-
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.Events.OnTokenValidated = e =>
             {
                 validatedCalled = true;
@@ -321,12 +307,12 @@ public class Introspection
 
                 return Task.CompletedTask;
             };
-
-        }, handler);
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
 
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         validatedCalled.ShouldBeNull();
@@ -339,20 +325,18 @@ public class Introspection
     {
         var expectedToken = "expected_token";
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.SaveToken = true;
-        }, handler);
-
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var response = await client.GetAsync("http://test");
+        var response = await client.GetAsync("", _ct);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var responseDataStr = await response.Content.ReadAsStringAsync();
+        var responseDataStr = await response.Content.ReadAsStringAsync(_ct);
         var responseData = JsonSerializer.Deserialize<Dictionary<string, string>>(responseDataStr);
 
         responseData.ShouldNotBeNull();
@@ -364,30 +348,28 @@ public class Introspection
     {
         var expectedToken = "expected_token";
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
-
-        var server = PipelineFactory.CreateServer(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.SaveToken = true;
             o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
-        var client = server.CreateClient();
+        }, handler, addCaching:true, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("", _ct);
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("", _ct);
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var responseDataStr = await secondResponse.Content.ReadAsStringAsync();
+        var responseDataStr = await secondResponse.Content.ReadAsStringAsync(_ct);
         var responseData = JsonSerializer.Deserialize<Dictionary<string, string>>(responseDataStr);
 
         responseData.ShouldNotBeNull();
         responseData.ShouldContainKeyAndValue("token", expectedToken);
-        AssertCacheItemExists(server, string.Empty, expectedToken);
+        AssertCacheItemExists(fixture, string.Empty, expectedToken);
     }
 
     [Fact]
@@ -396,31 +378,29 @@ public class Introspection
         var expectedToken = "expected_token";
         var cacheKeyPrefix = "KeyPrefix";
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
-
-        var server = PipelineFactory.CreateServer(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.SaveToken = true;
             o.EnableCaching = true;
             o.CacheKeyPrefix = cacheKeyPrefix;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
-        var client = server.CreateClient();
+        }, handler, addCaching: true, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("", _ct);
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("", _ct);
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var responseDataStr = await secondResponse.Content.ReadAsStringAsync();
+        var responseDataStr = await secondResponse.Content.ReadAsStringAsync(_ct);
         var responseData = JsonSerializer.Deserialize<Dictionary<string, string>>(responseDataStr);
 
         responseData.ShouldNotBeNull();
         responseData.ShouldContainKeyAndValue("token", expectedToken);
-        AssertCacheItemExists(server, cacheKeyPrefix, expectedToken);
+        AssertCacheItemExists(fixture, cacheKeyPrefix, expectedToken);
     }
 
     [Fact]
@@ -428,27 +408,25 @@ public class Introspection
     {
         var expectedToken = "expected_token";
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
-
-        var server = PipelineFactory.CreateServer(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.SaveToken = true;
             o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
-        var client = server.CreateClient();
+        }, handler, addCaching: true, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("", _ct);
 
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         handler.SentIntrospectionRequest.ShouldBeTrue();
 
         handler.SentIntrospectionRequest = false;
-        var secondResponse = await client.GetAsync("http://test");
+        _ = await client.GetAsync("", _ct);
         handler.SentIntrospectionRequest.ShouldBeFalse();
-        AssertCacheItemExists(server, string.Empty, expectedToken);
+        AssertCacheItemExists(fixture, string.Empty, expectedToken);
     }
 
     [Fact]
@@ -456,43 +434,42 @@ public class Introspection
     {
         var expectedToken = "expected_token";
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
-
-        var server = PipelineFactory.CreateServer(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
-
             o.SaveToken = true;
             o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
-        var client = server.CreateClient();
+        }, handler, addCaching: true, ct: _ct);
+        using var client = fixture.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("", _ct);
 
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         handler.SentIntrospectionRequest.ShouldBeTrue();
 
         handler.SentIntrospectionRequest = false;
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("", _ct);
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         handler.SentIntrospectionRequest.ShouldBeFalse();
-        AssertCacheItemExists(server, string.Empty, expectedToken);
+        AssertCacheItemExists(fixture, string.Empty, expectedToken);
     }
 
     [Fact]
     public async Task ActiveToken_With_Discovery_Unavailable_On_First_Request()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+        await using var fixture = await TestServerFixture.Start(_options, handler, ct: _ct);
+        using var client = fixture.CreateClient();
 
-        var client = PipelineFactory.CreateClient(o => _options(o), handler);
         client.SetBearerToken("sometoken");
 
         handler.IsDiscoveryFailureTest = true;
-        await Should.ThrowAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await client.GetAsync("", _ct));
 
         handler.IsDiscoveryFailureTest = false;
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -500,8 +477,7 @@ public class Introspection
     public async Task ActiveToken_RequestSending_AdditionalParameter_with_inline_event()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
-
-        var client = PipelineFactory.CreateClient(o =>
+        await using var fixture = await TestServerFixture.Start(o =>
         {
             _options(o);
 
@@ -511,22 +487,21 @@ public class Introspection
                 return Task.CompletedTask;
             };
 
-        }, handler);
+        }, handler, ct: _ct);
+        using var client = fixture.CreateClient();
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         handler.LastRequest.ShouldContain(new KeyValuePair<string, string>("additionalParameter", "42"));
     }
 
-    private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
+    private void AssertCacheItemExists(TestServerFixture fixture, string cacheKeyPrefix, string token)
     {
-        var cache = testServer.Services.GetRequiredService<IDistributedCache>();
-
+        var cache = fixture.Services.GetRequiredService<IDistributedCache>();
         var cacheItem = cache.GetString($"{cacheKeyPrefix}{token.ToSha256()}");
-
         cacheItem.ShouldNotBeNullOrEmpty();
     }
 }
