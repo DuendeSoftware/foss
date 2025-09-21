@@ -108,6 +108,5 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection
         public bool SkipTokensWithDots { get; set; }
         public System.Func<Microsoft.AspNetCore.Http.HttpRequest, string?> TokenRetriever { get; set; }
         public string TokenTypeHint { get; set; }
-        public override void Validate() { }
     }
 }

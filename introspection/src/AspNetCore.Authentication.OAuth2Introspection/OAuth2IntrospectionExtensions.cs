@@ -53,10 +53,15 @@ public static class OAuth2IntrospectionExtensions
         string authenticationScheme,
         Action<OAuth2IntrospectionOptions>? configureOptions)
     {
+        configureOptions ??= _ => { };
         builder.Services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName);
-        var serviceDescriptor = ServiceDescriptor
-            .Singleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>();
-        builder.Services.TryAddEnumerable(serviceDescriptor);
+        builder.Services.AddOptions<OAuth2IntrospectionOptions>()
+            .Configure(configureOptions)
+            .ValidateOnStart();
+        builder.Services
+            .AddSingleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>();
+        builder.Services
+            .AddSingleton<IValidateOptions<OAuth2IntrospectionOptions>, OAuth2IntrospectionOptionsValidator>();
         builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, configureOptions);
         return builder;
     }

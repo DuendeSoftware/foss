@@ -8,26 +8,33 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 public class Configuration
 {
-    [Fact]
-    public void Empty_Options()
-    {
-        var act = () => PipelineFactory.CreateClient(options => { })
-            .GetAsync("http://test").GetAwaiter().GetResult();
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
 
-        act.ShouldThrow<InvalidOperationException>().Message.ShouldBe("You must either set Authority or IntrospectionEndpoint");
+    [Fact]
+    public async Task Empty_Options()
+    {
+        var act = async () =>
+        {
+            await using var fixture = await TestServerFixture.Start(_ => { }, ct: _ct);
+        };
+
+        var exception = await act.ShouldThrowAsync<OptionsValidationException>();
+        exception.Message.ShouldBe("You must either set Authority or IntrospectionEndpoint");
     }
 
     [Fact]
-    public void Endpoint_But_No_Authority()
+    public async Task Endpoint_But_No_Authority()
     {
-        var act = () => PipelineFactory.CreateClient(options =>
+        var act = async () =>
         {
-            options.IntrospectionEndpoint = "http://endpoint";
-            options.ClientId = "scope";
+            await using var fixture = await TestServerFixture.Start(options =>
+            {
+                options.IntrospectionEndpoint = "http://endpoint";
+                options.ClientId = "scope";
+            }, ct: _ct);
+        };
 
-        }).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldNotThrow();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]

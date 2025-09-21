@@ -15,8 +15,6 @@ internal class PostConfigureOAuth2IntrospectionOptions(
 {
     public void PostConfigure(string? name, OAuth2IntrospectionOptions options)
     {
-        options.Validate();
-
         if (options.EnableCaching && cache == null)
         {
             throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(cache));
