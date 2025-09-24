@@ -23,9 +23,11 @@ public readonly partial record struct Scope : IStronglyTypedValue<Scope>
 
     public override string ToString() => Value;
 
-    // According to RFC 6749, the scope is a space-separated list of strings.
-    // it can only contain characters in the set [A-Za-z0-9\-._~+/:\^|`!#$%&'*]
-    [GeneratedRegex(@"^([A-Za-z0-9\-._~+/:\^|`!#$%&'*]+ ?)+$")]
+    // According to RFC 6749, the scope is a space-separated list of scope-token(s).
+    // Reference: https://datatracker.ietf.org/doc/html/rfc6749#section-3.3
+    // scope       = scope-token *( SP scope-token )
+    // scope-token = 1*( %x21 / %x23-5B / %x5D-7E )
+    [GeneratedRegex(@"^[\x21\x23-\x5B\x5D-\x7E]+(?: [\x21\x23-\x5B\x5D-\x7E]+)*$")]
     private static partial Regex _validScope();
 
     private static readonly ValidationRule<string>[] Validators = [
@@ -34,7 +36,7 @@ public readonly partial record struct Scope : IStronglyTypedValue<Scope>
     ];
 
     /// <summary>
-    /// You can't directly create this type. 
+    /// You can't directly create this type.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
     public Scope() => throw new InvalidOperationException("Can't create null value");
@@ -60,7 +62,7 @@ public readonly partial record struct Scope : IStronglyTypedValue<Scope>
     /// <summary>
     /// Parses a value to a <see cref="Scope"/>. This will return null if the provided string
     /// is null or whitespace. This is a convenience method for when you want to parse a value that may
-    /// contain null or whitespace strings. 
+    /// contain null or whitespace strings.
     /// </summary>
     public static Scope? ParseOrDefault(string? value) => StringParsers<Scope>.ParseOrDefault(value);
 }
