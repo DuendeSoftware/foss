@@ -68,9 +68,9 @@ jobs:
         git tag -a atm-${{ github.event.inputs.version }} -m "Release v${{ github.event.inputs.version }}"
         git push origin atm-${{ github.event.inputs.version }}
     - name: Pack AccessTokenManagement
-      run: dotnet pack -c Release src/AccessTokenManagement -o artifacts
+      run: dotnet pack -c Release src/AccessTokenManagement -o artifacts '/p:TargetFrameworks="net8.0;net9.0"'
     - name: Pack AccessTokenManagement.OpenIdConnect
-      run: dotnet pack -c Release src/AccessTokenManagement.OpenIdConnect -o artifacts
+      run: dotnet pack -c Release src/AccessTokenManagement.OpenIdConnect -o artifacts '/p:TargetFrameworks="net8.0;net9.0"'
     - name: Tool restore
       run: dotnet tool restore
     - name: Sign packages

@@ -1,16 +1,18 @@
 <Project>
   <PropertyGroup>
-    <ExtensionsVersion>10.0.0-rc.1.25451.107</ExtensionsVersion>
 	  <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
     <FrameworkVersion>8.0.1</FrameworkVersion>
+    <ExtensionsVersion>9.0.9</ExtensionsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0'">
     <FrameworkVersion>9.0.0</FrameworkVersion>
+    <ExtensionsVersion>9.0.9</ExtensionsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net10.0'">
     <FrameworkVersion>10.0.0-rc.1.25451.107</FrameworkVersion>
+    <ExtensionsVersion>10.0.0-rc.1.25451.107</ExtensionsVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.3.0" />
