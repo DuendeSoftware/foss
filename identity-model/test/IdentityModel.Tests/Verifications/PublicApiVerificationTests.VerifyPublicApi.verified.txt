@@ -791,6 +791,7 @@ namespace Duende.IdentityModel.Client
     }
     public class DiscoveryCache : Duende.IdentityModel.Client.IDiscoveryCache
     {
+        public DiscoveryCache(System.Func<System.Net.Http.HttpMessageInvoker> httpClientFunc, Duende.IdentityModel.Client.DiscoveryPolicy? policy = null) { }
         public DiscoveryCache(string authority, Duende.IdentityModel.Client.DiscoveryPolicy? policy = null) { }
         public DiscoveryCache(string authority, System.Func<System.Net.Http.HttpMessageInvoker> httpClientFunc, Duende.IdentityModel.Client.DiscoveryPolicy? policy = null) { }
         public System.TimeSpan CacheDuration { get; set; }
