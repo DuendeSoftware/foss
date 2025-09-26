@@ -17,6 +17,7 @@ public class DPoPTest : IntegrationTestBase
 {
 
     private static readonly string _jwkJson;
+    private readonly IDPoPProofTokenFactory _proofTokenFactory;
     private readonly IdentityServer.Models.Client _client;
 
     static DPoPTest()
@@ -39,12 +40,14 @@ public class DPoPTest : IntegrationTestBase
             AllowedScopes = { "scope1" },
             RequireDPoP = true,
         });
+
+        _proofTokenFactory = new DefaultDPoPProofTokenFactory(_jwkJson);
     }
 
     [Fact]
     public async Task dpop_tokens_should_be_passed_to_token_endpoint()
     {
-        var handler = new ProofTokenMessageHandler(_jwkJson, IdentityServerHost.Server.CreateHandler());
+        var handler = new ProofTokenMessageHandler(_proofTokenFactory, IdentityServerHost.Server.CreateHandler());
         var client = new HttpClient(handler);
 
         var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -63,7 +66,7 @@ public class DPoPTest : IntegrationTestBase
     {
         _client.DPoPValidationMode = DPoPTokenExpirationValidationMode.Nonce;
 
-        var handler = new ProofTokenMessageHandler(_jwkJson, IdentityServerHost.Server.CreateHandler());
+        var handler = new ProofTokenMessageHandler(_proofTokenFactory, IdentityServerHost.Server.CreateHandler());
         var client = new HttpClient(handler);
 
         var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -80,7 +83,7 @@ public class DPoPTest : IntegrationTestBase
     [Fact]
     public async Task dpop_tokens_should_be_passed_to_api()
     {
-        var tokenHandler = new ProofTokenMessageHandler(_jwkJson, IdentityServerHost.Server.CreateHandler());
+        var tokenHandler = new ProofTokenMessageHandler(_proofTokenFactory, IdentityServerHost.Server.CreateHandler());
         var tokenClient = new HttpClient(tokenHandler);
 
         var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -90,7 +93,7 @@ public class DPoPTest : IntegrationTestBase
             ClientSecret = "secret",
         });
 
-        var apiHandler = new ProofTokenMessageHandler(_jwkJson, ApiHost.Server.CreateHandler());
+        var apiHandler = new ProofTokenMessageHandler(_proofTokenFactory, ApiHost.Server.CreateHandler());
         var apiClient = new HttpClient(apiHandler);
         apiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DPoP", tokenResponse.AccessToken);
 
@@ -110,7 +113,7 @@ public class DPoPTest : IntegrationTestBase
         ApiHost.ValidateNonce = true;
         await ApiHost.InitializeAsync();
 
-        var tokenHandler = new ProofTokenMessageHandler(_jwkJson, IdentityServerHost.Server.CreateHandler());
+        var tokenHandler = new ProofTokenMessageHandler(_proofTokenFactory, IdentityServerHost.Server.CreateHandler());
         var tokenClient = new HttpClient(tokenHandler);
 
         var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
@@ -120,7 +123,7 @@ public class DPoPTest : IntegrationTestBase
             ClientSecret = "secret",
         });
 
-        var apiHandler = new ProofTokenMessageHandler(_jwkJson, ApiHost.Server.CreateHandler());
+        var apiHandler = new ProofTokenMessageHandler(_proofTokenFactory, ApiHost.Server.CreateHandler());
         var apiClient = new HttpClient(apiHandler);
         apiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DPoP", tokenResponse.AccessToken);
 
