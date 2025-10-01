@@ -497,6 +497,30 @@ public class Introspection
     }
 
     [Fact]
+    public async Task ActiveToken_With_Introspection_Unavailable_On_First_Request()
+    {
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+        var introspectionRequestCount = 0;
+
+        var client = PipelineFactory.CreateClient(o =>
+        {
+            _options(o);
+
+            o.Events.OnSendingRequest = e =>
+            {
+                introspectionRequestCount++;
+                return introspectionRequestCount == 1 ? throw new InvalidOperationException("Simulated introspection endpoint failure") : Task.CompletedTask;
+            };
+        }, handler);
+        client.SetBearerToken("sometoken");
+
+        await Should.ThrowAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
+
+        var result = await client.GetAsync("http://test");
+        result.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task ActiveToken_RequestSending_AdditionalParameter_with_inline_event()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
