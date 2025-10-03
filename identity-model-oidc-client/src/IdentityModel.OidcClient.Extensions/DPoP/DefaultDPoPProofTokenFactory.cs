@@ -12,14 +12,14 @@ namespace Duende.IdentityModel.OidcClient.DPoP;
 /// <summary>
 /// Used to create DPoP proof tokens.
 /// </summary>
-public class DPoPProofTokenFactory
+public class DefaultDPoPProofTokenFactory : IDPoPProofTokenFactory
 {
     private readonly JsonWebKey _jwk;
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public DPoPProofTokenFactory(string proofKey)
+    public DefaultDPoPProofTokenFactory(string proofKey)
     {
         _jwk = new JsonWebKey(proofKey);
 
@@ -79,7 +79,7 @@ public class DPoPProofTokenFactory
 
         if (!string.IsNullOrWhiteSpace(request.AccessToken))
         {
-            // ath: hash of the access token. The value MUST be the result of a base64url encoding 
+            // ath: hash of the access token. The value MUST be the result of a base64url encoding
             // the SHA-256 hash of the ASCII encoding of the associated access token's value.
             using var sha256 = SHA256.Create();
             var hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(request.AccessToken));
