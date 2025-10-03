@@ -15,7 +15,7 @@ public class DiscoveryCache : IDiscoveryCache
 
     private readonly DiscoveryPolicy _policy;
     private readonly Func<HttpMessageInvoker> _getHttpClient;
-    private readonly string _authority;
+    private readonly string? _authority;
 
     /// <summary>
     /// Initialize instance of DiscoveryCache with passed authority.
@@ -40,6 +40,18 @@ public class DiscoveryCache : IDiscoveryCache
         _authority = authority;
         _policy = policy ?? new DiscoveryPolicy();
         _getHttpClient = httpClientFunc ?? throw new ArgumentNullException(nameof(httpClientFunc));
+    }
+
+    /// <summary>
+    /// Initialize instance of DiscoveryCache without authority - the HttpClient used must have a BaseAddress configured.
+    /// </summary>
+    /// <param name="httpClientFunc">The HTTP client function which must have a BaseAddress configured.</param>
+    /// <param name="policy">The policy.</param>
+    public DiscoveryCache(Func<HttpMessageInvoker> httpClientFunc, DiscoveryPolicy? policy = null)
+    {
+        _getHttpClient = httpClientFunc ?? throw new ArgumentNullException(nameof(httpClientFunc));
+        _policy = policy ?? new DiscoveryPolicy();
+        _authority = null;
     }
 
     /// <summary>
@@ -68,9 +80,17 @@ public class DiscoveryCache : IDiscoveryCache
 
     private async Task<DiscoveryDocumentResponse> GetResponseAsync()
     {
-        var result = await _getHttpClient().GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        var client = _getHttpClient();
+        var httpClient = client as HttpClient;
+        var address = _authority ?? httpClient?.BaseAddress?.AbsoluteUri;
+        if (address.IsMissing())
         {
-            Address = _authority,
+            throw new InvalidOperationException("DiscoveryCache cannot determine the authority. Either pass the authority in the constructor or pass httpClientFunc which returns an instance of HttpClient with a BaseAddress.");
+        }
+
+        var result = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = address,
             Policy = _policy
         }).ConfigureAwait();
 
