@@ -79,7 +79,7 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection
     }
     public class OAuth2IntrospectionHandler : Microsoft.AspNetCore.Authentication.AuthenticationHandler<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions>
     {
-        public OAuth2IntrospectionHandler(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions> options, System.Text.Encodings.Web.UrlEncoder urlEncoder, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, Microsoft.Extensions.Caching.Distributed.IDistributedCache? cache = null) { }
+        public OAuth2IntrospectionHandler(Microsoft.Extensions.Options.IOptionsMonitor<Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionOptions> options, System.Text.Encodings.Web.UrlEncoder urlEncoder, Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, [Microsoft.Extensions.DependencyInjection.FromKeyedServices("IntrospectionCache")] Microsoft.Extensions.Caching.Hybrid.HybridCache cache) { }
         protected new Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionEvents Events { get; set; }
         protected override System.Threading.Tasks.Task<object> CreateEventsAsync() { }
         [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Calls methods on CacheExtensions that are annotated with RequiresUnreferencedCode" +
@@ -99,15 +99,19 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection
         public string? ClientId { get; set; }
         public string? ClientSecret { get; set; }
         public Duende.IdentityModel.Client.DiscoveryPolicy DiscoveryPolicy { get; set; }
-        public bool EnableCaching { get; set; }
         public new Duende.AspNetCore.Authentication.OAuth2Introspection.OAuth2IntrospectionEvents Events { get; set; }
         public string? IntrospectionEndpoint { get; set; }
         public string NameClaimType { get; set; }
         public string RoleClaimType { get; set; }
         public bool SaveToken { get; set; }
+        public Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryFlags SetCacheEntryFlags { get; set; }
         public bool SkipTokensWithDots { get; set; }
         public System.Func<Microsoft.AspNetCore.Http.HttpRequest, string?> TokenRetriever { get; set; }
         public string TokenTypeHint { get; set; }
         public override void Validate() { }
+    }
+    public static class ServiceProviderKeys
+    {
+        public const string IntrospectionCache = "IntrospectionCache";
     }
 }

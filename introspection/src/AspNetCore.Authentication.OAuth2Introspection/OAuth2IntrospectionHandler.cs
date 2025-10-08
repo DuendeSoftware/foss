@@ -10,7 +10,8 @@ using Duende.AspNetCore.Authentication.OAuth2Introspection.Infrastructure;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +22,7 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 /// </summary>
 public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2IntrospectionOptions>
 {
-    private readonly IDistributedCache? _cache;
+    private readonly HybridCache _cache;
     private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
     private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
@@ -38,7 +39,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         IOptionsMonitor<OAuth2IntrospectionOptions> options,
         UrlEncoder urlEncoder,
         ILoggerFactory loggerFactory,
-        IDistributedCache? cache = null)
+        [FromKeyedServices(ServiceProviderKeys.IntrospectionCache)] HybridCache cache)
         : base(options, loggerFactory, urlEncoder)
     {
         _logger = loggerFactory.CreateLogger<OAuth2IntrospectionHandler>();
@@ -83,28 +84,22 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             return AuthenticateResult.NoResult();
         }
 
-        // if caching is enable - let's check if we have a cached introspection
-        if (Options.EnableCaching && _cache is not null)
-        {
-            var claims = await _cache.GetClaimsAsync(Options, token).ConfigureAwait(false);
-            if (claims != null)
-            {
-                // find out if it is a cached inactive token
-                var isInActive = claims.Any(c => string.Equals(c.Type, "active", StringComparison.OrdinalIgnoreCase) && string.Equals(c.Value, "false", StringComparison.OrdinalIgnoreCase));
-                if (isInActive)
-                {
-                    return await ReportNonSuccessAndReturn("Cached token is not active.", Context, Scheme, Events, Options);
-                }
+        var claims = await _cache.GetClaimsAsync(Options, token).ConfigureAwait(false);
 
-                return await CreateTicket(claims, token, Context, Scheme, Events, Options);
+        if (claims != null)
+        {
+            // find out if it is a cached inactive token
+            var isInActive = claims.Any(c => string.Equals(c.Type, "active", StringComparison.OrdinalIgnoreCase) && string.Equals(c.Value, "false", StringComparison.OrdinalIgnoreCase));
+            if (isInActive)
+            {
+                return await ReportNonSuccessAndReturn("Cached token is not active.", Context, Scheme, Events, Options);
             }
 
-            Log.TokenNotCached(_logger, null);
+            return await CreateTicket(claims, token, Context, Scheme, Events, Options);
         }
 
-        // no cached result - let's make a network roundtrip to the introspection endpoint
-        // this code block tries to make sure that we only do a single roundtrip, even when multiple requests
-        // with the same token come in at the same time
+        Log.TokenNotCached(_logger, null);
+
         try
         {
             Lazy<Task<TokenIntrospectionResponse>> GetTokenIntrospectionResponseLazy(string _)
@@ -112,6 +107,11 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
                 return new Lazy<Task<TokenIntrospectionResponse>>(async () => await LoadClaimsForToken(token, Context, Scheme, Events, Options));
             }
 
+            // note: ideally we would rely on GetOrCreateAsync of the cache to prevent multiple calls, but that
+            // does not provide a way to set the cache expiration based on the factory method and RFC 7662 states:
+            // "If the response contains the "exp" parameter (expiration), the response MUST NOT be cached beyond the time indicated therein."
+            // so we need to cache items ourselves here. There is discussion of adding this to hybrid cache:
+            // https://github.com/dotnet/extensions/issues/6434, https://github.com/dotnet/aspnetcore/issues/56483
             var response = await IntrospectionDictionary
                 .GetOrAdd(token, GetTokenIntrospectionResponseLazy)
                 .Value;
@@ -124,24 +124,16 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
             if (response.IsActive)
             {
-                if (Options.EnableCaching && _cache is not null)
-                {
-                    await _cache.SetClaimsAsync(Options, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
-                }
+                await _cache.SetClaimsAsync(Options, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
 
                 return await CreateTicket(response.Claims, token, Context, Scheme, Events, Options);
             }
             else
             {
-                if (Options.EnableCaching && _cache is not null)
-                {
-                    // add an exp claim - otherwise caching will not work
-                    var claimsWithExp = response.Claims.ToList();
-                    claimsWithExp.Add(new Claim("exp",
-                        DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
-                    await _cache.SetClaimsAsync(Options, token, claimsWithExp, Options.CacheDuration, _logger)
-                        .ConfigureAwait(false);
-                }
+                // add an exp claim - otherwise caching will not work
+                var claimsWithExp = response.Claims.ToList();
+                claimsWithExp.Add(new Claim("exp", DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
+                await _cache.SetClaimsAsync(Options, token, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
 
                 return await ReportNonSuccessAndReturn("Token is not active.", Context, Scheme, Events, Options);
             }

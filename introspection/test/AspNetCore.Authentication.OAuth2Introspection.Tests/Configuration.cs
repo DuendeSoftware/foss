@@ -31,35 +31,6 @@ public class Configuration
     }
 
     [Fact]
-    public void Caching_With_Caching_Service()
-    {
-        var act = () => PipelineFactory.CreateClient(options =>
-        {
-            options.IntrospectionEndpoint = "http://endpoint";
-            options.ClientId = "scope";
-            options.EnableCaching = true;
-
-        }, addCaching: true).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldNotThrow();
-    }
-
-    [Fact]
-    public void Caching_Without_Caching_Service()
-    {
-        var act = () => PipelineFactory.CreateClient(options =>
-        {
-            options.IntrospectionEndpoint = "http://endpoint";
-            options.ClientId = "scope";
-            options.EnableCaching = true;
-
-        }).GetAsync("http://test").GetAwaiter().GetResult();
-
-        act.ShouldThrow<ArgumentException>()
-            .Message.ShouldStartWith("Caching is enabled, but no IDistributedCache is found in the services collection");
-    }
-
-    [Fact]
     public void No_ClientName_But_Introspection_Handler()
     {
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);

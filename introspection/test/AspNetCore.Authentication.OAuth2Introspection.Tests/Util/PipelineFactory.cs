@@ -16,15 +16,9 @@ internal static class PipelineFactory
 {
     public static TestServer CreateServer(
         Action<OAuth2IntrospectionOptions> options,
-        DelegatingHandler? backChannelHandler = null,
-        bool addCaching = false) => new(new WebHostBuilder()
+        DelegatingHandler? backChannelHandler = null) => new(new WebHostBuilder()
             .ConfigureServices(services =>
             {
-                if (addCaching)
-                {
-                    services.AddDistributedMemoryCache();
-                }
-
                 services
                     .AddAuthentication(OAuth2IntrospectionDefaults.AuthenticationScheme)
                     .AddOAuth2Introspection(options);
@@ -65,12 +59,10 @@ internal static class PipelineFactory
 
     public static HttpClient CreateClient(
         Action<OAuth2IntrospectionOptions> options,
-        DelegatingHandler? handler = null,
-        bool addCaching = false)
-        => CreateServer(options, handler, addCaching).CreateClient();
+        DelegatingHandler? handler = null)
+        => CreateServer(options, handler).CreateClient();
 
     public static HttpMessageHandler CreateHandler(
         Action<OAuth2IntrospectionOptions> options,
-        DelegatingHandler? handler = null,
-        bool addCaching = false) => CreateServer(options, handler, addCaching).CreateHandler();
+        DelegatingHandler? handler = null) => CreateServer(options, handler).CreateHandler();
 }

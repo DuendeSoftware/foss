@@ -1,7 +1,10 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Security.Claims;
+using Duende.AspNetCore.Authentication.OAuth2Introspection.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -58,6 +61,13 @@ public static class OAuth2IntrospectionExtensions
             .Singleton<IPostConfigureOptions<OAuth2IntrospectionOptions>, PostConfigureOAuth2IntrospectionOptions>();
         builder.Services.TryAddEnumerable(serviceDescriptor);
         builder.AddScheme<OAuth2IntrospectionOptions, OAuth2IntrospectionHandler>(authenticationScheme, configureOptions);
+
+        builder.Services.AddHybridCache();
+
+        builder.Services.TryAddSingleton<IHybridCacheSerializer<IEnumerable<Claim>>, ClaimSerializer>();
+
+        builder.Services.TryAddKeyedSingleton<HybridCache>(ServiceProviderKeys.IntrospectionCache, (sp, _) => sp.GetRequiredService<HybridCache>());
+
         return builder;
     }
 }

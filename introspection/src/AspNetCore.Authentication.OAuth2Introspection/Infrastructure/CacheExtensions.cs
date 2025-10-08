@@ -1,52 +1,39 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Duende.IdentityModel;
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Infrastructure;
 
 internal static class CacheExtensions
 {
-    private static readonly JsonSerializerOptions Options;
-
-    static CacheExtensions()
+    private static readonly HybridCacheEntryOptions GetOnlyEntryOptions = new()
     {
-        Options = new JsonSerializerOptions
-        {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
+        Flags = HybridCacheEntryFlags.DisableLocalCacheWrite
+                | HybridCacheEntryFlags.DisableDistributedCacheWrite
+                | HybridCacheEntryFlags.DisableUnderlyingData
+    };
 
-        Options.Converters.Add(new ClaimConverter());
-    }
-
-    [RequiresUnreferencedCode(
-        "Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(ReadOnlySpan<Byte>, JsonSerializerOptions)")]
+    /// <summary>
+    /// This extension method is created because we don't yet have a 'GetOrDefault' method
+    /// on HybridCache. This is under consideration:
+    ///
+    /// https://github.com/dotnet/extensions/issues/5688#issuecomment-2692247434
+    /// </summary>
     public static async Task<IEnumerable<Claim>?> GetClaimsAsync(
-        this IDistributedCache cache,
+        this HybridCache cache,
         OAuth2IntrospectionOptions options,
         string token)
     {
         var cacheKey = options.CacheKeyGenerator(options, token);
-        var bytes = await cache.GetAsync(cacheKey).ConfigureAwait(false);
-
-        var claims = bytes == null
-            ? null
-            : JsonSerializer.Deserialize<IEnumerable<Claim>>(bytes, Options);
-
-        return claims;
+        return await cache.GetOrCreateAsync<IEnumerable<Claim>?>(cacheKey, null!, GetOnlyEntryOptions).ConfigureAwait(false);
     }
 
-    [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.SerializeToUtf8Bytes<TValue>(TValue, JsonSerializerOptions)")]
     public static async Task SetClaimsAsync(
-        this IDistributedCache cache,
+        this HybridCache cache,
         OAuth2IntrospectionOptions options,
         string token,
         IEnumerable<Claim> claims,
@@ -76,11 +63,15 @@ internal static class CacheExtensions
             absoluteLifetime = now.Add(duration);
         }
 
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(claims, Options);
-
         Log.SettingToCache(logger, absoluteLifetime, null);
         var cacheKey = options.CacheKeyGenerator(options, token);
-        await cache.SetAsync(cacheKey, bytes,
-            new DistributedCacheEntryOptions { AbsoluteExpiration = absoluteLifetime }).ConfigureAwait(false);
+        var cacheDuration = absoluteLifetime - now;
+        var cacheEntryOptions = new HybridCacheEntryOptions
+        {
+            Expiration = cacheDuration,
+            LocalCacheExpiration = cacheDuration,
+            Flags = options.SetCacheEntryFlags
+        };
+        await cache.SetAsync(cacheKey, claims, cacheEntryOptions).ConfigureAwait(false);
     }
 }

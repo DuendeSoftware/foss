@@ -14,5 +14,6 @@
 
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>
 </Project>

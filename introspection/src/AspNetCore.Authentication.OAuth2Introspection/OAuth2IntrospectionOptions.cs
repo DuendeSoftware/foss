@@ -6,6 +6,7 @@ using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
@@ -95,14 +96,17 @@ public class OAuth2IntrospectionOptions : AuthenticationSchemeOptions
     public bool SaveToken { get; set; } = true;
 
     /// <summary>
-    /// Specifies whether the outcome of the token validation should be cached. This reduces the load on the introspection endpoint at the STS
-    /// </summary>
-    public bool EnableCaching { get; set; } = false;
-
-    /// <summary>
     /// Specifies for how long the outcome of the token validation should be cached.
     /// </summary>
     public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Specifies the flags controlling the behavior of the hybrid cache when setting the cache entry.
+    /// The default is <see cref="HybridCacheEntryFlags.None"/>, which means that both the local and distributed
+    /// caches will be written to when setting the cache entry. If you want to disable writing to either cache, or both
+    /// if you wish to disable caching entirely, you can set the appropriate flag(s).
+    /// </summary>
+    public HybridCacheEntryFlags SetCacheEntryFlags { get; set; } = HybridCacheEntryFlags.None;
 
     /// <summary>
     /// Specifies the prefix of the cache key (token).

@@ -3,24 +3,17 @@
 
 using Duende.AspNetCore.Authentication.OAuth2Introspection.Infrastructure;
 using Duende.IdentityModel.Client;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 internal class PostConfigureOAuth2IntrospectionOptions(
-    IHttpClientFactory httpClientFactory,
-    IDistributedCache? cache = null)
+    IHttpClientFactory httpClientFactory)
     : IPostConfigureOptions<OAuth2IntrospectionOptions>
 {
     public void PostConfigure(string? name, OAuth2IntrospectionOptions options)
     {
         options.Validate();
-
-        if (options.EnableCaching && cache == null)
-        {
-            throw new ArgumentException("Caching is enabled, but no IDistributedCache is found in the services collection", nameof(cache));
-        }
 
         options.IntrospectionClient = new AsyncLazy<HttpClient>(() => InitializeIntrospectionClient(options));
     }

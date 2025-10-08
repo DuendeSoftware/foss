@@ -2,18 +2,25 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 using Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 public class Introspection
 {
+    private static readonly HybridCacheEntryOptions GetOnlyEntryOptions = new()
+    {
+        Flags = HybridCacheEntryFlags.DisableLocalCacheWrite
+                | HybridCacheEntryFlags.DisableDistributedCacheWrite
+                | HybridCacheEntryFlags.DisableUnderlyingData
+    };
 
     private static readonly string clientId = "client";
     private static readonly string clientSecret = "secret";
@@ -170,6 +177,7 @@ public class Introspection
         {
             _options(o);
             o.ClientSecret = null;
+            o.CacheDuration = TimeSpan.FromMilliseconds(10);
 
             o.Events.OnUpdateClientAssertion = e =>
             {
@@ -194,6 +202,8 @@ public class Introspection
         request.ShouldContainKeyAndValue("client_id", clientId);
         request.ShouldContainKeyAndValue("client_assertion_type", "testType");
         request.ShouldContainKeyAndValue("client_assertion", assertion1);
+
+        await Task.Delay(20); // wait for cache to expire
 
         result = await client.GetAsync("http://test");
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -244,23 +254,29 @@ public class Introspection
     [Fact]
     public async Task ActiveToken_With_Caching_Ttl_Longer_Than_Duration()
     {
+        var introspectionCalls = 0;
         var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromHours(1));
         var client = PipelineFactory.CreateClient(o =>
         {
             _options(o);
 
-            o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-
-        }, handler, true);
+            o.Events.OnSendingRequest = e =>
+            {
+                introspectionCalls++;
+                return Task.CompletedTask;
+            };
+        }, handler);
 
         client.SetBearerToken("sometoken");
 
         var result = await client.GetAsync("http://test");
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionCalls.ShouldBe(1);
 
         result = await client.GetAsync("http://test");
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionCalls.ShouldBe(1);
     }
 
     [Fact]
@@ -272,9 +288,8 @@ public class Introspection
         {
             _options(o);
 
-            o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
+        }, handler);
 
         client.SetBearerToken("sometoken");
 
@@ -370,9 +385,8 @@ public class Introspection
             _options(o);
 
             o.SaveToken = true;
-            o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
+        }, handler);
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
@@ -387,7 +401,7 @@ public class Introspection
 
         responseData.ShouldNotBeNull();
         responseData.ShouldContainKeyAndValue("token", expectedToken);
-        AssertCacheItemExists(server, string.Empty, expectedToken);
+        await AssertCacheItemExists(server, string.Empty, expectedToken);
     }
 
     [Fact]
@@ -402,10 +416,9 @@ public class Introspection
             _options(o);
 
             o.SaveToken = true;
-            o.EnableCaching = true;
             o.CacheKeyPrefix = cacheKeyPrefix;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
+        }, handler);
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
@@ -420,7 +433,7 @@ public class Introspection
 
         responseData.ShouldNotBeNull();
         responseData.ShouldContainKeyAndValue("token", expectedToken);
-        AssertCacheItemExists(server, cacheKeyPrefix, expectedToken);
+        await AssertCacheItemExists(server, cacheKeyPrefix, expectedToken);
     }
 
     [Fact]
@@ -434,9 +447,8 @@ public class Introspection
             _options(o);
 
             o.SaveToken = true;
-            o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
+        }, handler);
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
@@ -448,7 +460,7 @@ public class Introspection
         handler.SentIntrospectionRequest = false;
         var secondResponse = await client.GetAsync("http://test");
         handler.SentIntrospectionRequest.ShouldBeFalse();
-        AssertCacheItemExists(server, string.Empty, expectedToken);
+        await AssertCacheItemExists(server, string.Empty, expectedToken);
     }
 
     [Fact]
@@ -462,9 +474,8 @@ public class Introspection
             _options(o);
 
             o.SaveToken = true;
-            o.EnableCaching = true;
             o.CacheDuration = TimeSpan.FromMinutes(10);
-        }, handler, true);
+        }, handler);
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
@@ -477,7 +488,7 @@ public class Introspection
         var secondResponse = await client.GetAsync("http://test");
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         handler.SentIntrospectionRequest.ShouldBeFalse();
-        AssertCacheItemExists(server, string.Empty, expectedToken);
+        await AssertCacheItemExists(server, string.Empty, expectedToken);
     }
 
     [Fact]
@@ -521,12 +532,71 @@ public class Introspection
         handler.LastRequest.ShouldContain(new KeyValuePair<string, string>("additionalParameter", "42"));
     }
 
-    private void AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
+    [Fact]
+    public async Task ActiveToken_expires_while_cached()
     {
-        var cache = testServer.Services.GetRequiredService<IDistributedCache>();
+        var introspectionRequestsMade = 0;
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMilliseconds(250));
 
-        var cacheItem = cache.GetString($"{cacheKeyPrefix}{token.ToSha256()}");
+        var client = PipelineFactory.CreateClient(o =>
+        {
+            _options(o);
 
-        cacheItem.ShouldNotBeNullOrEmpty();
+            o.CacheDuration = TimeSpan.FromMinutes(10);
+
+            o.Events.OnSendingRequest = e =>
+            {
+                introspectionRequestsMade++;
+                return Task.CompletedTask;
+            };
+        }, handler);
+
+        client.SetBearerToken("sometoken");
+
+        var result = await client.GetAsync("http://test");
+        result.StatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionRequestsMade.ShouldBe(1);
+
+        await Task.Delay(500); // wait for token to expire
+
+        result = await client.GetAsync("http://test");
+        result.StatusCode.ShouldBe(HttpStatusCode.OK);
+        introspectionRequestsMade.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task ActiveToken_can_override_cache_settings_to_prevent_caching()
+    {
+        var token = "sometoken";
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active, TimeSpan.FromMinutes(5));
+
+        var server = PipelineFactory.CreateServer(o =>
+        {
+            _options(o);
+
+            o.CacheDuration = TimeSpan.FromMinutes(10);
+            o.SetCacheEntryFlags = HybridCacheEntryFlags.DisableLocalCacheWrite |
+                                   HybridCacheEntryFlags.DisableDistributedCacheWrite;
+        }, handler);
+        var client = server.CreateClient();
+
+        client.SetBearerToken(token);
+
+        var result = await client.GetAsync("http://test");
+        result.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var cache = server.Services.GetRequiredService<HybridCache>();
+        var cacheItem = await cache.GetOrCreateAsync<IEnumerable<Claim>?>(token.ToSha256(), null!, GetOnlyEntryOptions);
+        cacheItem.ShouldBeNull();
+    }
+
+    private async Task AssertCacheItemExists(TestServer testServer, string cacheKeyPrefix, string token)
+    {
+        var cache = testServer.Services.GetRequiredService<HybridCache>();
+
+        var cacheItem = await cache.GetOrCreateAsync<IEnumerable<Claim>?>($"{cacheKeyPrefix}{token.ToSha256()}", null!, GetOnlyEntryOptions);
+
+        cacheItem.ShouldNotBeNull();
+        cacheItem!.ShouldNotBeEmpty();
     }
 }
