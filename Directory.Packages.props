@@ -29,6 +29,13 @@
     <IdentityServerVersion>7.0.8</IdentityServerVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net10.0'">
+    <FrameworkVersion>10.0.0-rc.2.25502.107</FrameworkVersion>
+    <ExtensionsVersion>10.0.0-rc.2.25502.107</ExtensionsVersion>
+    <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
+    <IdentityServerVersion>7.3.1</IdentityServerVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.1.2" />
     <PackageVersion Include="BullsEye" Version="5.0.0" />

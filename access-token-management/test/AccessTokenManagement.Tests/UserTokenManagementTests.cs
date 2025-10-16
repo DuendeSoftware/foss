@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
 using RichardSzalay.MockHttp;
 
 namespace Duende.AccessTokenManagement.Tests;
