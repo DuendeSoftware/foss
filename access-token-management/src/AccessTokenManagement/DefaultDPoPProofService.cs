@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Buffers.Text;
 using Duende.IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -91,7 +92,7 @@ public class DefaultDPoPProofService : IDPoPProofService
             // the SHA-256 hash of the ASCII encoding of the associated access token's value.
             using var sha256 = SHA256.Create();
             var hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(request.AccessToken));
-            var ath = Base64Url.Encode(hash);
+            var ath = Base64Url.EncodeToString(hash);
 
             payload.Add(JwtClaimTypes.DPoPAccessTokenHash, ath);
         }

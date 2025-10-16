@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Buffers.Text;
 using Duende.IdentityServer.Configuration;
 using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
@@ -141,7 +142,7 @@ public class ClientTokenManagementApiTests : IntegrationTestBase
 
         var json = JsonSerializer.Deserialize<JsonElement>(values!["cnf"].ToString()!);
         var jkt = json.GetString("jkt");
-        jkt.ShouldBe(Base64Url.Encode(jwk.ComputeJwkThumbprint()));
+        jkt.ShouldBe(Base64Url.EncodeToString(jwk.ComputeJwkThumbprint()));
     }
 
     [Theory]
@@ -168,7 +169,7 @@ public class ClientTokenManagementApiTests : IntegrationTestBase
 
         var json = JsonSerializer.Deserialize<JsonElement>(values!["cnf"].ToString()!);
         var jkt = json.GetString("jkt");
-        jkt.ShouldBe(Base64Url.Encode(jwk.ComputeJwkThumbprint()));
+        jkt.ShouldBe(Base64Url.EncodeToString(jwk.ComputeJwkThumbprint()));
     }
 
     [Fact]
