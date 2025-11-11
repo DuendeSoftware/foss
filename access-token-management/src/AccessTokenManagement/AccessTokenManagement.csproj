@@ -9,7 +9,7 @@
     <PackageReadmePath>README.md</PackageReadmePath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Duende.IdentityModel" VersionOverride="8.0.0-preview.1" />
+    <PackageReference Include="Duende.IdentityModel" VersionOverride="8.0.0-rc.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http" />

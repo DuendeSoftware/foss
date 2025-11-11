@@ -30,8 +30,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net10.0'">
-    <FrameworkVersion>10.0.0-rc.2.25502.107</FrameworkVersion>
-    <ExtensionsVersion>10.0.0-rc.2.25502.107</ExtensionsVersion>
+    <FrameworkVersion>10.0.0</FrameworkVersion>
+    <ExtensionsVersion>10.0.0</ExtensionsVersion>
     <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
     <IdentityServerVersion>7.4.0-preview.2</IdentityServerVersion>
   </PropertyGroup>

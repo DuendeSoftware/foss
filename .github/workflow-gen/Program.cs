@@ -188,7 +188,7 @@ git push origin {component.TagPrefix}-{contexts.Event.Input.Version}");
         .Shell("bash")
         .Run("tree");
 
-    tagJob.StepPush("MyGet", "https://www.myget.org/F/duende_identityserver/api/v2/package", "MYGET", pushAlways: true);
+    //tagJob.StepPush("MyGet", "https://www.myget.org/F/duende_identityserver/api/v2/package", "MYGET", pushAlways: true);
 
     publishJob.StepPush("nuget.org", "https://api.nuget.org/v3/index.json", "NUGET_ORG_API_KEY", pushAlways: true);
 
@@ -250,7 +250,7 @@ public static class StepExtensions
     public static void StepSetupDotNet(this Job job)
         => job.Step()
             .Name("Setup .NET")
-            .ActionsSetupDotNet("3e891b0cb619bf60e2c25674b222b8940e2c1c25", ["6.0.x", "8.0.x", "9.0.x", "10.0.100-rc.2.25502.107"]); // v4.1.0
+            .ActionsSetupDotNet("3e891b0cb619bf60e2c25674b222b8940e2c1c25", ["6.0.x", "8.0.x", "9.0.x", "10.0.100"]); // v4.1.0
 
     public static Step IfRefMain(this Step step) 
         => step.If("github.ref == 'refs/heads/main'");

@@ -48,7 +48,7 @@ jobs:
           6.0.x
           8.0.x
           9.0.x
-          10.0.100-rc.2.25502.107
+          10.0.100
     - name: Git Config
       run: |-
         git config --global user.email "github-bot@duendesoftware.com"
@@ -89,8 +89,8 @@ jobs:
         path: access-token-management/artifacts/*.nupkg
         overwrite: true
         retention-days: 15
-    - name: Push packages to MyGet
-      run: dotnet nuget push artifacts/*.nupkg --source https://www.myget.org/F/duende_identityserver/api/v2/package --api-key ${{ secrets.MYGET }} --skip-duplicate
+#    - name: Push packages to MyGet
+#      run: dotnet nuget push artifacts/*.nupkg --source https://www.myget.org/F/duende_identityserver/api/v2/package --api-key ${{ secrets.MYGET }} --skip-duplicate
   publish:
     name: Publish to nuget.org
     needs:
@@ -110,7 +110,7 @@ jobs:
           6.0.x
           8.0.x
           9.0.x
-          10.0.100-rc.2.25502.107
+          10.0.100
     - name: List files
       run: tree
       shell: bash
