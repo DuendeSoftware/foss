@@ -89,8 +89,8 @@ jobs:
         path: access-token-management/artifacts/*.nupkg
         overwrite: true
         retention-days: 15
-    - name: Push packages to MyGet
-      run: dotnet nuget push artifacts/*.nupkg --source https://www.myget.org/F/duende_identityserver/api/v2/package --api-key ${{ secrets.MYGET }} --skip-duplicate
+#    - name: Push packages to MyGet
+#      run: dotnet nuget push artifacts/*.nupkg --source https://www.myget.org/F/duende_identityserver/api/v2/package --api-key ${{ secrets.MYGET }} --skip-duplicate
   publish:
     name: Publish to nuget.org
     needs:
