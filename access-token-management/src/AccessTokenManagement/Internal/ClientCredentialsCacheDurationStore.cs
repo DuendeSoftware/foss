@@ -11,7 +11,7 @@ namespace Duende.AccessTokenManagement.Internal;
 /// </summary>
 internal sealed class ClientCredentialsCacheDurationStore(
     IOptions<ClientCredentialsTokenManagementOptions> options,
-    TimeProvider time)
+    TimeProvider time) : IClientCredentialsCacheDurationStore
 {
     private readonly ClientCredentialsTokenManagementOptions _options = options.Value;
     private readonly ConcurrentDictionary<ClientCredentialsCacheKey, TimeSpan> _cacheDurations = new();
