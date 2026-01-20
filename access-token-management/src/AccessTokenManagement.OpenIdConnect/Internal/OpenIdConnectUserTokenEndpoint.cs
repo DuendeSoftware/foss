@@ -48,7 +48,8 @@ internal class OpenIdConnectUserTokenEndpoint(
             ClientId = oidc.ClientId.ToString(),
             ClientSecret = oidc.ClientSecret.ToString(),
             ClientCredentialStyle = options.Value.ClientCredentialStyle,
-            RefreshToken = refreshToken.RefreshToken.ToString()
+            RefreshToken = refreshToken.RefreshToken.ToString(),
+            Parameters = parameters.Parameters
         };
 
         request.Options.TryAdd(ClientCredentialsTokenManagementDefaults.TokenRequestParametersOptionsName, parameters);
@@ -181,7 +182,8 @@ internal class OpenIdConnectUserTokenEndpoint(
             ClientCredentialStyle = options.Value.ClientCredentialStyle,
 
             Token = refreshToken.ToString(),
-            TokenTypeHint = OidcConstants.TokenTypes.RefreshToken
+            TokenTypeHint = OidcConstants.TokenTypes.RefreshToken,
+            Parameters = parameters.Parameters
         };
 
         request.Options.TryAdd(ClientCredentialsTokenManagementDefaults.TokenRequestParametersOptionsName, parameters);
