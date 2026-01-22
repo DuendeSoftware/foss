@@ -7,6 +7,9 @@ using Duende.AccessTokenManagement.AccessTokenHandler.Fixtures;
 using Duende.AccessTokenManagement.AccessTokenHandler.Helpers;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.IdentityServer.Configuration;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Duende.AccessTokenManagement.AccessTokenHandler;
@@ -97,6 +100,32 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
     public async Task Will_refresh_token_when_access_token_is_rejected(FixtureType type)
     {
         var fixture = await GetInitializedFixture(type);
+
+        fixture.ApiEndpoint.RespondOnceWithUnauthorized();
+
+        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+
+        fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
+    }
+
+    private class MyTokenRequestCustomizer(IHttpContextAccessor context) : ITokenRequestCustomizer
+    {
+        public async Task<TokenRequestParameters> Customize(HttpRequestContext httpRequest,
+            TokenRequestParameters baseParameters,
+            CancellationToken cancellationToken = default)
+        {
+            var idToken = await context.HttpContext!.GetTokenAsync("access_token");
+            baseParameters.Parameters.Add("id_token_hint", idToken ?? "");
+            return baseParameters;
+        }
+    }
+
+    [Fact]
+    public async Task Can_send_id_token()
+    {
+        var fixture = new OidcUserFixture();
+        fixture.Services.AddSingleton<ITokenRequestCustomizer, MyTokenRequestCustomizer>();
+        await fixture.InitializeAsync(output, null);
 
         fixture.ApiEndpoint.RespondOnceWithUnauthorized();
 

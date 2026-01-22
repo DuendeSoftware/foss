@@ -1,12 +1,13 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Duende.AccessTokenManagement;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OpenIdConnect;
-
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
@@ -76,6 +77,8 @@ public static class Startup
         var jsonWebKey = JsonWebKeyConverter.ConvertFromRSASecurityKey(rsaKey);
         jsonWebKey.Alg = "PS256";
         var jwk = JsonSerializer.Serialize(jsonWebKey) ?? throw new InvalidOperationException("Failed to deserialize");
+
+        builder.Services.AddSingleton<ITokenRequestCustomizer, MyTokenRequestCustomizer>();
 
         builder.Services.AddOpenIdConnectAccessTokenManagement(options =>
         {
@@ -149,5 +152,20 @@ public static class Startup
             .RequireAuthorization();
 
         return app;
+    }
+}
+
+internal class MyTokenRequestCustomizer(IHttpContextAccessor context) : ITokenRequestCustomizer
+{
+    public async Task<TokenRequestParameters> Customize(HttpRequestContext httpRequest, TokenRequestParameters baseParameters,
+        CancellationToken cancellationToken = default)
+    {
+        // you can add the id token as the id token hint to the token request as follows:
+        var idToken = await context.HttpContext!.GetTokenAsync("id_token");
+        baseParameters.Parameters.Add("id_token_hint", idToken ?? "");
+
+        // you can also get the access token here, 
+        var accessToken = await context.HttpContext!.GetTokenAsync("access_token");
+        return baseParameters;
     }
 }

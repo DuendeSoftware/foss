@@ -21,7 +21,7 @@ internal abstract class AccessTokenHandlingBaseFixture : IAsyncDisposable
     public readonly TokenHttpMessageHandler TokenEndpoint = new();
     public TimeSpan TokenExpiration = TimeSpan.FromSeconds(3600);
 
-    protected ServiceCollection Services = null!;
+    public ServiceCollection Services = new ServiceCollection();
 
     public ServiceProvider ServiceProvider { get; private set; } = null!;
 
@@ -36,7 +36,6 @@ internal abstract class AccessTokenHandlingBaseFixture : IAsyncDisposable
         ApiEndpoint.DefaultRespondOkWithToken();
         TokenEndpoint.DefaultRespondWithAccessToken((int)TokenExpiration.TotalSeconds);
 
-        Services = new ServiceCollection();
         Services.Configure<MemoryCacheOptions>(options =>
         {
             options.Clock = new MemoryCacheSystemClock(The.TimeProvider);
