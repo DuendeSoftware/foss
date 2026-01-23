@@ -9,6 +9,8 @@ using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 using OidcConstants = Duende.IdentityModel.OidcConstants;
@@ -466,7 +468,6 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         thirdToken.token.ShouldNotBe(firstToken.token);
     }
 
-
     [Fact]
     public async Task Logout_should_revoke_refresh_tokens()
     {
@@ -495,11 +496,11 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         await AppHost.BrowserClient.GetAsync(AppHost.Url("/logout"));
 
-        var postLogoutIntrospectionResponse = await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams);
+        var postLogoutIntrospectionResponse =
+            await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams);
         postLogoutIntrospectionResponse.ShouldNotBeNull();
         postLogoutIntrospectionResponse.IsError.ShouldBeFalse(introspectionResponse.Error);
         postLogoutIntrospectionResponse.IsActive.ShouldBeFalse();
-
     }
 
     [Fact]
@@ -510,14 +511,18 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         AppHost.ClientSecret = null;
         AppHost.OnConfigureServices += services =>
         {
-            services.AddSingleton<IClientAssertionService>(new TestClientAssertionService("test", "service_type", "service_value"));
+            services.AddSingleton<IClientAssertionService>(
+                new TestClientAssertionService("test", "service_type", "service_value"));
             services.PostConfigure<OpenIdConnectOptions>("oidc", options =>
             {
                 options.Events.OnAuthorizationCodeReceived = async context =>
                 {
                     var clientAssertionService =
                         context.HttpContext.RequestServices.GetRequiredService<IClientAssertionService>();
-                    var assertion = await clientAssertionService.GetClientAssertionAsync(ClientCredentialsClientName.Parse("test")) ?? throw new InvalidOperationException("Client assertion is null");
+                    var assertion =
+                        await clientAssertionService.GetClientAssertionAsync(
+                            ClientCredentialsClientName.Parse("test")) ??
+                        throw new InvalidOperationException("Client assertion is null");
 
                     context.TokenEndpointRequest!.ClientAssertionType = assertion.Type;
                     context.TokenEndpointRequest.ClientAssertion = assertion.Value;
@@ -550,5 +555,84 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         token.ShouldNotBeNull();
         token.AccessTokenType.ShouldBe("clientAssertionsWork");
+    }
+
+    [Fact]
+    public async Task Refresh_token_request_should_include_additional_parameters()
+    {
+        /*
+         * We attempt to refresh the token as soon as we attempt to retrieve
+         * it because the token expires in 10 seconds, which is within the 1 minute RefreshBeforeExpiration window.
+         */
+        AppHost.ClientId = "web.short";
+
+        AppHost.OnConfigureServices += services =>
+        {
+            services.PostConfigure<UserTokenManagementOptions>(opt =>
+            {
+                opt.RefreshBeforeExpiration = TimeSpan.FromMinutes(1);
+            });
+        };
+
+        AppHost.OnConfigure += app =>
+        {
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapGet("/refresh_token_with_parameters", async context =>
+                {
+                    var token = await context.GetUserAccessTokenAsync(new UserTokenRequestParameters
+                    {
+                        Parameters = new Parameters([
+                            new KeyValuePair<string, string>("param_name", "param_value")
+                        ])
+                    }).GetToken();
+                    await context.Response.WriteAsJsonAsync(UserTokenModel.BuildFrom(token));
+                });
+            });
+        };
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/refresh_token_with_parameters"));
+        response.EnsureSuccessStatusCode();
+
+        var refreshTokenRequest = IdentityServerHost.CapturedTokenRequests
+            .FirstOrDefault(r => r.TryGetValue("grant_type", out var grantType) && grantType == "refresh_token");
+
+        refreshTokenRequest.ShouldNotBeNull("Expected a refresh token request to be captured");
+        refreshTokenRequest.ShouldContainKey("param_name");
+        refreshTokenRequest["param_name"].ShouldBe("param_value");
+    }
+
+    [Fact]
+    public async Task Revoke_refresh_token_request_should_include_additional_parameters()
+    {
+        AppHost.OnConfigure += app =>
+        {
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapGet("/revoke_token_with_parameters", async context =>
+                {
+                    await context.RevokeRefreshTokenAsync(new UserTokenRequestParameters
+                    {
+                        Parameters = new Parameters([
+                            new KeyValuePair<string, string>("param_name", "param_value")
+                        ])
+                    });
+                });
+            });
+        };
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/revoke_token_with_parameters"));
+        response.EnsureSuccessStatusCode();
+
+        IdentityServerHost.CapturedRevocationRequests.ShouldNotBeEmpty("Expected a revocation request to be captured");
+        var revocationRequest = IdentityServerHost.CapturedRevocationRequests.First();
+        revocationRequest.ShouldContainKey("param_name");
+        revocationRequest["param_name"].ShouldBe("param_value");
     }
 }
