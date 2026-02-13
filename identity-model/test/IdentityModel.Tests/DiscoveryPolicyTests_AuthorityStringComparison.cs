@@ -9,6 +9,8 @@ namespace Duende.IdentityModel;
 
 public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTestsBase
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     public DiscoveryPolicyTests_AuthorityStringComparison() : base(new StringComparisonAuthorityValidationStrategy())
     {
 
@@ -43,7 +45,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = input,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -62,7 +64,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "http://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -84,7 +86,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "http://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -106,7 +108,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = input,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -125,7 +127,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -159,7 +161,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -179,7 +181,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -200,7 +202,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority/TENANTID",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -222,7 +224,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -249,7 +251,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -283,7 +285,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -310,7 +312,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -345,7 +347,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -367,7 +369,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -389,7 +391,7 @@ public class DiscoveryPolicyTests_AuthorityStringComparison : DiscoveryPolicyTes
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);

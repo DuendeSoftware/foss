@@ -10,31 +10,36 @@ Component[] components = [
         ["IgnoreThis"],
         ["IgnoreThis.Tests"],
         "it",
-        [GitHubHostedRunners.UbuntuLatest]),
+        [GitHubHostedRunners.UbuntuLatest],
+        ["net8.0", "net10.0"]),
 
     new("access-token-management",
         ["AccessTokenManagement", "AccessTokenManagement.OpenIdConnect"],
         ["AccessTokenManagement.Tests"],
         "atm",
-        [GitHubHostedRunners.UbuntuLatest]),
+        [GitHubHostedRunners.UbuntuLatest],
+        ["net8.0", "net9.0", "net10.0"]),
 
     new("identity-model",
         ["IdentityModel"],
         ["IdentityModel.Tests"],
         "im",
-        [GitHubHostedRunners.UbuntuLatest, GitHubHostedRunners.WindowsLatest]),
+        [GitHubHostedRunners.UbuntuLatest, GitHubHostedRunners.WindowsLatest],
+        ["net8.0", "net9.0", "net10.0"]),
 
     new("identity-model-oidc-client",
         ["IdentityModel.OidcClient", "IdentityModel.OidcClient.Extensions"],
         ["IdentityModel.OidcClient.Tests"],
         "imoc",
-        [GitHubHostedRunners.UbuntuLatest]),
+        [GitHubHostedRunners.UbuntuLatest],
+        ["net8.0", "net9.0", "net10.0"]),
 
     new("introspection",
         ["AspNetCore.Authentication.OAuth2Introspection"],
         ["AspNetCore.Authentication.OAuth2Introspection.Tests"],
         "intro",
-        [GitHubHostedRunners.UbuntuLatest]),
+        [GitHubHostedRunners.UbuntuLatest],
+        ["net8.0", "net9.0", "net10.0"]),
 ];
 
 foreach (var component in components)
@@ -112,7 +117,7 @@ void GenerateCiWorkflow(Component component)
     var runsOnIncludesWindows = component.RunsOn.Contains(GitHubHostedRunners.WindowsLatest);
     foreach (var testProject in component.Tests)
     {
-        job.StepTest(component.Name, testProject, runsOnIncludesWindows);
+        job.StepTest(component, testProject, runsOnIncludesWindows);
 
         // Temporarily disabled
         // if (runsOnIncludesWindows)
@@ -265,12 +270,16 @@ void GenerateUploadTestResultsWorkflow()
     {
         foreach (var testProject in component.Tests)
         {
-            job.StepGenerateReportFromTestArtifact(component, testProject);
-
-            if (component.RunsOn.Contains(GitHubHostedRunners.WindowsLatest))
+            foreach (var tfm in component.TargetFrameworks)
             {
-                job.StepGenerateReportFromTestArtifact(component, $"{testProject}-net481", "test-results-net481");
+                job.StepGenerateReportFromTestArtifact(component, testProject, tfm);
             }
+
+            // Temporarily disabled
+            // if (component.RunsOn.Contains(GitHubHostedRunners.WindowsLatest))
+            // {
+            //     job.StepGenerateReportFromTestArtifact(component, $"{testProject}-net481", "test-results-net481");
+            // }
         }
     }
 
@@ -285,7 +294,7 @@ void WriteWorkflow(Workflow workflow, string fileName)
     Console.WriteLine($"Wrote workflow to {filePath}");
 }
 
-record Component(string Name, string[] Projects, string[] Tests, string TagPrefix, string[] RunsOn)
+public record Component(string Name, string[] Projects, string[] Tests, string TagPrefix, string[] RunsOn, string[] TargetFrameworks)
 {
     public string CiWorkflowName => $"{Name}/ci";
     public string ReleaseWorkflowName => $"{Name}/release";
@@ -320,70 +329,72 @@ public static class StepExtensions
     internal static Step IfNotWindows(this Step step)
         => step.If("matrix.os != 'windows-latest'");
 
-    public static void StepTest(this Job job, string componentName, string testProject, bool excludeOnWindows, string? framework = null)
+    public static void StepTest(this Job job, Component component, string testProject, bool excludeOnWindows)
     {
-        var testProjectFullName = $"{testProject}{(framework == null ? string.Empty : $"-{framework}")}";
         var path = $"test/{testProject}";
-        var logFileName = $"{testProjectFullName}.trx";
-        var flags = $"--logger \"console;verbosity=normal\" " +
-                    $"--logger \"trx;LogFileName={logFileName}\" " +
-                    $"--collect:\"XPlat Code Coverage\"";
+        var tfmList = string.Join(" ", component.TargetFrameworks);
 
-        if (framework != null)
+        // Build step
+        var buildStep = job.Step()
+            .Name($"Build - {testProject}")
+            .Run($"dotnet build -c Release {path}");
+
+        if (excludeOnWindows)
         {
-            flags += $" --framework {framework}";
+            buildStep.IfNotWindows();
         }
 
+        // Run tests for each TFM using MTP command line experience
         var testStep = job.Step()
-            .Name($"Test - {testProjectFullName}")
-            .Run($"dotnet test -c Release {path} {flags}");
+            .Name($"Test - {testProject}")
+            .Run($"""
+                for tfm in {tfmList}; do
+                  dotnet run --project {path} -c Release --no-build -f $tfm -- \
+                    --report-xunit-trx --report-xunit-trx-filename {testProject}-$tfm.trx \
+                    --coverage --coverage-output-format cobertura \
+                    --coverage-output {testProject}-$tfm.cobertura.xml
+                done
+                """);
 
         if (excludeOnWindows)
         {
             testStep.IfNotWindows();
         }
-
-        if (framework == "net481")
-        {
-            testStep.IfWindows();
-        }
     }
 
-    internal static void StepUploadTestResultsAsArtifact(this Job job, Component component, bool excludeOnWindows, string? framework = null)
+    internal static void StepUploadTestResultsAsArtifact(this Job job, Component component, bool excludeOnWindows)
     {
-        var nameSuffix = framework == null ? string.Empty : $"-{framework}";
+        // Build paths for all TFMs
+        var paths = component.Tests
+            .SelectMany(testProject => component.TargetFrameworks
+                .Select(tfm => $"{component.Name}/test/{testProject}/TestResults/{testProject}-{tfm}.trx"));
+
         var uploadStep = job.Step()
-            .Name($"Test report{nameSuffix}")
+            .Name("Test report")
             .If("success() || failure()")
             .Uses("actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882") // 4.4.3
             .With(
-                ("name", $"test-results{nameSuffix}"),
-                ("path", string.Join(Environment.NewLine, component.Tests
-                    .Select(testProject => $"{component.Name}/test/{testProject}/TestResults/{testProject}{nameSuffix}.trx"))),
+                ("name", "test-results"),
+                ("path", string.Join(Environment.NewLine, paths)),
                 ("retention-days", "5"));
 
         if (excludeOnWindows)
         {
             uploadStep.IfNotWindows();
         }
-
-        if (framework == "net481")
-        {
-            uploadStep.IfWindows();
-        }
     }
 
-    internal static void StepGenerateReportFromTestArtifact(this Job job, Component component, string testProject, string? artifactName = "test-results")
+    internal static void StepGenerateReportFromTestArtifact(this Job job, Component component, string testProject, string tfm, string artifactName = "test-results")
     {
-        var path = $"test/{testProject}";
+        var testProjectWithTfm = $"{testProject}-{tfm}";
         job.Step()
-            .Name($"Test report - {component.Name} - {testProject}")
+            .Name($"Test report - {component.Name} - {testProjectWithTfm}")
             .Uses("dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5") // v1.9.1
             .If($"github.event.workflow.name == '{component.CiWorkflowName}'")
             .With(
-                ("artifact", $"{artifactName}"),
-                ("name", $"Test Report - {testProject}"),
-                ("path", $"{testProject}.trx"),
+                ("artifact", artifactName),
+                ("name", $"Test Report - {testProjectWithTfm}"),
+                ("path", $"{testProjectWithTfm}.trx"),
                 ("reporter", "dotnet-trx"),
                 ("fail-on-error", "true"),
                 ("fail-on-empty", "true"));

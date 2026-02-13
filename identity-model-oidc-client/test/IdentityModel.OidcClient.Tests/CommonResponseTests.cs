@@ -8,6 +8,8 @@ namespace Duende.IdentityModel.OidcClient;
 
 public class CommonResponseTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     readonly OidcClientOptions _options = new OidcClientOptions
     {
         ProviderInformation = new ProviderInformation
@@ -23,10 +25,10 @@ public class CommonResponseTests
     public async Task Missing_code_should_be_rejected()
     {
         var client = new Duende.IdentityModel.OidcClient.OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&id_token=foo";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeTrue();
         result.Error.ShouldBe("Missing authorization code.");
@@ -36,10 +38,10 @@ public class CommonResponseTests
     public async Task Missing_state_should_be_rejected()
     {
         var client = new Duende.IdentityModel.OidcClient.OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?code=foo&id_token=foo";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeTrue();
         result.Error.ShouldBe("Missing state.");
@@ -49,10 +51,10 @@ public class CommonResponseTests
     public async Task Invalid_state_should_be_rejected()
     {
         var client = new Duende.IdentityModel.OidcClient.OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state=invalid&id_token=foo&code=bar";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeTrue();
         result.Error.ShouldBe("Invalid state.");

@@ -16,6 +16,7 @@ namespace Duende.AccessTokenManagement;
 
 public class BackChannelClientTests(ITestOutputHelper output)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private TestData The { get; } = new();
     private TestDataBuilder Some => new(The);
 
@@ -41,9 +42,9 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
         // Getting the token twice should result in a single call (because it' cached)
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
         token.Succeeded.ShouldBeTrue();
-        token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
         token.Succeeded.ShouldBeTrue();
 
         mockHttp.GetMatchCount(request).ShouldBe(1);
@@ -71,14 +72,14 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
         // Get the first token (should result in a call)
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
         token.Succeeded.ShouldBeTrue();
 
         // then delete the token
-        await sut.DeleteAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        await sut.DeleteAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
         // Now get another token. This should result in another call
-        token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
         token.Succeeded.ShouldBeTrue();
         mockHttp.GetMatchCount(request).ShouldBe(2);
     }
@@ -106,7 +107,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
         token.Succeeded.ShouldBeFalse();
         token.FailedResult!.Error.ShouldBe("Not Found");
@@ -137,7 +138,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
         token.Succeeded.ShouldBeFalse();
         token.FailedResult!.Error.ShouldBe("Not Found");
@@ -173,7 +174,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
             ForceTokenRenewal = false,
             Scope = Scope.Parse("scope1"),
 
-        }).GetToken();
+        }, _ct).GetToken();
 
 
         await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), new TokenRequestParameters
@@ -181,7 +182,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
             ForceTokenRenewal = false,
             Scope = Scope.Parse("scope2"),
 
-        }).GetToken();
+        }, _ct).GetToken();
 
         mockHttp.GetMatchCount(request).ShouldBe(2);
     }
@@ -335,7 +336,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
         token.Succeeded.ShouldBeFalse();
         token.FailedResult!.Error.ShouldBe("Not Found");
@@ -369,7 +370,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
         // Verify we actually used the cache
         replacementCache.GetOrCreateCount.ShouldBe(1);
@@ -402,8 +403,8 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
-        var token2 = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+        var token2 = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
         token.AccessToken.ShouldBeEquivalentTo(token2.AccessToken);
         var encryptedSerializer =
@@ -441,7 +442,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
         replacementCache.CacheKey.ShouldBe("always_the_same");
 
@@ -471,7 +472,7 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
         // Getting the token twice should result in a single call (because it' cached)
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"));
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
         token.Token!.AccessToken.ToString().ShouldStartWith("_prefix_added_by_serializer");
         token.Token!.AccessToken.ToString().ShouldEndWith("_suffix_added_by_serializer_");
@@ -528,18 +529,18 @@ public class BackChannelClientTests(ITestOutputHelper output)
         var provider = services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("some_client_name")).GetToken();
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("some_client_name"), ct: _ct).GetToken();
 
         var cache = provider.GetRequiredService<HybridCache>();
         var cachedToken = await cache.GetOrCreateAsync<ClientCredentialsToken>("always_the_same",
-            _ => ValueTask.FromResult((ClientCredentialsToken)null!));
+            _ => ValueTask.FromResult((ClientCredentialsToken)null!), cancellationToken: _ct);
 
         cachedToken.ShouldNotBeNull();
 
-        await cache.RemoveByTagAsync(clientName);
+        await cache.RemoveByTagAsync(clientName, _ct);
 
         cachedToken = await cache.GetOrCreateAsync<ClientCredentialsToken>("always_the_same",
-            _ => ValueTask.FromResult((ClientCredentialsToken)null!));
+            _ => ValueTask.FromResult((ClientCredentialsToken)null!), cancellationToken: _ct);
         cachedToken.ShouldBeNull();
     }
 

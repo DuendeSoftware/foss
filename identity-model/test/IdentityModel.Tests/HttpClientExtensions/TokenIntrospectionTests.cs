@@ -11,6 +11,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class TokenIntrospectionTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/token";
     private static readonly DateTimeOffset NotBeforeDate = new(year: 2016, month: 10, day: 7, hour: 7, minute: 21, second: 11, offset: TimeSpan.Zero);
     private static readonly DateTimeOffset ExpirationDate = new(year: 2016, month: 10, day: 7, hour: 8, minute: 21, second: 11, offset: TimeSpan.Zero);
@@ -30,7 +32,7 @@ public class TokenIntrospectionTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        _ = await client.IntrospectTokenAsync(request);
+        _ = await client.IntrospectTokenAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -59,7 +61,7 @@ public class TokenIntrospectionTests
         var response = await client.IntrospectTokenAsync(new TokenIntrospectionRequest
         {
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -109,7 +111,7 @@ public class TokenIntrospectionTests
         var response = await client.IntrospectTokenAsync(new TokenIntrospectionRequest
         {
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -160,7 +162,7 @@ public class TokenIntrospectionTests
             Token = "token"
         };
 
-        var response = await client.IntrospectTokenAsync(request);
+        var response = await client.IntrospectTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -196,7 +198,7 @@ public class TokenIntrospectionTests
         response.JwtId.ShouldBeNull();
 
         // repeat
-        response = await client.IntrospectTokenAsync(request);
+        response = await client.IntrospectTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -226,7 +228,7 @@ public class TokenIntrospectionTests
             BaseAddress = new Uri(Endpoint)
         };
 
-        var act = async () => await client.IntrospectTokenAsync(new TokenIntrospectionRequest());
+        var act = async () => await client.IntrospectTokenAsync(new TokenIntrospectionRequest(), _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.Message.ShouldContain("token");
@@ -243,7 +245,7 @@ public class TokenIntrospectionTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -262,7 +264,7 @@ public class TokenIntrospectionTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -280,7 +282,7 @@ public class TokenIntrospectionTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -299,7 +301,7 @@ public class TokenIntrospectionTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -352,7 +354,7 @@ public class TokenIntrospectionTests
                 { "scope", "scope2" },
                 { "foo", "bar baz" }
             }
-        });
+        }, _ct);
 
         // check request
         handler.Body.ShouldBe("scope=scope1&scope=scope2&foo=bar+baz&token=token");
@@ -408,7 +410,7 @@ public class TokenIntrospectionTests
             Address = Endpoint,
             Token = "token",
             ResponseFormat = ResponseFormat.Jwt
-        });
+        }, _ct);
 
         response.ShouldNotBeNull();
         var acceptHeaders = handler.Request.Headers.Accept.ToArray();

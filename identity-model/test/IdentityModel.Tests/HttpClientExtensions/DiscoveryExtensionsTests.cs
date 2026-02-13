@@ -10,9 +10,10 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class DiscoveryExtensionsTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private readonly NetworkHandler _successHandler;
     private readonly string _endpoint = "https://demo.identityserver.io/.well-known/openid-configuration";
-    private readonly string _authority = "https://demo.identityserver.io";
 
     public DiscoveryExtensionsTests()
     {
@@ -47,7 +48,7 @@ public class DiscoveryExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.GetDiscoveryDocumentAsync(request);
+        var response = await client.GetDiscoveryDocumentAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -76,7 +77,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -109,7 +110,7 @@ public class DiscoveryExtensionsTests
         var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
             Address = _endpoint
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -122,8 +123,8 @@ public class DiscoveryExtensionsTests
 
         var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            Address = _authority
-        });
+            Address = _endpoint
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         handler.Request.RequestUri!.AbsoluteUri.ShouldBe(_endpoint);
@@ -138,7 +139,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -160,7 +161,7 @@ public class DiscoveryExtensionsTests
         {
             Address = _endpoint,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         policy.Authority.ShouldBe("https://server:123");
@@ -175,7 +176,7 @@ public class DiscoveryExtensionsTests
         var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
             Address = _endpoint
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -191,7 +192,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeFalse();
 
@@ -210,7 +211,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeFalse();
 
@@ -401,7 +402,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeFalse();
         disco.MtlsEndpointAliases.ShouldNotBeNull();
@@ -424,7 +425,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -450,7 +451,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -494,7 +495,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -543,7 +544,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -580,7 +581,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -618,7 +619,7 @@ public class DiscoveryExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var disco = await client.GetDiscoveryDocumentAsync();
+        var disco = await client.GetDiscoveryDocumentAsync(cancellationToken: _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.ErrorType.ShouldBe(ResponseErrorType.Http);

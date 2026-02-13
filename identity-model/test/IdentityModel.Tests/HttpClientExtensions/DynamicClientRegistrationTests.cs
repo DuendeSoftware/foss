@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class DynamicClientRegistrationTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/register";
 
     // This is an example software statement, taken from RFC 7591
@@ -30,7 +32,7 @@ public class DynamicClientRegistrationTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.RegisterClientAsync(request);
+        var response = await client.RegisterClientAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -64,7 +66,7 @@ public class DynamicClientRegistrationTests
             {
                 SoftwareStatement = SoftwareStatement
             }
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -94,7 +96,7 @@ public class DynamicClientRegistrationTests
         {
             Address = Endpoint,
             Document = new DynamicClientRegistrationDocument()
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -112,7 +114,7 @@ public class DynamicClientRegistrationTests
         {
             Address = Endpoint,
             Document = new DynamicClientRegistrationDocument()
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -130,7 +132,7 @@ public class DynamicClientRegistrationTests
         {
             Address = Endpoint,
             Document = new DynamicClientRegistrationDocument()
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -149,7 +151,7 @@ public class DynamicClientRegistrationTests
         {
             Address = Endpoint,
             Document = new DynamicClientRegistrationDocument()
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Protocol);
@@ -174,7 +176,7 @@ public class DynamicClientRegistrationTests
         var handler = new NetworkHandler(document, HttpStatusCode.Created);
 
         var client = new HttpClient(handler);
-        var response = await client.RegisterClientAsync(request);
+        var response = await client.RegisterClientAsync(request, _ct);
 
         // Mostly we just want to make sure that serialization didn't throw
         response.ShouldNotBeNull();

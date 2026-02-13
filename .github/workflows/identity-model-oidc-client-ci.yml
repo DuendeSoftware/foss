@@ -54,14 +54,25 @@ jobs:
       run: dotnet restore *.slnf
     - name: Verify Formatting
       run: dotnet format *.slnf --verify-no-changes --no-restore
+    - name: Build - IdentityModel.OidcClient.Tests
+      run: dotnet build -c Release test/IdentityModel.OidcClient.Tests
     - name: Test - IdentityModel.OidcClient.Tests
-      run: dotnet test -c Release test/IdentityModel.OidcClient.Tests --logger "console;verbosity=normal" --logger "trx;LogFileName=IdentityModel.OidcClient.Tests.trx" --collect:"XPlat Code Coverage"
+      run: >-
+        for tfm in net8.0 net9.0 net10.0; do
+          dotnet run --project test/IdentityModel.OidcClient.Tests -c Release --no-build -f $tfm -- \
+            --report-xunit-trx --report-xunit-trx-filename IdentityModel.OidcClient.Tests-$tfm.trx \
+            --coverage --coverage-output-format cobertura \
+            --coverage-output IdentityModel.OidcClient.Tests-$tfm.cobertura.xml
+        done
     - name: Test report
       if: success() || failure()
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
       with:
         name: test-results
-        path: identity-model-oidc-client/test/IdentityModel.OidcClient.Tests/TestResults/IdentityModel.OidcClient.Tests.trx
+        path: |-
+          identity-model-oidc-client/test/IdentityModel.OidcClient.Tests/TestResults/IdentityModel.OidcClient.Tests-net8.0.trx
+          identity-model-oidc-client/test/IdentityModel.OidcClient.Tests/TestResults/IdentityModel.OidcClient.Tests-net9.0.trx
+          identity-model-oidc-client/test/IdentityModel.OidcClient.Tests/TestResults/IdentityModel.OidcClient.Tests-net10.0.trx
         retention-days: 5
     - name: Tool restore
       run: dotnet tool restore

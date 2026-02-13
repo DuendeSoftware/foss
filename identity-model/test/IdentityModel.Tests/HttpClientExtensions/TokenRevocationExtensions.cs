@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class TokenRevocationExtensionsTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/endpoint";
 
     [Fact]
@@ -27,7 +29,7 @@ public class TokenRevocationExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.RevokeTokenAsync(request);
+        var response = await client.RevokeTokenAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -58,7 +60,7 @@ public class TokenRevocationExtensionsTests
             Address = Endpoint,
             Token = "token",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -78,14 +80,14 @@ public class TokenRevocationExtensionsTests
             ClientId = "client"
         };
 
-        var response = await client.RevokeTokenAsync(request);
+        var response = await client.RevokeTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
         response.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
 
         // repeat
-        response = await client.RevokeTokenAsync(request);
+        response = await client.RevokeTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -104,7 +106,7 @@ public class TokenRevocationExtensionsTests
             Address = Endpoint,
             Token = "token",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Protocol);
@@ -124,7 +126,7 @@ public class TokenRevocationExtensionsTests
             Address = Endpoint,
             Token = "token",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -143,7 +145,7 @@ public class TokenRevocationExtensionsTests
             Address = Endpoint,
             Token = "token",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -162,7 +164,7 @@ public class TokenRevocationExtensionsTests
             Address = Endpoint,
             Token = "token",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -186,7 +188,7 @@ public class TokenRevocationExtensionsTests
             {
                 { "foo", "bar" }
             }
-        });
+        }, _ct);
 
         // check request
         var fields = QueryHelpers.ParseQuery(handler.Body);

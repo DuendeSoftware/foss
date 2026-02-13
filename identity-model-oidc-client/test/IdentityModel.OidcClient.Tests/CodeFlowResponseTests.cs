@@ -12,6 +12,8 @@ namespace Duende.IdentityModel.OidcClient;
 
 public class CodeFlowResponseTestsWithNoValidation
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private readonly OidcClientOptions _options = new OidcClientOptions
     {
         ClientId = "client",
@@ -44,7 +46,7 @@ public class CodeFlowResponseTestsWithNoValidation
     public async Task Valid_response_with_id_token_should_succeed()
     {
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -63,7 +65,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler =
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -81,7 +83,7 @@ public class CodeFlowResponseTestsWithNoValidation
     {
         _options.Scope = "api";
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
 
@@ -95,7 +97,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler =
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -109,7 +111,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.LoadProfile = true;
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -148,7 +150,7 @@ public class CodeFlowResponseTestsWithNoValidation
 
         _options.BackchannelHandler = networkHandler;
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -169,7 +171,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.TokenClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader;
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -187,7 +189,7 @@ public class CodeFlowResponseTestsWithNoValidation
         var backChannelHandler = new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
         _options.BackchannelHandler = backChannelHandler;
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         var request = backChannelHandler.Request;
 
@@ -204,7 +206,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.TokenClientCredentialStyle = ClientCredentialStyle.PostBody;
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -222,7 +224,7 @@ public class CodeFlowResponseTestsWithNoValidation
         var backChannelHandler = new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
         _options.BackchannelHandler = backChannelHandler;
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         var fields = QueryHelpers.ParseQuery(backChannelHandler.Body);
         fields["client_id"].First().ShouldBe("client");
@@ -233,7 +235,7 @@ public class CodeFlowResponseTestsWithNoValidation
     public async Task Multi_tenant_token_issuer_name_should_succeed_by_policy_option()
     {
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         _options.Policy.Discovery.ValidateEndpoints = false;
         _options.Policy.ValidateTokenIssuerName = false;
@@ -254,7 +256,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler =
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -266,7 +268,7 @@ public class CodeFlowResponseTestsWithNoValidation
     public async Task Extra_parameters_on_backchannel_should_be_sent()
     {
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -290,7 +292,7 @@ public class CodeFlowResponseTestsWithNoValidation
             { "bar", "bar" }
         };
 
-        var result = await client.ProcessResponseAsync(url, state, backChannel);
+        var result = await client.ProcessResponseAsync(url, state, backChannel, _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -307,7 +309,7 @@ public class CodeFlowResponseTestsWithNoValidation
     {
         _options.Policy.RequireIdentityTokenSignature = true;
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -325,7 +327,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler =
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
-        var act = async () => { await client.ProcessResponseAsync(url, state); };
+        var act = async () => { await client.ProcessResponseAsync(url, state, cancellationToken: _ct); };
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldStartWith("No IIdentityTokenValidator is configured.");
     }
@@ -336,10 +338,10 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler = new NetworkHandler(new Exception("error"));
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeTrue();
         result.Error.ShouldStartWith("Error redeeming code: error");
@@ -360,10 +362,10 @@ public class CodeFlowResponseTestsWithNoValidation
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeTrue();
         result.Error.ShouldBe("Error validating token response: Access token is missing on token response.");
@@ -383,10 +385,10 @@ public class CodeFlowResponseTestsWithNoValidation
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -402,7 +404,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.LoadProfile = true;
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
         var idToken = Crypto.CreateJwt(null, "https://authority", "client",
@@ -440,7 +442,7 @@ public class CodeFlowResponseTestsWithNoValidation
 
         _options.BackchannelHandler = networkHandler;
 
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeFalse();
         result.AccessToken.ShouldBe("token");
@@ -469,10 +471,10 @@ public class CodeFlowResponseTestsWithNoValidation
             new NetworkHandler(JsonSerializer.Serialize(tokenResponse), HttpStatusCode.OK);
 
         var client = new OidcClient(_options);
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         var url = $"?state={state.State}&code=bar";
-        var result = await client.ProcessResponseAsync(url, state);
+        var result = await client.ProcessResponseAsync(url, state, cancellationToken: _ct);
 
         result.IsError.ShouldBeTrue();
         result.Error.ShouldContain("invalid_jwt");
@@ -496,7 +498,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler = backChannelHandler;
 
         // Prepare the login to cause the backchannel PAR request
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         // Validate that the resulting PAR state is correct
         var startUrl = new Uri(state.StartUrl);
@@ -537,7 +539,7 @@ public class CodeFlowResponseTestsWithNoValidation
         _options.BackchannelHandler = backChannelHandler;
 
         // Prepare the login to cause the backchannel PAR request
-        var state = await client.PrepareLoginAsync();
+        var state = await client.PrepareLoginAsync(cancellationToken: _ct);
 
         // Validate that the resulting PAR state is correct
         var startUrl = new Uri(state.StartUrl);

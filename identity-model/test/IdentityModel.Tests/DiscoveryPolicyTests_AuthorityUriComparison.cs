@@ -9,6 +9,8 @@ namespace Duende.IdentityModel;
 
 public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsBase
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     public DiscoveryPolicyTests_AuthorityUriComparison() : base(new AuthorityUrlValidationStrategy())
     {
 
@@ -43,7 +45,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = input,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -62,7 +64,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "http://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -84,7 +86,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "http://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -106,7 +108,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = input,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -125,7 +127,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -159,7 +161,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -179,7 +181,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -200,7 +202,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority/tenantid",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -220,7 +222,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority/tenantid",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
     }
@@ -242,7 +244,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -269,7 +271,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -303,7 +305,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -330,7 +332,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);
@@ -365,7 +367,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = authority,
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -387,7 +389,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeFalse();
     }
@@ -409,7 +411,7 @@ public class DiscoveryPolicyTests_AuthorityUriComparison : DiscoveryPolicyTestsB
         {
             Address = "https://authority",
             Policy = policy
-        });
+        }, _ct);
 
         disco.IsError.ShouldBeTrue();
         disco.Json?.ValueKind.ShouldBe(JsonValueKind.Undefined);

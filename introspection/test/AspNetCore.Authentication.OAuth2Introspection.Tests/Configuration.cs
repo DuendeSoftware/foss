@@ -8,12 +8,14 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 public class Configuration
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task Empty_Options()
     {
         var client = await PipelineFactory.CreateClient(_ => { });
 
-        var act = async () => await client.GetAsync("http://test");
+        var act = async () => await client.GetAsync("http://test", _ct);
 
         var result = await act.ShouldThrowAsync<InvalidOperationException>();
         result.Message.ShouldBe("You must either set Authority or IntrospectionEndpoint");
@@ -29,7 +31,7 @@ public class Configuration
 
         });
 
-        var act = async () => await client.GetAsync("http://test");
+        var act = async () => await client.GetAsync("http://test", _ct);
 
         await act.ShouldNotThrowAsync();
     }
@@ -43,7 +45,7 @@ public class Configuration
             options.IntrospectionEndpoint = "http://endpoint";
         }, handler);
 
-        var act = async () => await client.GetAsync("http://test");
+        var act = async () => await client.GetAsync("http://test", _ct);
 
         await act.ShouldNotThrowAsync();
     }
@@ -57,7 +59,7 @@ public class Configuration
             options.ClientId = "scope";
         });
 
-        var act = async () => await client.GetAsync("http://test");
+        var act = async () => await client.GetAsync("http://test", _ct);
 
         await act.ShouldNotThrowAsync();
     }
@@ -78,7 +80,7 @@ public class Configuration
         }, handler);
 
         client.SetBearerToken("token");
-        await client.GetAsync("http://server/api");
+        await client.GetAsync("http://server/api", _ct);
 
         ops.IntrospectionEndpoint.ShouldBe("https://authority.com/introspection_endpoint");
     }

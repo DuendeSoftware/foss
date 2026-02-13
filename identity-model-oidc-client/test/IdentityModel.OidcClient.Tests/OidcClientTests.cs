@@ -8,6 +8,7 @@ namespace Duende.IdentityModel.OidcClient;
 
 public class OidcClientTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     [Fact]
     public async Task RefreshTokenAsync_with_scope_should_set_http_request_scope_parameter()
     {
@@ -54,7 +55,7 @@ public class OidcClientTests
             }
         });
 
-        var result = await sut.RefreshTokenAsync("test", scope: scope);
+        var result = await sut.RefreshTokenAsync("test", scope: scope, cancellationToken: _ct);
 
         result.ShouldNotBeNull();
     }
@@ -72,7 +73,7 @@ public class OidcClientTests
         };
 
         var client = new OidcClient(options);
-        var state = await client.PrepareLogoutAsync();
+        var state = await client.PrepareLogoutAsync(cancellationToken: _ct);
 
         state.ShouldNotBeNull();
     }

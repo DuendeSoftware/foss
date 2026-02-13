@@ -14,6 +14,8 @@ namespace Duende.AccessTokenManagement;
 
 public class HybridCacheExplorationTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task Exception_is_not_written_to_cache()
     {
@@ -32,7 +34,7 @@ public class HybridCacheExplorationTests
             {
                 count++;
                 throw new InvalidOperationException();
-            });
+            }, cancellationToken: _ct);
         }
         catch (InvalidOperationException)
         {
@@ -42,7 +44,7 @@ public class HybridCacheExplorationTests
         {
             count++;
             return ValueTask.FromResult<object>(null!);
-        });
+        }, cancellationToken: _ct);
 
         item.ShouldBeNull();
         count.ShouldBe(2);
@@ -77,7 +79,8 @@ public class HybridCacheExplorationTests
             {
                 Expiration = TimeSpan.FromMinutes(5)
             },
-            factory: _ => ValueTask.FromResult("cached"));
+            factory: _ => ValueTask.FromResult("cached"),
+            cancellationToken: _ct);
 
         //when the cached item is still valid, it shouldn't invoke the factory
         var found = await cache.GetOrCreateAsync<string>("key",
@@ -85,7 +88,8 @@ public class HybridCacheExplorationTests
             {
                 Expiration = TimeSpan.FromMinutes(5)
             },
-            factory: _ => ValueTask.FromResult("wrong"));
+            factory: _ => ValueTask.FromResult("wrong"),
+            cancellationToken: _ct);
 
         found.ShouldBe("cached");
 
@@ -98,7 +102,8 @@ public class HybridCacheExplorationTests
         found = await cache.GetOrCreateAsync<string>(
             "key",
             options: cacheEntryOptions,
-            factory: _ => ValueTask.FromResult("updated"));
+            factory: _ => ValueTask.FromResult("updated"),
+            cancellationToken: _ct);
 
         found.ShouldBe("updated");
     }
@@ -129,7 +134,8 @@ public class HybridCacheExplorationTests
                 Expiration = TimeSpan.FromMinutes(5),
                 LocalCacheExpiration = TimeSpan.FromSeconds(1)
             },
-            factory: _ => ValueTask.FromResult("cached"));
+            factory: _ => ValueTask.FromResult("cached"),
+            cancellationToken: _ct);
 
         // when the cached item is still valid, it shouldn't invoke the factory
         var found = await cache.GetOrCreateAsync<string>("key",
@@ -138,7 +144,8 @@ public class HybridCacheExplorationTests
                 Expiration = TimeSpan.FromMinutes(5),
                 LocalCacheExpiration = TimeSpan.FromSeconds(1)
             },
-            factory: _ => ValueTask.FromResult("wrong"));
+            factory: _ => ValueTask.FromResult("wrong"),
+            cancellationToken: _ct);
 
         found.ShouldBe("cached");
 
@@ -152,7 +159,8 @@ public class HybridCacheExplorationTests
                 Expiration = TimeSpan.FromMinutes(5),
                 LocalCacheExpiration = TimeSpan.FromSeconds(1)
             },
-            factory: _ => ValueTask.FromResult("updated"));
+            factory: _ => ValueTask.FromResult("updated"),
+            cancellationToken: _ct);
 
         found.ShouldBe("updated");
     }

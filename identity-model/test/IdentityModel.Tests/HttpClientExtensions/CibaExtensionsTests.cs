@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class CibaExtensionsTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/backchannel";
 
     [Fact]
@@ -45,7 +47,7 @@ public class CibaExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.RequestBackchannelAuthenticationAsync(request);
+        var response = await client.RequestBackchannelAuthenticationAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -133,7 +135,7 @@ public class CibaExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.RequestBackchannelAuthenticationAsync(request);
+        var response = await client.RequestBackchannelAuthenticationAsync(request, _ct);
 
         var httpRequest = handler.Request;
 

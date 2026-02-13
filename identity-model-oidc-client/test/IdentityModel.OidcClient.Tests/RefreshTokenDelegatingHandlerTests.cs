@@ -10,6 +10,7 @@ namespace Duende.IdentityModel.OidcClient;
 
 public class RefreshTokenDelegatingHandlerTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private readonly Action<string> _writeLine;
 
     public RefreshTokenDelegatingHandlerTests(ITestOutputHelper output) => _writeLine = output.WriteLine;

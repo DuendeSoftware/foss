@@ -11,6 +11,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class DeviceAuthorizationExtensionsTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/device";
 
     [Fact]
@@ -27,7 +29,7 @@ public class DeviceAuthorizationExtensionsTests
             //ClientCredentialStyle = ClientCredentialStyle.PostBody
         };
 
-        var _ = await client.RequestDeviceAuthorizationAsync(request);
+        var _ = await client.RequestDeviceAuthorizationAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -54,7 +56,7 @@ public class DeviceAuthorizationExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var _ = await client.RequestDeviceAuthorizationAsync(request);
+        var _ = await client.RequestDeviceAuthorizationAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -86,7 +88,7 @@ public class DeviceAuthorizationExtensionsTests
             ClientId = "client",
             ClientSecret = "secret",
             ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-        });
+        }, _ct);
 
         var request = handler.Request;
 
@@ -108,7 +110,7 @@ public class DeviceAuthorizationExtensionsTests
             ClientId = "client",
             ClientSecret = "secret",
             ClientCredentialStyle = ClientCredentialStyle.PostBody
-        });
+        }, _ct);
 
         var request = handler.Request;
 
@@ -130,7 +132,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -158,7 +160,7 @@ public class DeviceAuthorizationExtensionsTests
         };
 
         var client = new HttpClient(handler);
-        var response = await client.RequestDeviceAuthorizationAsync(request);
+        var response = await client.RequestDeviceAuthorizationAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -173,7 +175,7 @@ public class DeviceAuthorizationExtensionsTests
         response.Interval.ShouldBe(10);
 
         // repeat
-        response = await client.RequestDeviceAuthorizationAsync(request);
+        response = await client.RequestDeviceAuthorizationAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -199,7 +201,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Protocol);
@@ -220,7 +222,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -238,7 +240,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -256,7 +258,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -274,7 +276,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -299,7 +301,7 @@ public class DeviceAuthorizationExtensionsTests
         {
             Address = Endpoint,
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);

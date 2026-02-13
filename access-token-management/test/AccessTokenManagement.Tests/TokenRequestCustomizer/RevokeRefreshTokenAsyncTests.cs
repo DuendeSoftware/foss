@@ -13,6 +13,7 @@ namespace Duende.AccessTokenManagement.TokenRequestCustomizer;
 
 public class RevokeRefreshTokenAsyncTests(ITestOutputHelper outputHelper) : IntegrationTestBase(outputHelper)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private Action<HttpRequest>? CustomizeOutgoingRequest { get; set; }
 
     public override async ValueTask InitializeAsync()
@@ -53,7 +54,7 @@ public class RevokeRefreshTokenAsyncTests(ITestOutputHelper outputHelper) : Inte
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_refresh_token_revocation"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_refresh_token_revocation"), _ct);
 
         response.EnsureSuccessStatusCode();
 
@@ -93,7 +94,7 @@ public class RevokeRefreshTokenAsyncTests(ITestOutputHelper outputHelper) : Inte
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_refresh_token_revocation"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_refresh_token_revocation"), _ct);
 
         response.EnsureSuccessStatusCode();
 
@@ -136,7 +137,7 @@ public class RevokeRefreshTokenAsyncTests(ITestOutputHelper outputHelper) : Inte
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_refresh_token_revocation"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_refresh_token_revocation"), _ct);
 
         response.EnsureSuccessStatusCode();
 

@@ -17,6 +17,8 @@ namespace Duende.AccessTokenManagement;
 
 public class TokenRetrieverTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task Customizer_can_modify_parameters_when_called_in_client_credentials_token_retriever()
     {
@@ -30,7 +32,7 @@ public class TokenRetrieverTests
         });
         var tokenRetriever = new ClientCredentialsTokenRetriever(tokenManager,
             ClientCredentialsClientName.Parse("unknown"), tokenRequestCustomizer);
-        await tokenRetriever.GetTokenAsync(new HttpRequestMessage(), CancellationToken.None);
+        await tokenRetriever.GetTokenAsync(new HttpRequestMessage(), _ct);
 
         finalizedTokenRequestParameters.ShouldBeEquivalentTo(overriddenTokenRequestParameters);
     }
@@ -52,7 +54,7 @@ public class TokenRetrieverTests
         var defaultTokenRequestParameters = BuildDefaultUserTokenRequestParameters();
         var tokenRetriever = new OpenIdConnectClientAccessTokenRetriever(tokenManager, options,
             new TestSchemeProvider(), defaultTokenRequestParameters, tokenRequestCustomizer);
-        await tokenRetriever.GetTokenAsync(new HttpRequestMessage(), CancellationToken.None);
+        await tokenRetriever.GetTokenAsync(new HttpRequestMessage(), _ct);
 
         finalizedTokenRequestParameters.ShouldBeEquivalentTo(overriddenTokenRequestParameters);
     }
@@ -71,7 +73,7 @@ public class TokenRetrieverTests
         var defaultTokenRequestParameters = BuildDefaultUserTokenRequestParameters();
         var tokenRetriever = new OpenIdConnectUserAccessTokenRetriever(new UserAccessor(), tokenManager,
             defaultTokenRequestParameters, tokenRequestCustomizer);
-        await tokenRetriever.GetTokenAsync(new HttpRequestMessage(), CancellationToken.None);
+        await tokenRetriever.GetTokenAsync(new HttpRequestMessage(), _ct);
 
         finalizedTokenRequestParameters.ShouldBeEquivalentTo(overriddenTokenRequestParameters);
     }

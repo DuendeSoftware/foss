@@ -10,6 +10,7 @@ namespace Duende.AccessTokenManagement.TokenRequestCustomizer;
 
 public class UserAccessTokenRequestCustomizerTests(ITestOutputHelper output) : IntegrationTestBase(output)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private Action<IHttpClientBuilder>? CustomizeHttpClientBuilder { get; set; }
     private Action<HttpClient, UriBuilder>? CustomizeOutgoingRequest { get; set; }
 
@@ -51,7 +52,7 @@ public class UserAccessTokenRequestCustomizerTests(ITestOutputHelper output) : I
 
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -75,7 +76,7 @@ public class UserAccessTokenRequestCustomizerTests(ITestOutputHelper output) : I
 
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -107,7 +108,7 @@ public class UserAccessTokenRequestCustomizerTests(ITestOutputHelper output) : I
 
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -138,7 +139,7 @@ public class UserAccessTokenRequestCustomizerTests(ITestOutputHelper output) : I
 
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -169,7 +170,7 @@ public class UserAccessTokenRequestCustomizerTests(ITestOutputHelper output) : I
 
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(new Uri(new Uri(AppHost.Url()), "/call_api?scope=scope2"));
+        var response = await AppHost.BrowserClient.GetAsync(new Uri(new Uri(AppHost.Url()), "/call_api?scope=scope2"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");

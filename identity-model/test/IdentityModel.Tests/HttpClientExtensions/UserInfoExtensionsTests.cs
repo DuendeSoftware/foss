@@ -9,6 +9,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class UserInfoExtensionsTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/endpoint";
 
     [Fact]
@@ -22,7 +24,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -45,7 +47,7 @@ public class UserInfoExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.GetUserInfoAsync(request);
+        var response = await client.GetUserInfoAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -78,7 +80,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -96,7 +98,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -114,7 +116,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -133,7 +135,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Protocol);
@@ -156,7 +158,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -182,7 +184,7 @@ public class UserInfoExtensionsTests
         {
             Address = Endpoint,
             Token = "token"
-        });
+        }, _ct);
 
         var httpRequest = handler.Request;
 
@@ -210,7 +212,7 @@ public class UserInfoExtensionsTests
                 Type = "test",
                 Value = "value"
             }
-        });
+        }, _ct);
 
         var httpRequest = handler.Request;
 

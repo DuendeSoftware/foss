@@ -19,12 +19,14 @@ namespace Duende.AccessTokenManagement;
 
 public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task Anonymous_user_should_return_user_token_error()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token_error"));
-        var token = await response.Content.ReadFromJsonAsync<FailedResult>();
+        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token_error"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<FailedResult>(_ct);
 
         token!.Error.ShouldNotBeNull();
     }
@@ -33,8 +35,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     public async Task Anonymous_user_should_return_client_token()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/client_token"));
-        var token = await response.Content.ReadFromJsonAsync<ClientCredentialsTokenModel>();
+        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/client_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<ClientCredentialsTokenModel>(_ct);
 
         token!.AccessToken.ShouldNotBeNull();
         token.AccessTokenType.ShouldNotBeNull().ShouldBe("Bearer");
@@ -79,13 +81,13 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
         // Get a user token. This should trigger a token refresh, which then get's stored and triggers
         // the custom token transform
-        await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"));
+        await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"), _ct);
 
         // Verify that the transform is used.
         transformed.ShouldBeTrue();
 
         // The transformed principal should now be used.
-        var claims = await AppHost.BrowserClient!.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"));
+        var claims = await AppHost.BrowserClient!.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"), _ct);
         claims![JwtClaimTypes.Name].ShouldBe("transformed");
     }
 
@@ -113,8 +115,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         // 1st request
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("initial_access_token");
@@ -123,8 +125,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // 2nd request should not trigger a token request
-        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("initial_access_token");
@@ -155,8 +157,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("initial_access_token");
@@ -187,8 +189,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("initial_access_token");
@@ -219,8 +221,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("initial_access_token");
@@ -289,8 +291,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         // first request should trigger refresh
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.IdentityToken.ShouldNotBeNull().ShouldBe("refreshed1_id_token");
@@ -300,8 +302,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // second request should trigger refresh
-        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.IdentityToken.ShouldNotBeNull().ShouldBe("refreshed2_id_token");
@@ -311,8 +313,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // third request should not trigger refresh
-        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("refreshed2_access_token");
@@ -371,8 +373,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         // first request - no resource
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("access_token_without_resource");
@@ -380,8 +382,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // second request - with resource api1
-        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_with_resource/urn:api1"));
-        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_with_resource/urn:api1"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("urn:api1_access_token");
@@ -389,8 +391,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         token.Expiration.ShouldNotBe(DateTimeOffset.MaxValue);
 
         // third request - with resource api2
-        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_with_resource/urn:api2"));
-        token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_with_resource/urn:api2"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessToken.ShouldBe("urn:api2_access_token");
@@ -438,8 +440,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
 
         // first request should trigger refresh
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.RefreshToken.ShouldNotBeNull().ShouldBe("initial_refresh_token");
@@ -452,17 +454,17 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         AppHost.ClientId = "web.short";
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
-        var firstResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
-        var firstToken = await firstResponse.Content.ReadFromJsonAsync<TokenEchoResponse>();
-        var secondResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
-        var secondToken = await secondResponse.Content.ReadFromJsonAsync<TokenEchoResponse>();
+        var firstResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
+        var firstToken = await firstResponse.Content.ReadFromJsonAsync<TokenEchoResponse>(_ct);
+        var secondResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
+        var secondToken = await secondResponse.Content.ReadFromJsonAsync<TokenEchoResponse>(_ct);
         firstToken.ShouldNotBeNull();
         secondToken.ShouldNotBeNull();
         secondToken.sub.ShouldBe(firstToken.sub);
         secondToken.token.ShouldNotBe(firstToken.token);
         await AppHost.LoginAsync("bob");
-        var thirdResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"));
-        var thirdToken = await thirdResponse.Content.ReadFromJsonAsync<TokenEchoResponse>();
+        var thirdResponse = await AppHost.BrowserClient.GetAsync(AppHost.Url("/call_api"), _ct);
+        var thirdToken = await thirdResponse.Content.ReadFromJsonAsync<TokenEchoResponse>(_ct);
         thirdToken.ShouldNotBeNull();
         thirdToken.sub.ShouldNotBe(secondToken.sub);
         thirdToken.token.ShouldNotBe(firstToken.token);
@@ -474,8 +476,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
         var refreshToken = token?.RefreshToken;
 
         refreshToken.ShouldNotBeNull();
@@ -489,15 +491,15 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
             Address = IdentityServerHost.Url("/connect/introspect")
         };
 
-        var introspectionResponse = await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams);
+        var introspectionResponse = await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams, _ct);
         introspectionResponse.ShouldNotBeNull();
         introspectionResponse.IsError.ShouldBeFalse(introspectionResponse.Error);
         introspectionResponse.IsActive.ShouldBeTrue();
 
-        await AppHost.BrowserClient.GetAsync(AppHost.Url("/logout"));
+        await AppHost.BrowserClient.GetAsync(AppHost.Url("/logout"), _ct);
 
         var postLogoutIntrospectionResponse =
-            await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams);
+            await IdentityServerHost.HttpClient.IntrospectTokenAsync(introspectionParams, _ct);
         postLogoutIntrospectionResponse.ShouldNotBeNull();
         postLogoutIntrospectionResponse.IsError.ShouldBeFalse(introspectionResponse.Error);
         postLogoutIntrospectionResponse.IsActive.ShouldBeFalse();
@@ -550,8 +552,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"));
-        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
 
         token.ShouldNotBeNull();
         token.AccessTokenType.ShouldBe("clientAssertionsWork");
@@ -594,7 +596,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/refresh_token_with_parameters"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/refresh_token_with_parameters"), _ct);
         response.EnsureSuccessStatusCode();
 
         var refreshTokenRequest = IdentityServerHost.CapturedTokenRequests
@@ -627,7 +629,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await InitializeAsync();
         await AppHost.LoginAsync("alice");
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/revoke_token_with_parameters"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/revoke_token_with_parameters"), _ct);
         response.EnsureSuccessStatusCode();
 
         IdentityServerHost.CapturedRevocationRequests.ShouldNotBeEmpty("Expected a revocation request to be captured");

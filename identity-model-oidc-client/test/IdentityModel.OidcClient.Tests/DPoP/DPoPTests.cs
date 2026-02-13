@@ -15,6 +15,7 @@ namespace Duende.IdentityModel.OidcClient.DPoP;
 
 public class DPoPTest : IntegrationTestBase
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
 
     private static readonly string _jwkJson;
     private readonly IDPoPProofTokenFactory _proofTokenFactory;
@@ -55,7 +56,7 @@ public class DPoPTest : IntegrationTestBase
             Address = IdentityServerHost.Url("/connect/token"),
             ClientId = "client_credentials_client",
             ClientSecret = "secret",
-        });
+        }, _ct);
 
         tokenResponse.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
         tokenResponse.TokenType.ShouldBe("DPoP");
@@ -74,7 +75,7 @@ public class DPoPTest : IntegrationTestBase
             Address = IdentityServerHost.Url("/connect/token"),
             ClientId = "client_credentials_client",
             ClientSecret = "secret",
-        });
+        }, _ct);
 
         tokenResponse.HttpStatusCode.ShouldBe(HttpStatusCode.OK);
         tokenResponse.TokenType.ShouldBe("DPoP");
@@ -91,7 +92,7 @@ public class DPoPTest : IntegrationTestBase
             Address = IdentityServerHost.Url("/connect/token"),
             ClientId = "client_credentials_client",
             ClientSecret = "secret",
-        });
+        }, _ct);
 
         var apiHandler = new ProofTokenMessageHandler(_proofTokenFactory, ApiHost.Server.CreateHandler());
         var apiClient = new HttpClient(apiHandler);
@@ -102,7 +103,7 @@ public class DPoPTest : IntegrationTestBase
             ctx.User.Identity.IsAuthenticated.ShouldBeTrue();
         };
 
-        var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"));
+        var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"), _ct);
         apiResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -121,7 +122,7 @@ public class DPoPTest : IntegrationTestBase
             Address = IdentityServerHost.Url("/connect/token"),
             ClientId = "client_credentials_client",
             ClientSecret = "secret",
-        });
+        }, _ct);
 
         var apiHandler = new ProofTokenMessageHandler(_proofTokenFactory, ApiHost.Server.CreateHandler());
         var apiClient = new HttpClient(apiHandler);
@@ -132,7 +133,7 @@ public class DPoPTest : IntegrationTestBase
             ctx.User.Identity.IsAuthenticated.ShouldBeTrue();
         };
 
-        var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"));
+        var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"), _ct);
         apiResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }

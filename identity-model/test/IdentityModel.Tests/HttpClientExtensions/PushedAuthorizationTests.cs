@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class PushedAuthorizationTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/par";
 
     private PushedAuthorizationRequest Request = new PushedAuthorizationRequest
@@ -38,7 +40,7 @@ public class PushedAuthorizationTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.PushAuthorizationAsync(request);
+        var response = await client.PushAuthorizationAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -72,7 +74,7 @@ public class PushedAuthorizationTests
             Address = Endpoint,
         };
 
-        await client.PushAuthorizationAsync(request);
+        await client.PushAuthorizationAsync(request, _ct);
 
 
         var fields = QueryHelpers.ParseQuery(handler.Body);
@@ -93,7 +95,7 @@ public class PushedAuthorizationTests
             BaseAddress = new Uri(Endpoint)
         };
 
-        var response = await client.PushAuthorizationAsync(Request);
+        var response = await client.PushAuthorizationAsync(Request, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -109,7 +111,7 @@ public class PushedAuthorizationTests
         var handler = new NetworkHandler(document, HttpStatusCode.OK);
 
         var client = new HttpClient(handler);
-        var response = await client.PushAuthorizationAsync(Request);
+        var response = await client.PushAuthorizationAsync(Request, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -123,7 +125,7 @@ public class PushedAuthorizationTests
         var handler = new NetworkHandler(new Exception("exception"));
 
         var client = new HttpClient(handler);
-        var response = await client.PushAuthorizationAsync(Request);
+        var response = await client.PushAuthorizationAsync(Request, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -137,7 +139,7 @@ public class PushedAuthorizationTests
         var handler = new NetworkHandler(HttpStatusCode.NotFound, "not found");
 
         var client = new HttpClient(handler);
-        var response = await client.PushAuthorizationAsync(Request);
+        var response = await client.PushAuthorizationAsync(Request, _ct);
 
         response.IsError.ShouldBeTrue();
         response.Error.ShouldBe("not found");
@@ -163,7 +165,7 @@ public class PushedAuthorizationTests
             {
                 { "foo", "bar" }
             }
-        });
+        }, _ct);
 
         // check request
         var fields = QueryHelpers.ParseQuery(handler.Body);
@@ -190,7 +192,7 @@ public class PushedAuthorizationTests
 
         Request.ResponseType = null;
 
-        var act = async () => await client.PushAuthorizationAsync(Request);
+        var act = async () => await client.PushAuthorizationAsync(Request, _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("response_type");
@@ -206,7 +208,7 @@ public class PushedAuthorizationTests
         Request.Parameters.Add(OidcConstants.AuthorizeRequest.RequestUri, "not allowed");
 
 
-        var act = async () => await client.PushAuthorizationAsync(Request);
+        var act = async () => await client.PushAuthorizationAsync(Request, _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("request_uri");

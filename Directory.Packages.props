@@ -34,6 +34,7 @@
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.0.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(WilsonVersion)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
     <PackageVersion Include="Microsoft.NETCore.Jit" Version="2.0.8" />
     <PackageVersion Include="MinVer" Version="6.0.0" />
     <PackageVersion Include="PublicApiGenerator" Version="11.5.4" />
@@ -44,7 +45,6 @@
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Text.Json" Version="$(ExtensionsVersion)" />
     <PackageVersion Include="Verify.XunitV3" Version="31.8.0" />
-    <PackageVersion Include="xunit.v3.core" Version="3.2.1" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="xunit.v3.core.mtp-v2" Version="3.2.1" />
   </ItemGroup>
 </Project>

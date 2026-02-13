@@ -10,6 +10,7 @@ namespace Duende.IdentityModel.OidcClient;
 
 public class ConfigurationTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     [Fact]
     public void Null_options_should_throw_exception()
     {
@@ -47,7 +48,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         await act.ShouldNotThrowAsync();
     }
@@ -68,7 +69,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldStartWith("Issuer name is missing in provider information");
@@ -90,7 +91,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldBe("Authorize endpoint is missing in provider information");
@@ -112,7 +113,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldBe("Token endpoint is missing in provider information");
@@ -134,7 +135,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldBe("Key set is missing in provider information");
@@ -152,7 +153,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldBe("Error loading discovery document: Error connecting to https://authority/.well-known/openid-configuration. error.");
@@ -170,7 +171,7 @@ public class ConfigurationTests
 
         var client = new OidcClient(options);
 
-        var act = async () => { await client.EnsureProviderInformationAsync(CancellationToken.None); };
+        var act = async () => { await client.EnsureProviderInformationAsync(_ct); };
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldBe("Error loading discovery document: Error connecting to https://authority/.well-known/openid-configuration: not found");

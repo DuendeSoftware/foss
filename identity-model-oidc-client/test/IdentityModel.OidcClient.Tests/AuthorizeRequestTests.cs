@@ -8,6 +8,7 @@ namespace Duende.IdentityModel.OidcClient;
 
 public class AuthorizeRequestTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     [Fact]
     public void Default_parameters_should_be_used_for_authorize_request()
     {
@@ -90,7 +91,7 @@ public class AuthorizeRequestTests
 
         var client = new AuthorizeClient(options);
 
-        var response = await client.AuthorizeAsync(new AuthorizeRequest());
+        var response = await client.AuthorizeAsync(new AuthorizeRequest(), _ct);
 
         response.Error.ShouldBe("Something terrible happened");
         response.ErrorDescription.ShouldBe("Explaining the terrible error...");

@@ -16,6 +16,7 @@ namespace Duende.AccessTokenManagement;
 
 public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) : IntegrationTestBase(output), IAsyncLifetime
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private IClientCredentialsTokenManager _tokenService = null!;
     private IHttpClientFactory _clientFactory = null!;
     private ClientCredentialsClient _clientOptions = null!;
@@ -95,7 +96,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
             count++;
         };
         var client = _clientFactory.CreateClient("test");
-        var apiResult = await client.GetAsync(ApiHost.Url("/test"));
+        var apiResult = await client.GetAsync(ApiHost.Url("/test"), _ct);
 
         count.ShouldBe(2);
     }
@@ -103,7 +104,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
     [Fact]
     public async Task dpop_clients_GetAccessTokenAsync_should_obtain_token_with_cnf()
     {
-        var token = await _tokenService.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        var token = await _tokenService.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
         token.DPoPJsonWebKey.ShouldNotBeNull();
         token.AccessTokenType.ShouldNotBeNull()
@@ -129,7 +130,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
 
         _clientOptions.DPoPJsonWebKey = DPoPProofKey.Parse(jwkJson);
 
-        var token = await _tokenService.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        var token = await _tokenService.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
         token.DPoPJsonWebKey.ShouldNotBeNull();
         token.AccessTokenType.ShouldNotBeNull().ToString().ShouldBe("DPoP");
@@ -155,7 +156,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
 
         _clientOptions.DPoPJsonWebKey = DPoPProofKey.Parse(jwkJson);
 
-        var token = await _tokenService.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test")).GetToken();
+        var token = await _tokenService.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
         token.DPoPJsonWebKey.ShouldNotBeNull();
         token.AccessTokenType.ShouldNotBeNull().ToString().ShouldBe("DPoP");
@@ -180,7 +181,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
             proofToken = ctx.Request.Headers["DPoP"].FirstOrDefault()?.ToString();
         };
         var client = _clientFactory.CreateClient("test");
-        await client.GetAsync(ApiHost.Url("/test"));
+        await client.GetAsync(ApiHost.Url("/test"), _ct);
 
         scheme.ShouldBe("DPoP");
         proofToken.ShouldNotBeNull();
@@ -203,7 +204,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
             { "claim_two", "two" },
         });
 
-        await client.SendAsync(requestMessage);
+        await client.SendAsync(requestMessage, _ct);
 
         proofToken.ShouldNotBeNull();
         var payload = Base64UrlEncoder.Decode(proofToken!.Split('.')[1]);
@@ -238,7 +239,7 @@ public class HybridCacheClientTokenManagementApiTests(ITestOutputHelper output) 
             count++;
         };
         var client = _clientFactory.CreateClient("test");
-        await client.GetAsync(ApiHost.Url("/test"));
+        await client.GetAsync(ApiHost.Url("/test"), _ct);
 
         count.ShouldBe(2);
         var payload = Base64UrlEncoder.Decode(proofToken!.Split('.')[1]);

@@ -13,6 +13,8 @@ namespace Duende.AccessTokenManagement.AccessTokenHandler;
 
 public class AccessTokenHandlerTests(ITestOutputHelper output)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     public enum FixtureType
     {
         ClientCredentials,
@@ -27,7 +29,7 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
     {
         var fixture = await GetInitializedFixture(type);
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
 
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_1");
     }
@@ -38,8 +40,8 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
     {
         var fixture = await GetInitializedFixture(type);
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
 
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_1");
     }
@@ -100,7 +102,7 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
 
         fixture.ApiEndpoint.RespondOnceWithUnauthorized();
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
 
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
     }
@@ -114,7 +116,7 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
         fixture.ApiEndpoint.RespondOnceWithUnauthorized();
         fixture.ApiEndpoint.RespondOnceWithUnauthorized();
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode(HttpStatusCode.Unauthorized);
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode(HttpStatusCode.Unauthorized);
 
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
     }
@@ -130,9 +132,9 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
         fixture.ApiEndpoint.ExpectCallWithNonce(expectedNonce: "nonce_2", replyWithNonce: "nonce_3");
         fixture.ApiEndpoint.ExpectCallWithNonce(expectedNonce: "nonce_3", replyWithNonce: "nonce_4");
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
     }
 
     [Theory]
@@ -144,7 +146,7 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
         fixture.TokenEndpoint.RespondWithTokenType(tokenType);
         fixture.ApiEndpoint.ExpectCallWithScheme(expectedScheme);
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
     }
 
     [Theory]
@@ -153,18 +155,18 @@ public class AccessTokenHandlerTests(ITestOutputHelper output)
     {
         var fixture = await GetInitializedFixture(type);
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_1");
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_1");
 
         var request = new HttpRequestMessage(HttpMethod.Get, "/");
         request.SetForceRenewal(true);
-        await fixture.HttpClient.SendAsync(request).CheckHttpStatusCode();
+        await fixture.HttpClient.SendAsync(request, _ct).CheckHttpStatusCode();
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
 
-        await fixture.HttpClient.GetAsync("/").CheckHttpStatusCode();
+        await fixture.HttpClient.GetAsync("/", _ct).CheckHttpStatusCode();
         fixture.ApiEndpoint.LastUsedAccessToken.ShouldBe("access_token_2");
     }
 

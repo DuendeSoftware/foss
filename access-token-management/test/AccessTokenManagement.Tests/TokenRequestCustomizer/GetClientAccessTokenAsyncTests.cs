@@ -12,6 +12,7 @@ namespace Duende.AccessTokenManagement.TokenRequestCustomizer;
 
 public class GetClientAccessTokenAsyncTests(ITestOutputHelper outputHelper) : IntegrationTestBase(outputHelper)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private Action<HttpRequest>? CustomizeOutgoingRequest { get; set; }
 
     public override async ValueTask InitializeAsync()
@@ -50,7 +51,7 @@ public class GetClientAccessTokenAsyncTests(ITestOutputHelper outputHelper) : In
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"), _ct);
 
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
@@ -76,7 +77,7 @@ public class GetClientAccessTokenAsyncTests(ITestOutputHelper outputHelper) : In
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"), _ct);
 
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
@@ -102,7 +103,7 @@ public class GetClientAccessTokenAsyncTests(ITestOutputHelper outputHelper) : In
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"), _ct);
 
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();

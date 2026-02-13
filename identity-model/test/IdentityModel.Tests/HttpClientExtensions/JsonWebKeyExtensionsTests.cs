@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class JsonWebkeyExtensionsTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private readonly NetworkHandler _successHandler;
     private readonly string _endpoint = "https://demo.identityserver.io/.well-known/openid-configuration/jwks";
 
@@ -46,7 +48,7 @@ public class JsonWebkeyExtensionsTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var response = await client.GetJsonWebKeySetAsync(request);
+        var response = await client.GetJsonWebKeySetAsync(request, _ct);
 
         var httpRequest = handler.Request;
 
@@ -74,7 +76,7 @@ public class JsonWebkeyExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var jwk = await client.GetJsonWebKeySetAsync();
+        var jwk = await client.GetJsonWebKeySetAsync(cancellationToken: _ct);
 
         jwk.IsError.ShouldBeFalse();
     }
@@ -84,7 +86,7 @@ public class JsonWebkeyExtensionsTests
     {
         var client = new HttpClient(_successHandler);
 
-        var jwk = await client.GetJsonWebKeySetAsync(_endpoint);
+        var jwk = await client.GetJsonWebKeySetAsync(_endpoint, _ct);
 
         jwk.IsError.ShouldBeFalse();
     }
@@ -98,7 +100,7 @@ public class JsonWebkeyExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var jwk = await client.GetJsonWebKeySetAsync();
+        var jwk = await client.GetJsonWebKeySetAsync(cancellationToken: _ct);
 
         jwk.IsError.ShouldBeTrue();
         jwk.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -113,7 +115,7 @@ public class JsonWebkeyExtensionsTests
         var handler = new NetworkHandler(new Exception("error"));
 
         var client = new HttpClient(handler);
-        var jwk = await client.GetJsonWebKeySetAsync(_endpoint);
+        var jwk = await client.GetJsonWebKeySetAsync(_endpoint, _ct);
 
         jwk.IsError.ShouldBeTrue();
         jwk.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -129,7 +131,7 @@ public class JsonWebkeyExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var jwk = await client.GetJsonWebKeySetAsync();
+        var jwk = await client.GetJsonWebKeySetAsync(cancellationToken: _ct);
 
         jwk.IsError.ShouldBeFalse();
         jwk.KeySet.ShouldNotBeNull();
@@ -144,7 +146,7 @@ public class JsonWebkeyExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var jwk = await client.GetJsonWebKeySetAsync();
+        var jwk = await client.GetJsonWebKeySetAsync(cancellationToken: _ct);
 
         jwk.IsError.ShouldBeTrue();
         jwk.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -170,7 +172,7 @@ public class JsonWebkeyExtensionsTests
             BaseAddress = new Uri(_endpoint)
         };
 
-        var jwk = await client.GetJsonWebKeySetAsync();
+        var jwk = await client.GetJsonWebKeySetAsync(cancellationToken: _ct);
 
         jwk.IsError.ShouldBeTrue();
         jwk.ErrorType.ShouldBe(ResponseErrorType.Http);

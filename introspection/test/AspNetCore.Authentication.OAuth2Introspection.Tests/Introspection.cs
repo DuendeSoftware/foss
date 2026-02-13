@@ -15,6 +15,8 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 public class Introspection
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private static readonly HybridCacheEntryOptions GetOnlyEntryOptions = new()
     {
         Flags = HybridCacheEntryFlags.DisableLocalCacheWrite
@@ -42,7 +44,7 @@ public class Introspection
         var client = await PipelineFactory.CreateClient(o => _options(o), handler);
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
@@ -54,7 +56,7 @@ public class Introspection
         var client = await PipelineFactory.CreateClient(_options, handler);
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var request = handler.LastRequest;
@@ -195,7 +197,7 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var request = handler.LastRequest;
@@ -203,9 +205,9 @@ public class Introspection
         request.ShouldContainKeyAndValue("client_assertion_type", "testType");
         request.ShouldContainKeyAndValue("client_assertion", assertion1);
 
-        await Task.Delay(20); // wait for cache to expire
+        await Task.Delay(20, _ct); // wait for cache to expire
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         request = handler.LastRequest;
@@ -243,7 +245,7 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
 
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         validatedCalled.HasValue.ShouldBeTrue();
@@ -270,11 +272,11 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         introspectionCalls.ShouldBe(1);
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         introspectionCalls.ShouldBe(1);
     }
@@ -293,10 +295,10 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -308,7 +310,7 @@ public class Introspection
         var client = await PipelineFactory.CreateClient(o => _options(o), handler);
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
@@ -341,7 +343,7 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
 
         result.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         validatedCalled.ShouldBeNull();
@@ -364,7 +366,7 @@ public class Introspection
 
         client.SetBearerToken(expectedToken);
 
-        var response = await client.GetAsync("http://test");
+        var response = await client.GetAsync("http://test", _ct);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var responseDataStr = await response.Content.ReadAsStringAsync();
@@ -390,10 +392,10 @@ public class Introspection
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("http://test", _ct);
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("http://test", _ct);
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var responseDataStr = await secondResponse.Content.ReadAsStringAsync();
@@ -422,10 +424,10 @@ public class Introspection
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("http://test", _ct);
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("http://test", _ct);
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var responseDataStr = await secondResponse.Content.ReadAsStringAsync();
@@ -452,13 +454,13 @@ public class Introspection
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("http://test", _ct);
 
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         handler.SentIntrospectionRequest.ShouldBeTrue();
 
         handler.SentIntrospectionRequest = false;
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("http://test", _ct);
         handler.SentIntrospectionRequest.ShouldBeFalse();
         await AssertCacheItemExists(server, string.Empty, expectedToken);
     }
@@ -479,13 +481,13 @@ public class Introspection
         var client = server.CreateClient();
         client.SetBearerToken(expectedToken);
 
-        var firstResponse = await client.GetAsync("http://test");
+        var firstResponse = await client.GetAsync("http://test", _ct);
 
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         handler.SentIntrospectionRequest.ShouldBeTrue();
 
         handler.SentIntrospectionRequest = false;
-        var secondResponse = await client.GetAsync("http://test");
+        var secondResponse = await client.GetAsync("http://test", _ct);
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         handler.SentIntrospectionRequest.ShouldBeFalse();
         await AssertCacheItemExists(server, string.Empty, expectedToken);
@@ -500,10 +502,10 @@ public class Introspection
         client.SetBearerToken("sometoken");
 
         handler.IsDiscoveryFailureTest = true;
-        await Should.ThrowAsync<InvalidOperationException>(async () => await client.GetAsync("http://test"));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await client.GetAsync("http://test", _ct));
 
         handler.IsDiscoveryFailureTest = false;
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -526,7 +528,7 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         handler.LastRequest.ShouldContain(new KeyValuePair<string, string>("additionalParameter", "42"));
@@ -553,13 +555,13 @@ public class Introspection
 
         client.SetBearerToken("sometoken");
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         introspectionRequestsMade.ShouldBe(1);
 
-        await Task.Delay(500); // wait for token to expire
+        await Task.Delay(500, _ct); // wait for token to expire
 
-        result = await client.GetAsync("http://test");
+        result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
         introspectionRequestsMade.ShouldBe(2);
     }
@@ -582,7 +584,7 @@ public class Introspection
 
         client.SetBearerToken(token);
 
-        var result = await client.GetAsync("http://test");
+        var result = await client.GetAsync("http://test", _ct);
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var cache = server.Services.GetRequiredService<HybridCache>();

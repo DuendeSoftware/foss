@@ -11,6 +11,8 @@ namespace Duende.AccessTokenManagement.TokenRequestCustomizer;
 
 public class ScenarioTests(ITestOutputHelper outputHelper) : IntegrationTestBase(outputHelper)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task
         OpenIdConnectUserAccessTokenRetriever_and_GetClientAccessTokenExtensionMethod_can_use_the_same_token_request_customizer()
@@ -52,11 +54,11 @@ public class ScenarioTests(ITestOutputHelper outputHelper) : IntegrationTestBase
         await AppHost.LoginAsync("alice");
 
         var extensionMethodResponse =
-            await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"));
+            await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_token"), _ct);
         extensionMethodResponse.EnsureSuccessStatusCode();
 
         var clientAccessTokenManagerResponse =
-            await AppHost.BrowserClient.GetAsync(new Uri(new Uri(AppHost.Url()), "/call_api"));
+            await AppHost.BrowserClient.GetAsync(new Uri(new Uri(AppHost.Url()), "/call_api"), _ct);
         clientAccessTokenManagerResponse.EnsureSuccessStatusCode();
 
         requestPaths.ToArray().ShouldBeEquivalentTo(new[]

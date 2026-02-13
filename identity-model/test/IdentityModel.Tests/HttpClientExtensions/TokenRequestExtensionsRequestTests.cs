@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class TokenRequestExtensionsRequestTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/token";
 
     private HttpClient _client;
@@ -43,7 +45,7 @@ public class TokenRequestExtensionsRequestTests
         request.Headers.Add("custom", "custom");
         request.GetProperties().Add("custom", "custom");
 
-        var _ = await client.RequestTokenAsync(request);
+        var _ = await client.RequestTokenAsync(request, _ct);
         var httpRequest = handler.Request;
 
         httpRequest.Method.ShouldBe(HttpMethod.Post);
@@ -66,7 +68,7 @@ public class TokenRequestExtensionsRequestTests
     public async Task No_explicit_endpoint_address_should_use_base_address()
     {
         var response = await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-        { ClientId = "client" });
+        { ClientId = "client" }, _ct);
 
         response.IsError.ShouldBeFalse();
         _handler.Request.RequestUri.AbsoluteUri.ShouldBe(Endpoint);
@@ -81,7 +83,7 @@ public class TokenRequestExtensionsRequestTests
             Scope = "scope"
         };
 
-        var response = await _client.RequestClientCredentialsTokenAsync(request);
+        var response = await _client.RequestClientCredentialsTokenAsync(request, _ct);
         response.IsError.ShouldBeFalse();
 
         var fields = QueryHelpers.ParseQuery(_handler.Body);
@@ -91,7 +93,7 @@ public class TokenRequestExtensionsRequestTests
         fields.TryGetValue("scope", out var scope).ShouldBeTrue();
         scope.First().ShouldBe("scope");
 
-        response = await _client.RequestClientCredentialsTokenAsync(request);
+        response = await _client.RequestClientCredentialsTokenAsync(request, _ct);
         response.IsError.ShouldBeFalse();
 
         fields = QueryHelpers.ParseQuery(_handler.Body);
@@ -110,7 +112,7 @@ public class TokenRequestExtensionsRequestTests
             ClientId = "client",
             Scope = "scope",
             Resource = { "resource1", "resource2" }
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -138,7 +140,7 @@ public class TokenRequestExtensionsRequestTests
 
         request.Headers.Add("foo", "bar");
 
-        var response = await _client.RequestClientCredentialsTokenAsync(request);
+        var response = await _client.RequestClientCredentialsTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -158,7 +160,7 @@ public class TokenRequestExtensionsRequestTests
 
         request.GetProperties().Add("foo", "bar");
 
-        var response = await _client.RequestClientCredentialsTokenAsync(request);
+        var response = await _client.RequestClientCredentialsTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -178,7 +180,7 @@ public class TokenRequestExtensionsRequestTests
             DPoPProofToken = "dpop_token"
         };
 
-        var response = await _client.RequestClientCredentialsTokenAsync(request);
+        var response = await _client.RequestClientCredentialsTokenAsync(request, _ct);
 
         response.IsError.ShouldBeFalse();
         _handler.Request.Headers.Single(x => x.Key == "DPoP").Value.First().ShouldBe("dpop_token");
@@ -205,7 +207,7 @@ public class TokenRequestExtensionsRequestTests
             Scope = "scope",
         };
 
-        var response = await _client.RequestClientCredentialsTokenAsync(request);
+        var response = await _client.RequestClientCredentialsTokenAsync(request, _ct);
 
         response.IsError.ShouldBeTrue();
         response.DPoPNonce.ShouldBe("dpop_nonce");
@@ -217,7 +219,7 @@ public class TokenRequestExtensionsRequestTests
     {
         var act = async () =>
             await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
-            { ClientId = "client", Parameters = null });
+            { ClientId = "client", Parameters = null }, _ct);
 
         await act.ShouldNotThrowAsync();
     }
@@ -229,7 +231,7 @@ public class TokenRequestExtensionsRequestTests
         {
             ClientId = "device",
             DeviceCode = "device_code"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -245,7 +247,7 @@ public class TokenRequestExtensionsRequestTests
     public async Task Device_request_without_device_code_should_fail()
     {
         var act = async () =>
-            await _client.RequestDeviceTokenAsync(new DeviceTokenRequest { ClientId = "device" });
+            await _client.RequestDeviceTokenAsync(new DeviceTokenRequest { ClientId = "device" }, _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("device_code");
@@ -261,7 +263,7 @@ public class TokenRequestExtensionsRequestTests
             Password = "password",
             Scope = "scope",
             Resource = { "resource1", "resource2" }
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -291,7 +293,7 @@ public class TokenRequestExtensionsRequestTests
         {
             ClientId = "client",
             UserName = "user"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -309,7 +311,7 @@ public class TokenRequestExtensionsRequestTests
     [Fact]
     public async Task Password_request_without_username_should_fail()
     {
-        var act = async () => await _client.RequestPasswordTokenAsync(new PasswordTokenRequest());
+        var act = async () => await _client.RequestPasswordTokenAsync(new PasswordTokenRequest(), _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("username");
@@ -325,7 +327,7 @@ public class TokenRequestExtensionsRequestTests
             RedirectUri = "uri",
             CodeVerifier = "verifier",
             Resource = { "resource1", "resource2" },
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -355,7 +357,7 @@ public class TokenRequestExtensionsRequestTests
             new AuthorizationCodeTokenRequest
             {
                 RedirectUri = "uri"
-            });
+            }, _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("code");
@@ -368,7 +370,7 @@ public class TokenRequestExtensionsRequestTests
             new AuthorizationCodeTokenRequest
             {
                 Code = "code"
-            });
+            }, _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("redirect_uri");
@@ -383,7 +385,7 @@ public class TokenRequestExtensionsRequestTests
             RefreshToken = "rt",
             Scope = "scope",
             Resource = { "resource1", "resource2" }
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -406,7 +408,7 @@ public class TokenRequestExtensionsRequestTests
     [Fact]
     public async Task Refresh_request_without_refresh_token_should_fail()
     {
-        var act = async () => await _client.RequestRefreshTokenAsync(new RefreshTokenRequest());
+        var act = async () => await _client.RequestRefreshTokenAsync(new RefreshTokenRequest(), _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("refresh_token");
@@ -428,7 +430,7 @@ public class TokenRequestExtensionsRequestTests
 
             ActorToken = "actor_token",
             ActorTokenType = "actor_token_type"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -471,7 +473,7 @@ public class TokenRequestExtensionsRequestTests
                 "resource1",
                 "resource2"
             }
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
 
@@ -491,7 +493,7 @@ public class TokenRequestExtensionsRequestTests
     [Fact]
     public async Task Setting_no_grant_type_should_fail()
     {
-        var act = async () => await _client.RequestTokenAsync(new TokenRequest());
+        var act = async () => await _client.RequestTokenAsync(new TokenRequest(), _ct);
 
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("grant_type");
@@ -509,7 +511,7 @@ public class TokenRequestExtensionsRequestTests
                 { "client_secret", "custom" },
                 { "custom", "custom" }
             }
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -541,7 +543,7 @@ public class TokenRequestExtensionsRequestTests
                 { "grant_type", "custom" },
                 { "custom", "custom" }
             }
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -562,7 +564,7 @@ public class TokenRequestExtensionsRequestTests
             { "client_id", "client" },
             { "client_secret", "secret" },
             { "scope", "scope" }
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -593,7 +595,7 @@ public class TokenRequestExtensionsRequestTests
             ClientId = "client",
             ClientSecret = "secret",
             ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -612,7 +614,7 @@ public class TokenRequestExtensionsRequestTests
             ClientId = "client",
             ClientSecret = "secret",
             ClientCredentialStyle = ClientCredentialStyle.PostBody
-        });
+        }, _ct);
 
         var request = _handler.Request;
         request.Headers.Authorization.ShouldBeNull();
@@ -630,7 +632,7 @@ public class TokenRequestExtensionsRequestTests
             GrantType = "test",
             ClientId = "client",
             ClientCredentialStyle = ClientCredentialStyle.PostBody
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -648,7 +650,7 @@ public class TokenRequestExtensionsRequestTests
             GrantType = "test",
             ClientId = "client",
             ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -671,7 +673,7 @@ public class TokenRequestExtensionsRequestTests
             ClientId = "client",
             ClientAssertion = { Type = "type", Value = "value" },
             ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-        });
+        }, _ct);
 
         var exception = await act.ShouldThrowAsync<InvalidOperationException>();
         exception.Message.ShouldBe("CredentialStyle.AuthorizationHeader and client assertions are not compatible");
@@ -686,7 +688,7 @@ public class TokenRequestExtensionsRequestTests
             ClientId = "client",
             ClientAssertion = { Type = "type", Value = "value" },
             ClientCredentialStyle = ClientCredentialStyle.PostBody
-        });
+        }, _ct);
 
         var request = _handler.Request;
 
@@ -706,7 +708,7 @@ public class TokenRequestExtensionsRequestTests
             GrantType = "test",
             ClientAssertion = { Type = "type", Value = "value" },
             ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-        });
+        }, _ct);
 
         var request = _handler.Request;
 

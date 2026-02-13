@@ -13,6 +13,7 @@ namespace Duende.AccessTokenManagement.TokenRequestCustomizer;
 public class ClientCredentialsTokenRequestCustomizerTests(ITestOutputHelper output) : IntegrationTestBase(output,
     configureUserTokenManagementOptions: opt => { opt.UseChallengeSchemeScopedTokens = true; })
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private const string ClientName = "pure_client_credentials";
     private Action<IHttpClientBuilder>? CustomizeHttpClientBuilder { get; set; }
     private Action<HttpClient, UriBuilder>? CustomizeOutgoingRequest { get; set; }
@@ -69,7 +70,7 @@ public class ClientCredentialsTokenRequestCustomizerTests(ITestOutputHelper outp
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -89,7 +90,7 @@ public class ClientCredentialsTokenRequestCustomizerTests(ITestOutputHelper outp
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -117,7 +118,7 @@ public class ClientCredentialsTokenRequestCustomizerTests(ITestOutputHelper outp
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -144,7 +145,7 @@ public class ClientCredentialsTokenRequestCustomizerTests(ITestOutputHelper outp
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");
@@ -171,7 +172,7 @@ public class ClientCredentialsTokenRequestCustomizerTests(ITestOutputHelper outp
 
         await InitializeAsync();
 
-        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"));
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/exercise_client_credentials"), _ct);
         response.EnsureSuccessStatusCode();
         var token = response.ParseTokenFromResponse();
         token.Claims.ShouldContain(c => c.Type == "scope" && c.Value == "scope2");

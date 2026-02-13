@@ -10,6 +10,8 @@ namespace Duende.IdentityModel.HttpClientExtensions;
 
 public class TokenRequestExtensionsResponseTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private const string Endpoint = "http://server/token";
 
     [Fact]
@@ -24,7 +26,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeFalse();
         response.ErrorType.ShouldBe(ResponseErrorType.None);
@@ -47,7 +49,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.HttpResponse.ShouldNotBeNull();
         response.Dispose();
@@ -66,7 +68,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Protocol);
@@ -88,7 +90,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -107,7 +109,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Exception);
@@ -126,7 +128,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -145,7 +147,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
@@ -171,7 +173,7 @@ public class TokenRequestExtensionsResponseTests
             Address = Endpoint,
             GrantType = "test",
             ClientId = "client"
-        });
+        }, _ct);
 
         response.IsError.ShouldBeTrue();
         response.ErrorType.ShouldBe(ResponseErrorType.Http);
