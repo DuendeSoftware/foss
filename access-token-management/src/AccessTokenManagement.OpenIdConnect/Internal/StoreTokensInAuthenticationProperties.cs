@@ -50,7 +50,7 @@ internal class StoreTokensInAuthenticationProperties(
         var tokens = authenticationProperties.Items.Where(i => i.Key.StartsWith(TokenPrefix)).ToList();
         if (!tokens.Any())
         {
-            logger.FailedToGetUserTokenDueToMissingTokensInCookie(LogLevel.Error);
+            logger.FailedToGetUserTokenDueToMissingTokensInCookie(LogLevel.Information);
 
             return new FailedResult("No tokens in properties");
         }
