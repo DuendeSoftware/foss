@@ -213,4 +213,84 @@ public class PushedAuthorizationTests
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("request_uri");
     }
+
+    [Fact]
+    public async Task Setting_only_client_assertion_factory_should_invoke_factory_and_send_assertion()
+    {
+        var document = File.ReadAllText(FileName.Create("success_par_response.json"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        var client = new HttpClient(handler);
+
+        var response = await client.PushAuthorizationAsync(new PushedAuthorizationRequest
+        {
+            ClientId = "client",
+            ResponseType = "code",
+            Address = Endpoint,
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = () => Task.FromResult(new ClientAssertion
+            {
+                Type = "factory_type",
+                Value = "factory_value"
+            })
+        }, _ct);
+
+        var fields = QueryHelpers.ParseQuery(handler.Body);
+
+        fields["client_assertion_type"].First().ShouldBe("factory_type");
+        fields["client_assertion"].First().ShouldBe("factory_value");
+    }
+
+    [Fact]
+    public async Task Setting_only_client_assertion_factory_should_store_factory_in_options()
+    {
+        var document = File.ReadAllText(FileName.Create("success_par_response.json"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        var client = new HttpClient(handler);
+
+        var factory = new Func<Task<ClientAssertion>>(() => Task.FromResult(new ClientAssertion
+        {
+            Type = "factory_type",
+            Value = "factory_value"
+        }));
+
+        await client.PushAuthorizationAsync(new PushedAuthorizationRequest
+        {
+            ClientId = "client",
+            ResponseType = "code",
+            Address = Endpoint,
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = factory
+        }, _ct);
+
+        handler.Request.Options.TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out var storedFactory)
+            .ShouldBeTrue();
+        storedFactory.ShouldBeSameAs(factory);
+    }
+
+    [Fact]
+    public async Task Client_assertion_factory_should_take_precedence_over_static_client_assertion()
+    {
+        var document = File.ReadAllText(FileName.Create("success_par_response.json"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        var client = new HttpClient(handler);
+
+        await client.PushAuthorizationAsync(new PushedAuthorizationRequest
+        {
+            ClientId = "client",
+            ResponseType = "code",
+            Address = Endpoint,
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertion = { Type = "static_type", Value = "static_value" },
+            ClientAssertionFactory = () => Task.FromResult(new ClientAssertion
+            {
+                Type = "factory_type",
+                Value = "factory_value"
+            })
+        }, _ct);
+
+        var fields = QueryHelpers.ParseQuery(handler.Body);
+
+        fields["client_assertion_type"].First().ShouldBe("factory_type");
+        fields["client_assertion"].First().ShouldBe("factory_value");
+    }
 }

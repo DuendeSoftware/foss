@@ -12,7 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 
-namespace ConsoleClientWithBrowser;
+namespace NetCoreConsoleClient;
 
 public class Program
 {

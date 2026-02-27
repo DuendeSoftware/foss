@@ -718,4 +718,66 @@ public class TokenRequestExtensionsRequestTests
         fields["client_assertion_type"].First().ShouldBe("type");
         fields["client_assertion"].First().ShouldBe("value");
     }
+
+    [Fact]
+    public async Task Setting_only_client_assertion_factory_should_invoke_factory_and_send_assertion()
+    {
+        var response = await _client.RequestTokenAsync(new TokenRequest
+        {
+            GrantType = "test",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = () => Task.FromResult(new ClientAssertion
+            {
+                Type = "factory_type",
+                Value = "factory_value"
+            })
+        }, _ct);
+
+        var fields = QueryHelpers.ParseQuery(_handler.Body);
+
+        fields["client_assertion_type"].First().ShouldBe("factory_type");
+        fields["client_assertion"].First().ShouldBe("factory_value");
+    }
+
+    [Fact]
+    public async Task Setting_only_client_assertion_factory_should_store_factory_in_options()
+    {
+        var factory = new Func<Task<ClientAssertion>>(() => Task.FromResult(new ClientAssertion
+        {
+            Type = "factory_type",
+            Value = "factory_value"
+        }));
+
+        var response = await _client.RequestTokenAsync(new TokenRequest
+        {
+            GrantType = "test",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = factory
+        }, _ct);
+
+        _handler.Request.Options.TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out var storedFactory)
+            .ShouldBeTrue();
+        storedFactory.ShouldBeSameAs(factory);
+    }
+
+    [Fact]
+    public async Task Client_assertion_factory_should_take_precedence_over_static_client_assertion()
+    {
+        var response = await _client.RequestTokenAsync(new TokenRequest
+        {
+            GrantType = "test",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertion = { Type = "static_type", Value = "static_value" },
+            ClientAssertionFactory = () => Task.FromResult(new ClientAssertion
+            {
+                Type = "factory_type",
+                Value = "factory_value"
+            })
+        }, _ct);
+
+        var fields = QueryHelpers.ParseQuery(_handler.Body);
+
+        fields["client_assertion_type"].First().ShouldBe("factory_type");
+        fields["client_assertion"].First().ShouldBe("factory_value");
+    }
 }

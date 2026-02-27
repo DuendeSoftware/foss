@@ -1,192 +1,190 @@
-﻿using Duende.IdentityModel.OidcClient.Browser;
+﻿// Copyright (c) Duende Software. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+
+using Duende.IdentityModel.OidcClient.Browser;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace ConsoleClientWithBrowser
+namespace NetCoreConsoleClient;
+
+public class SystemBrowser : IBrowser
 {
-    public class SystemBrowser : IBrowser
+    public int Port { get; }
+    private readonly string? _path;
+
+    public SystemBrowser(int? port = null, string? path = null)
     {
-        public int Port { get; }
-        private readonly string? _path;
+        _path = path;
 
-        public SystemBrowser(int? port = null, string? path = null)
+        if (!port.HasValue)
         {
-            _path = path;
-
-            if (!port.HasValue)
-            {
-                Port = GetRandomUnusedPort();
-            }
-            else
-            {
-                Port = port.Value;
-            }
+            Port = GetRandomUnusedPort();
         }
-
-        private int GetRandomUnusedPort()
+        else
         {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
+            Port = port.Value;
         }
+    }
 
-        public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default(CancellationToken))
+    private int GetRandomUnusedPort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        using (var listener = new LoopbackHttpListener(Port, _path))
         {
-            using (var listener = new LoopbackHttpListener(Port, _path))
-            {
-                OpenBrowser(options.StartUrl);
+            OpenBrowser(options.StartUrl);
 
-                try
+            try
+            {
+                var result = await listener.WaitForCallbackAsync();
+                if (String.IsNullOrWhiteSpace(result))
                 {
-                    var result = await listener.WaitForCallbackAsync();
-                    if (String.IsNullOrWhiteSpace(result))
-                    {
-                        return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = "Empty response." };
-                    }
+                    return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = "Empty response." };
+                }
 
-                    return new BrowserResult { Response = result, ResultType = BrowserResultType.Success };
-                }
-                catch (TaskCanceledException ex)
-                {
-                    return new BrowserResult { ResultType = BrowserResultType.Timeout, Error = ex.Message };
-                }
-                catch (Exception ex)
-                {
-                    return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
-                }
+                return new BrowserResult { Response = result, ResultType = BrowserResultType.Success };
             }
-        }
-
-        public static void OpenBrowser(string url)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            catch (TaskCanceledException ex)
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = url,
-                    UseShellExecute = true,
-                });
+                return new BrowserResult { ResultType = BrowserResultType.Timeout, Error = ex.Message };
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            catch (Exception ex)
             {
-                Process.Start("xdg-open", url);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", url);
+                return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
             }
         }
     }
 
-    public class LoopbackHttpListener : IDisposable
+    public static void OpenBrowser(string url)
     {
-        const int DefaultTimeout = 60 * 5; // 5 mins (in seconds)
-
-        IWebHost _host;
-        TaskCompletionSource<string> _source = new TaskCompletionSource<string>();
-        string _url;
-
-        public string Url => _url;
-
-        public LoopbackHttpListener(int port, string? path = null)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            path = path ?? String.Empty;
-            if (path.StartsWith("/")) path = path.Substring(1);
-
-            _url = $"http://127.0.0.1:{port}/{path}";
-
-            _host = new WebHostBuilder()
-                .UseKestrel()
-                .UseUrls(_url)
-                .Configure(Configure)
-                .Build();
-            _host.Start();
-        }
-
-        public void Dispose()
-        {
-            Task.Run(async () =>
+            Process.Start(new ProcessStartInfo
             {
-                await Task.Delay(500);
-                _host.Dispose();
+                FileName = url,
+                UseShellExecute = true,
             });
         }
-
-        void Configure(IApplicationBuilder app)
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            app.Run(async ctx =>
+            Process.Start("xdg-open", url);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Process.Start("open", url);
+        }
+    }
+}
+
+public class LoopbackHttpListener : IDisposable
+{
+    const int DefaultTimeout = 60 * 5; // 5 mins (in seconds)
+
+    IWebHost _host;
+    TaskCompletionSource<string> _source = new TaskCompletionSource<string>();
+    string _url;
+
+    public string Url => _url;
+
+    public LoopbackHttpListener(int port, string? path = null)
+    {
+        path = path ?? String.Empty;
+        if (path.StartsWith("/")) path = path.Substring(1);
+
+        _url = $"http://127.0.0.1:{port}/{path}";
+
+        _host = new WebHostBuilder()
+            .UseKestrel()
+            .UseUrls(_url)
+            .Configure(Configure)
+            .Build();
+        _host.Start();
+    }
+
+    public void Dispose()
+    {
+        Task.Run(async () =>
+        {
+            await Task.Delay(500);
+            _host.Dispose();
+        });
+    }
+
+    void Configure(IApplicationBuilder app)
+    {
+        app.Run(async ctx =>
+        {
+            if (ctx.Request.Method == "GET")
             {
-                if (ctx.Request.Method == "GET")
+                var result = ctx.Request.QueryString.Value ??
+                    throw new InvalidOperationException("QueryString cannot be null");
+                await SetResultAsync(result, ctx);
+            }
+            else if (ctx.Request.Method == "POST")
+            {
+                if (ctx.Request.ContentType?.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase) == false)
                 {
-                    var result = ctx.Request.QueryString.Value ??
-                        throw new InvalidOperationException("QueryString cannot be null");
-                    await SetResultAsync(result, ctx);
-                }
-                else if (ctx.Request.Method == "POST")
-                {
-                    if (ctx.Request.ContentType?.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase) == false)
-                    {
-                        ctx.Response.StatusCode = 415;
-                    }
-                    else
-                    {
-                        using (var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8))
-                        {
-                            var body = await sr.ReadToEndAsync();
-                            await SetResultAsync(body, ctx);
-                        }
-                    }
+                    ctx.Response.StatusCode = 415;
                 }
                 else
                 {
-                    ctx.Response.StatusCode = 405;
+                    using (var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8))
+                    {
+                        var body = await sr.ReadToEndAsync();
+                        await SetResultAsync(body, ctx);
+                    }
                 }
-            });
-        }
-
-        private async Task SetResultAsync(string value, HttpContext ctx)
-        {
-            try
-            {
-                ctx.Response.StatusCode = 200;
-                ctx.Response.ContentType = "text/html";
-                await ctx.Response.WriteAsync("<h1>You can now return to the application.</h1>");
-                await ctx.Response.Body.FlushAsync();
-
-                _source.TrySetResult(value);
             }
-            catch(Exception ex)
+            else
             {
-                Console.WriteLine(ex.ToString());
-
-                ctx.Response.StatusCode = 400;
-                ctx.Response.ContentType = "text/html";
-                await ctx.Response.WriteAsync("<h1>Invalid request.</h1>");
-                await ctx.Response.Body.FlushAsync();
+                ctx.Response.StatusCode = 405;
             }
-        }
+        });
+    }
 
-        public Task<string> WaitForCallbackAsync(int timeoutInSeconds = DefaultTimeout)
+    private async Task SetResultAsync(string value, HttpContext ctx)
+    {
+        try
         {
-            Task.Run(async () =>
-            {
-                await Task.Delay(timeoutInSeconds * 1000);
-                _source.TrySetCanceled();
-            });
+            ctx.Response.StatusCode = 200;
+            ctx.Response.ContentType = "text/html";
+            await ctx.Response.WriteAsync("<h1>You can now return to the application.</h1>");
+            await ctx.Response.Body.FlushAsync();
 
-            return _source.Task;
+            _source.TrySetResult(value);
         }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+
+            ctx.Response.StatusCode = 400;
+            ctx.Response.ContentType = "text/html";
+            await ctx.Response.WriteAsync("<h1>Invalid request.</h1>");
+            await ctx.Response.Body.FlushAsync();
+        }
+    }
+
+    public Task<string> WaitForCallbackAsync(int timeoutInSeconds = DefaultTimeout)
+    {
+        Task.Run(async () =>
+        {
+            await Task.Delay(timeoutInSeconds * 1000);
+            _source.TrySetCanceled();
+        });
+
+        return _source.Task;
     }
 }
