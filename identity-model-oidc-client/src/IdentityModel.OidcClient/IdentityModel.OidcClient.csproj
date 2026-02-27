@@ -12,7 +12,7 @@
     <PackageReadmePath>README.md</PackageReadmePath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Duende.IdentityModel" />
+    <ProjectReference Include="../../../identity-model/src/IdentityModel/IdentityModel.csproj" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 </Project>

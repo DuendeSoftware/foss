@@ -602,4 +602,102 @@ public class ClientTokenManagementTests
         secondRequestExpiration.ShouldBe(expectedExpiration,
             "Second request should use the auto-tuned cache duration learned from the first request");
     }
+
+    [Fact]
+    public async Task dpop_nonce_retry_should_use_fresh_client_assertion()
+    {
+        // Arrange: assertion service that returns incrementing assertion values
+        var callCount = 0;
+        var capturedAssertions = new List<string>();
+        _services.AddTransient<IClientAssertionService>(_ =>
+            new CountingClientAssertionService("test", () => $"assertion_{Interlocked.Increment(ref callCount)}"));
+
+        var proof = new TestDPoPProofService { ProofToken = "proof_token", AppendNonce = true };
+        _services.AddSingleton<IDPoPProofService>(proof);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client => Some.ClientCredentialsClient(
+                toConfigure: client,
+                jsonWebKey: The.JsonWebKey));
+
+        // First request: returns DPoP nonce error
+        _mockHttp.Expect(The.TokenEndpoint.ToString())
+            .With(m =>
+            {
+                var content = m.Content!.ReadAsStringAsync().Result;
+                var pairs = System.Web.HttpUtility.ParseQueryString(content);
+                var assertion = pairs["client_assertion"];
+                if (assertion != null)
+                {
+                    capturedAssertions.Add(assertion);
+                }
+
+                return true;
+            })
+            .Respond(HttpStatusCode.BadRequest,
+                [new KeyValuePair<string, string>("DPoP-Nonce", "some_nonce")],
+                "application/json",
+                JsonSerializer.Serialize(new { error = "use_dpop_nonce" }));
+
+        // Retry request: should succeed
+        _mockHttp.Expect(The.TokenEndpoint.ToString())
+            .With(m =>
+            {
+                var content = m.Content!.ReadAsStringAsync().Result;
+                var pairs = System.Web.HttpUtility.ParseQueryString(content);
+                var assertion = pairs["client_assertion"];
+                if (assertion != null)
+                {
+                    capturedAssertions.Add(assertion);
+                }
+
+                return true;
+            })
+            .Respond(_ => Some.TokenHttpResponse());
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+        _mockHttp.VerifyNoOutstandingExpectation();
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken() with
+        {
+            DPoPJsonWebKey = The.JsonWebKey
+        });
+
+        // CRITICAL ASSERTION: The two requests should have different client assertions
+        capturedAssertions.Count.ShouldBe(2, "Expected two token requests (initial + nonce retry)");
+        capturedAssertions[0].ShouldNotBe(capturedAssertions[1],
+            "Client assertion must be regenerated on DPoP nonce retry, not reused");
+    }
+
+    /// <summary>
+    /// A client assertion service that returns a new assertion value on each call,
+    /// useful for proving that assertions are (or are not) being refreshed.
+    /// </summary>
+    private class CountingClientAssertionService(string name, Func<string> valueFactory) : IClientAssertionService
+    {
+        public Task<ClientAssertion?> GetClientAssertionAsync(
+            ClientCredentialsClientName? clientName = null,
+            TokenRequestParameters? parameters = null,
+            CancellationToken ct = default)
+        {
+            if (clientName == name)
+            {
+                return Task.FromResult<ClientAssertion?>(new ClientAssertion
+                {
+                    Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+                    Value = valueFactory()
+                });
+            }
+
+            return Task.FromResult<ClientAssertion?>(null);
+        }
+    }
 }

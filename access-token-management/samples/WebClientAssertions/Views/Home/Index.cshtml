@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<h2>Client Assertions Sample</h2>
+<p>
+    This sample demonstrates <code>IClientAssertionService</code> with Duende's Access Token Management library,
+    including DPoP with server-issued nonces that trigger retries with fresh client assertions.
+</p>
+
+@if (User.Identity!.IsAuthenticated)
+{
+    <h3>Call API as User (DPoP + JWT assertion)</h3>
+
+    <a asp-controller="Home" asp-action="CallApiAsUserManual">Manual</a>
+    @("|")
+    <a asp-controller="Home" asp-action="CallApiAsUserFactory">HTTP client factory</a>
+    @("|")
+    <a asp-controller="Home" asp-action="CallApiAsUserFactoryTyped">HTTP client factory (typed)</a>
+}
+else
+{
+    <p>
+        <a asp-controller="Home" asp-action="Login">Login</a> to call APIs as a user with DPoP + JWT client assertions.
+    </p>
+}
+
+<h3>Call API as Client (M2M / client credentials + JWT assertion)</h3>
+
+<a asp-controller="Home" asp-action="CallApiAsClientFactory">HTTP client factory</a>
+|
+<a asp-controller="Home" asp-action="CallApiAsClientFactoryTyped">HTTP client factory (typed)</a>

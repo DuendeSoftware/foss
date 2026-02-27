@@ -4,6 +4,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Web;
 using Duende.IdentityModel.Client;
 using Duende.IdentityModel.OidcClient.DPoP.Framework;
 using Duende.IdentityServer.Models;
@@ -133,5 +134,161 @@ public class DPoPTest : IntegrationTestBase
 
         var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"), _ct);
         apiResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task when_nonce_required_client_assertion_factory_should_be_called_on_retry()
+    {
+        // Arrange: a mock handler that returns 400+DPoP-Nonce on the first call
+        // and 200 on the second, capturing the client_assertion from each request.
+        var capturedAssertions = new List<string>();
+        var callCount = 0;
+        var nonce = "test-nonce-value";
+
+        var mockInner = new CallbackHttpMessageHandler(async (request, ct) =>
+        {
+            var body = request.Content != null
+                ? await request.Content.ReadAsStringAsync(ct)
+                : string.Empty;
+            var pairs = HttpUtility.ParseQueryString(body);
+            var assertion = pairs["client_assertion"];
+            if (assertion != null)
+            {
+                capturedAssertions.Add(assertion);
+            }
+
+            callCount++;
+            if (callCount == 1)
+            {
+                var resp = new HttpResponseMessage(HttpStatusCode.BadRequest);
+                resp.Headers.Add("DPoP-Nonce", nonce);
+                resp.Content = new StringContent(
+                    """{"error":"use_dpop_nonce"}""",
+                    System.Text.Encoding.UTF8, "application/json");
+                return resp;
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"access_token":"tok","token_type":"DPoP","expires_in":3600}""",
+                    System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        var assertionCallCount = 0;
+        Func<Task<ClientAssertion>> factory = () =>
+        {
+            assertionCallCount++;
+            return Task.FromResult<ClientAssertion>(new ClientAssertion
+            {
+                Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+                Value = $"assertion_{assertionCallCount}"
+            });
+        };
+
+        var handler = new ProofTokenMessageHandler(_proofTokenFactory, mockInner);
+        var client = new HttpClient(handler);
+
+        // Act: make a POST with a form body that already includes a client_assertion
+        var initialContent = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("grant_type", "client_credentials"),
+            new KeyValuePair<string, string>("client_assertion_type", OidcConstants.ClientAssertionTypes.JwtBearer),
+            new KeyValuePair<string, string>("client_assertion", "original_assertion"),
+            new KeyValuePair<string, string>("scope", "scope1"),
+        });
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://server/connect/token")
+        {
+            Content = initialContent
+        };
+        requestMessage.Options.Set(ProtocolRequestOptions.ClientAssertionFactory, factory);
+
+        await client.SendAsync(requestMessage, _ct);
+
+        // Assert: two requests were made, each with a different assertion value
+        callCount.ShouldBe(2, "Expected initial request + nonce retry");
+        capturedAssertions.Count.ShouldBe(2);
+        capturedAssertions[0].ShouldBe("original_assertion",
+            "First request should use the original body's assertion");
+        capturedAssertions[1].ShouldBe("assertion_1",
+            "Retry request should use the fresh assertion from ClientAssertionFactory");
+        assertionCallCount.ShouldBe(1, "ClientAssertionFactory should be called exactly once (on retry)");
+    }
+
+    [Fact]
+    public async Task when_no_client_assertion_factory_nonce_retry_does_not_modify_body()
+    {
+        // Arrange: handler without ClientAssertionFactory — body should be unchanged on retry.
+        var capturedAssertions = new List<string>();
+        var callCount = 0;
+        var nonce = "test-nonce-backward-compat";
+
+        var mockInner = new CallbackHttpMessageHandler(async (request, ct) =>
+        {
+            var body = request.Content != null
+                ? await request.Content.ReadAsStringAsync(ct)
+                : string.Empty;
+            var pairs = HttpUtility.ParseQueryString(body);
+            var assertion = pairs["client_assertion"];
+            if (assertion != null)
+            {
+                capturedAssertions.Add(assertion);
+            }
+
+            callCount++;
+            if (callCount == 1)
+            {
+                var resp = new HttpResponseMessage(HttpStatusCode.BadRequest);
+                resp.Headers.Add("DPoP-Nonce", nonce);
+                resp.Content = new StringContent(
+                    """{"error":"use_dpop_nonce"}""",
+                    System.Text.Encoding.UTF8, "application/json");
+                return resp;
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"access_token":"tok","token_type":"DPoP","expires_in":3600}""",
+                    System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        // No ClientAssertionFactory set
+        var handler = new ProofTokenMessageHandler(_proofTokenFactory, mockInner);
+        var client = new HttpClient(handler);
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://server/connect/token")
+        {
+            Content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                new KeyValuePair<string, string>("client_assertion_type", OidcConstants.ClientAssertionTypes.JwtBearer),
+                new KeyValuePair<string, string>("client_assertion", "static_assertion"),
+            })
+        };
+
+        await client.SendAsync(requestMessage, _ct);
+
+        // Both requests should carry the same (unchanged) assertion — backward compatible
+        callCount.ShouldBe(2, "Expected initial request + nonce retry");
+        capturedAssertions.Count.ShouldBe(2);
+        capturedAssertions[0].ShouldBe("static_assertion");
+        capturedAssertions[1].ShouldBe("static_assertion",
+            "Without ClientAssertionFactory, body must not be modified on retry");
+    }
+
+    /// <summary>
+    /// A minimal HttpMessageHandler that delegates to a callback, used for unit tests
+    /// that don't need a full IdentityServer instance.
+    /// </summary>
+    private sealed class CallbackHttpMessageHandler(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> callback)
+        : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+            => callback(request, cancellationToken);
     }
 }

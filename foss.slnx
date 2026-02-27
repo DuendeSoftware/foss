@@ -14,6 +14,7 @@
   <Folder Name="/access-token-management/samples/">
     <Project Path="access-token-management/samples/BlazorServer/BlazorServer.csproj" />
     <Project Path="access-token-management/samples/Web/Web.csproj" />
+    <Project Path="access-token-management/samples/WebClientAssertions/WebClientAssertions.csproj" />
     <Project Path="access-token-management/samples/WebJarJwt/WebJarJwt.csproj" />
     <Project Path="access-token-management/samples/Worker/Worker.csproj" />
     <Project Path="access-token-management/samples/WorkerDI/WorkerDI.csproj" />
@@ -50,6 +51,7 @@
     <File Path="identity-model/README.md" />
   </Folder>
   <Folder Name="/identity-model/samples/">
+    <Project Path="identity-model/samples/ClientAssertions/ClientAssertions.csproj" />
     <Project Path="identity-model/samples/HttpClientFactory/HttpClientFactory.csproj" />
   </Folder>
   <Folder Name="/identity-model/src/">

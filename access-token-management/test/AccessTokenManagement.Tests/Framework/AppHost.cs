@@ -7,9 +7,11 @@ using System.Web;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using RichardSzalay.MockHttp;
 
 namespace Duende.AccessTokenManagement.Framework;
@@ -18,6 +20,7 @@ public class AppHost : GenericHost
 {
     public string ClientId;
     public string? ClientSecret;
+    public SigningCredentials? ClientAssertionSigningCredentials { get; set; }
 
     private readonly IdentityServerHost _identityServerHost;
     private readonly ApiHost _apiHost;
@@ -69,7 +72,7 @@ public class AppHost : GenericHost
                 options.Authority = _identityServerHost.Url();
 
                 options.ClientId = ClientId;
-                options.ClientSecret = ClientSecret;
+                options.ClientSecret = ClientAssertionSigningCredentials is null ? ClientSecret : null;
                 options.ResponseType = "code";
                 options.ResponseMode = "query";
 
@@ -105,6 +108,27 @@ public class AppHost : GenericHost
 
                 options.ProtocolValidator.RequireNonce = false;
             });
+
+        if (ClientAssertionSigningCredentials is { } assertionCredentials)
+        {
+            services.AddSingleton<IClientAssertionService>(
+                new JwtClientAssertionService(ClientId, assertionCredentials));
+
+            services.Configure<OpenIdConnectOptions>("oidc", opt =>
+            {
+                opt.Events.OnAuthorizationCodeReceived = async context =>
+                {
+                    var svc = context.HttpContext.RequestServices
+                        .GetRequiredService<IClientAssertionService>();
+                    var assertion = await svc.GetClientAssertionAsync(
+                        ClientCredentialsClientName.Parse(ClientId))
+                        ?? throw new InvalidOperationException("Client assertion is null");
+
+                    context.TokenEndpointRequest!.ClientAssertionType = assertion.Type;
+                    context.TokenEndpointRequest.ClientAssertion = assertion.Value;
+                };
+            });
+        }
 
         services.AddOpenIdConnectAccessTokenManagement(opt =>
         {

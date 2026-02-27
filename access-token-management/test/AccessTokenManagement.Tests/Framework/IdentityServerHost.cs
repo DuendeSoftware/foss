@@ -66,7 +66,8 @@ public class IdentityServerHost : GenericHost
             .AddInMemoryClients(Clients)
             .AddInMemoryIdentityResources(IdentityResources)
             .AddInMemoryApiResources(ApiResources)
-            .AddInMemoryApiScopes(ApiScopes);
+            .AddInMemoryApiScopes(ApiScopes)
+            .AddJwtBearerClientAuthentication();
     }
 
     private void Configure(IApplicationBuilder app)

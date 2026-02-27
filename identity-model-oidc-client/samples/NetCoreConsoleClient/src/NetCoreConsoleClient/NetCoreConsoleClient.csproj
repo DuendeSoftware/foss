@@ -4,14 +4,16 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>NetCoreConsoleClient</AssemblyName>
     <OutputType>Exe</OutputType>
+    <ImplicitUsings>true</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
 	  <FrameworkReference Include="Microsoft.AspNetCore.App"></FrameworkReference>
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.*" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
-    <PackageReference Include="Duende.IdentityModel.OidcClient" Version="6.0.0" />
+    <ProjectReference Include="../../../../src/IdentityModel.OidcClient.Extensions/IdentityModel.OidcClient.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

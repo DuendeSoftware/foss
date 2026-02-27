@@ -350,6 +350,7 @@ public class OidcClient
             ClientId = Options.ClientId,
             ClientSecret = Options.ClientSecret,
             ClientAssertion = await Options.GetClientAssertionAsync(),
+            ClientAssertionFactory = Options.GetClientAssertionAsync,
             ClientCredentialStyle = Options.TokenClientCredentialStyle,
             RefreshToken = refreshToken,
             Parameters = backChannelParameters,
