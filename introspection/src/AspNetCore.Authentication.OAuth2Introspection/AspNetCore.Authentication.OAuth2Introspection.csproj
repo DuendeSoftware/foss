@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>
 </Project>
