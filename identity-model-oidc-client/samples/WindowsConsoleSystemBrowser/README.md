@@ -1,6 +1,6 @@
 ## HttpSysConsoleClient Sample
 This sample shows how to use Duende.IdentityModel.OidcClient to build a windows desktop
-application in .NET 8. It uses [manual
+application in .NET. It uses [manual
 mode](https://docs.duendesoftware.com/foss/identitymodel.oidcclient/manual/), and listens for
 callbacks on a private-use URI scheme.
 

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 
-namespace ConsoleClientWithBrowser;
+namespace NetCoreConsoleClient;
 
 public class SystemBrowser : IBrowser
 {
