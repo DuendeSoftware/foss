@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <ExtensionsVersion>10.0.0</ExtensionsVersion>
+    <ExtensionsVersion>10.0.4</ExtensionsVersion>
 	  <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0'">
