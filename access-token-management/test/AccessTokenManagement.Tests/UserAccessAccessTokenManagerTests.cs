@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
+using Duende.AccessTokenManagement.OTel;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.AccessTokenManagement.OpenIdConnect.Internal;
-using Duende.AccessTokenManagement.OTel;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -18,7 +18,8 @@ public class UserAccessAccessTokenManagerTests
     public async Task GetAccessTokenAsync_with_null_identity_should_return_failure()
     {
         // A ClaimsPrincipal created with no arguments has Identity == null.
-        // This can happen if a custom IUserAccessor returns a default principal.
+        // This happens when HttpContextUserAccessor falls back because
+        // there is no HttpContext (e.g., background service).
         var user = new ClaimsPrincipal();
 
         var sut = CreateSut();
@@ -27,7 +28,7 @@ public class UserAccessAccessTokenManagerTests
 
         result.Succeeded.ShouldBeFalse();
         result.FailedResult.ShouldNotBeNull();
-        result.FailedResult!.Error.ShouldBe("No active user");
+        result.FailedResult.Error.ShouldBe("No active user");
     }
 
     [Fact]
@@ -42,7 +43,7 @@ public class UserAccessAccessTokenManagerTests
 
         result.Succeeded.ShouldBeFalse();
         result.FailedResult.ShouldNotBeNull();
-        result.FailedResult!.Error.ShouldBe("No active user");
+        result.FailedResult.Error.ShouldBe("No active user");
     }
 
     private static UserAccessAccessTokenManager CreateSut()
