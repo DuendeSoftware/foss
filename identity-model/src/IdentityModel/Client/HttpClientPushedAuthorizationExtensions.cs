@@ -66,6 +66,15 @@ public static class HttpClientPushedAuthorizationExtensions
 
     internal static async Task<PushedAuthorizationResponse> PushAuthorizationAsync(this HttpMessageInvoker client, ProtocolRequest request, CancellationToken cancellationToken = default)
     {
+        // If a factory is set, invoke it to get a fresh assertion for this attempt and
+        // store it on Options so that DPoP retry handlers can invoke it again on each
+        // subsequent attempt. The factory always takes precedence over a static ClientAssertion.
+        if (request.ClientAssertionFactory != null)
+        {
+            request.ClientAssertion = await request.ClientAssertionFactory().ConfigureAwait();
+            request.Options.TryAdd(ProtocolRequestOptions.ClientAssertionFactory.Key, request.ClientAssertionFactory);
+        }
+
         request.Prepare();
         request.Method = HttpMethod.Post;
 

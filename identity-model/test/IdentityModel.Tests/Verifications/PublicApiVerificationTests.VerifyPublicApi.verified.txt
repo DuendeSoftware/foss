@@ -1159,6 +1159,7 @@ namespace Duende.IdentityModel.Client
         public string? Address { get; set; }
         public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
         public Duende.IdentityModel.Client.ClientAssertion ClientAssertion { get; set; }
+        public System.Func<System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion>>? ClientAssertionFactory { get; set; }
         public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
         public string ClientId { get; set; }
         public string? ClientSecret { get; set; }
@@ -1168,6 +1169,10 @@ namespace Duende.IdentityModel.Client
         public T Clone<T>()
             where T : Duende.IdentityModel.Client.ProtocolRequest, new () { }
         public void Prepare() { }
+    }
+    public static class ProtocolRequestOptions
+    {
+        public static readonly System.Net.Http.HttpRequestOptionsKey<System.Func<System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion>>?> ClientAssertionFactory;
     }
     public class ProtocolResponse : System.IDisposable
     {

@@ -2,10 +2,13 @@
   "solution": {
     "path": "..\\foss.slnx",
     "projects": [
+      "identity-model\\samples\\ClientAssertions\\ClientAssertions.csproj",
       "identity-model\\samples\\HttpClientFactory\\HttpClientFactory.csproj",
       "identity-model\\src\\IdentityModel\\IdentityModel.csproj",
       "identity-model\\src\\TrimmableAnalysis\\TrimmableAnalysis.csproj",
-      "identity-model\\test\\IdentityModel.Tests\\IdentityModel.Tests.csproj"
+      "identity-model\\test\\IdentityModel.Tests\\IdentityModel.Tests.csproj",
+      "identity-model-oidc-client\\src\\IdentityModel.OidcClient.Extensions\\IdentityModel.OidcClient.Extensions.csproj",
+      "identity-model-oidc-client\\src\\IdentityModel.OidcClient\\IdentityModel.OidcClient.csproj"
     ]
   }
 }

@@ -127,6 +127,19 @@ internal class ClientCredentialsTokenClient(
                 dPoPNonce: DPoPNonce.Parse(response.DPoPNonce),
                 ct: ct);
 
+            // Regenerate the client assertion to ensure a fresh jti on retry.
+            // Only apply when using the service-based assertion path (not the static Assertion parameter).
+            if (parameters.Assertion == null)
+            {
+                var freshAssertion = await clientAssertionService.GetClientAssertionAsync(clientName, parameters, ct: ct)
+                    .ConfigureAwait(false);
+                if (freshAssertion != null)
+                {
+                    request.ClientAssertion = freshAssertion;
+                    request.ClientCredentialStyle = ClientCredentialStyle.PostBody;
+                }
+            }
+
             if (request.DPoPProofToken != null)
             {
                 response = await httpClient.RequestClientCredentialsTokenAsync(request, ct).ConfigureAwait(false);

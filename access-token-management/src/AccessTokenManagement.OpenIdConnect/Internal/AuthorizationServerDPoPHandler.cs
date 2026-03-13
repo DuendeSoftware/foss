@@ -4,8 +4,10 @@
 using System.Net;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Internal;
-
+using Duende.IdentityModel;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect.Internal;
@@ -40,7 +42,8 @@ internal class AuthorizationServerDPoPHandler(
     // We depend on the logger factory, rather than the logger itself, since
     // the type parameter of the logger (referencing this class) will not
     // always be accessible.
-    private readonly ILogger<AuthorizationServerDPoPHandler> _logger = loggerFactory.CreateLogger<AuthorizationServerDPoPHandler>();
+    private readonly ILogger<AuthorizationServerDPoPHandler> _logger =
+        loggerFactory.CreateLogger<AuthorizationServerDPoPHandler>();
 
     /// <inheritdoc/>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
@@ -87,6 +90,7 @@ internal class AuthorizationServerDPoPHandler(
                 _logger.DPoPErrorDuringTokenRefreshWillRetryWithServerNonce(LogLevel.Debug, response.GetDPoPError());
                 response.Dispose();
                 await SetDPoPProofTokenForCodeExchangeAsync(request, dPoPNonce, codeExchangeJwk).ConfigureAwait(false);
+                await RefreshClientAssertionAsync(request).ConfigureAwait(false);
                 return await base.SendAsync(request, ct).ConfigureAwait(false);
             }
         }
@@ -108,10 +112,8 @@ internal class AuthorizationServerDPoPHandler(
         return response;
     }
 
-    /// <summary>
-    /// Creates a DPoP proof token and attaches it to a request.
-    /// </summary>
-    internal async Task SetDPoPProofTokenForCodeExchangeAsync(HttpRequestMessage request, DPoPNonce? dpopNonce = null, DPoPProofKey? jwk = null)
+    internal async Task SetDPoPProofTokenForCodeExchangeAsync(HttpRequestMessage request, DPoPNonce? dpopNonce = null,
+        DPoPProofKey? jwk = null)
     {
         if (jwk == null)
         {
@@ -137,5 +139,57 @@ internal class AuthorizationServerDPoPHandler(
         {
             _logger.FailedToCreateDPopProofToken(LogLevel.Debug, request.RequestUri);
         }
+    }
+
+    private async Task RefreshClientAssertionAsync(HttpRequestMessage request)
+    {
+        if (request.Content == null)
+        {
+            return;
+        }
+
+        var body = await request.Content.ReadAsStringAsync().ConfigureAwait(false);
+        var fields = QueryHelpers.ParseQuery(body);
+
+        if (!fields.ContainsKey(OidcConstants.TokenRequest.ClientAssertion))
+        {
+            return;
+        }
+
+        var assertionService = httpContextAccessor.HttpContext?.RequestServices
+            .GetService<IClientAssertionService>();
+        if (assertionService == null)
+        {
+            return;
+        }
+
+        var assertion = await assertionService.GetClientAssertionAsync().ConfigureAwait(false);
+        if (assertion == null)
+        {
+            return;
+        }
+
+        var pairs = new List<KeyValuePair<string, string>>();
+        foreach (var kvp in fields)
+        {
+            var key = kvp.Key;
+            switch (key)
+            {
+                case OidcConstants.TokenRequest.ClientAssertion:
+                    pairs.Add(new KeyValuePair<string, string>(key, assertion.Value));
+                    break;
+                case OidcConstants.TokenRequest.ClientAssertionType:
+                    pairs.Add(new KeyValuePair<string, string>(key, assertion.Type));
+                    break;
+                default:
+                    {
+                        pairs.AddRange(kvp.Value.Select(val => new KeyValuePair<string, string>(key, val ?? string.Empty)));
+
+                        break;
+                    }
+            }
+        }
+
+        request.Content = new FormUrlEncodedContent(pairs);
     }
 }
