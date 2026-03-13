@@ -86,7 +86,7 @@ public static class Startup
         // Register our client assertion service (replaces the default no-op)
         builder.Services.AddTransient<IClientAssertionService, ClientAssertionService>();
 
-        // --- Named M2M client (client credentials with JWT auth, no DPoP) ---
+        // --- Named M2M client (client credentials with JWT auth + DPoP) ---
         builder.Services.AddClientCredentialsTokenManagement()
             .AddClient("m2m.jwt", client =>
             {
@@ -94,6 +94,7 @@ public static class Startup
                 client.ClientId = ClientId.Parse("m2m.jwt");
                 // No ClientSecret — assertion service provides credentials
                 client.Scope = Scope.Parse("api");
+                client.DPoPJsonWebKey = DPoPProofKey.Parse(dpopJwk);
             });
 
         // --- HTTP Clients ---
@@ -111,17 +112,17 @@ public static class Startup
             })
             .AddUserAccessTokenHandler();
 
-        // Client access token clients (M2M with JWT assertion, no DPoP)
+        // Client access token clients (M2M with JWT assertion + DPoP)
         builder.Services.AddClientCredentialsHttpClient("client",
             ClientCredentialsClientName.Parse("m2m.jwt"),
             client =>
             {
-                client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
+                client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/dpop/");
             });
 
         builder.Services.AddHttpClient<TypedClientClient>(client =>
             {
-                client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/");
+                client.BaseAddress = new Uri("https://demo.duendesoftware.com/api/dpop/");
             })
             .AddClientCredentialsTokenHandler(ClientCredentialsClientName.Parse("m2m.jwt"));
 
