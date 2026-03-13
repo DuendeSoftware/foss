@@ -24,7 +24,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     public async Task Anonymous_user_should_return_user_token_error()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token_error"), _ct);
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_error"), _ct);
         var token = await response.Content.ReadFromJsonAsync<FailedResult>(_ct);
 
         token!.Error.ShouldNotBeNull();
@@ -34,7 +34,7 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     public async Task Anonymous_user_should_return_client_token()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/client_token"), _ct);
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/client_token"), _ct);
         var token = await response.Content.ReadFromJsonAsync<ClientCredentialsTokenModel>(_ct);
 
         token!.AccessToken.ShouldNotBeNull();
@@ -80,13 +80,13 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
         // Get a user token. This should trigger a token refresh, which then get's stored and triggers
         // the custom token transform
-        await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"), _ct);
+        await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
 
         // Verify that the transform is used.
         transformed.ShouldBeTrue();
 
         // The transformed principal should now be used.
-        var claims = await AppHost.BrowserClient!.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"), _ct);
+        var claims = await AppHost.BrowserClient.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"), _ct);
         claims![JwtClaimTypes.Name].ShouldBe("transformed");
     }
 

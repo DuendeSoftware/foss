@@ -119,7 +119,7 @@ public static class Startup
     internal static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseSerilogRequestLogging(
-            options => options.GetLevel = (httpContext, elapsed, ex) => LogEventLevel.Debug);
+            options => options.GetLevel = (_, _, _) => LogEventLevel.Debug);
 
         app.UseDeveloperExceptionPage();
         app.UseHttpsRedirection();

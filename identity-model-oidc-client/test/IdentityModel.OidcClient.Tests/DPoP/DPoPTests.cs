@@ -99,7 +99,7 @@ public class DPoPTest : IntegrationTestBase
 
         ApiHost.ApiInvoked += ctx =>
         {
-            ctx.User.Identity.IsAuthenticated.ShouldBeTrue();
+            ctx.User.Identity?.IsAuthenticated.ShouldBeTrue();
         };
 
         var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"), _ct);
@@ -129,7 +129,7 @@ public class DPoPTest : IntegrationTestBase
 
         ApiHost.ApiInvoked += ctx =>
         {
-            ctx.User.Identity.IsAuthenticated.ShouldBeTrue();
+            ctx.User.Identity?.IsAuthenticated.ShouldBeTrue();
         };
 
         var apiResponse = await apiClient.GetAsync(ApiHost.Url("/api"), _ct);
@@ -175,10 +175,10 @@ public class DPoPTest : IntegrationTestBase
         });
 
         var assertionCallCount = 0;
-        Func<Task<ClientAssertion>> factory = () =>
+        var factory = () =>
         {
             assertionCallCount++;
-            return Task.FromResult<ClientAssertion>(new ClientAssertion
+            return Task.FromResult(new ClientAssertion
             {
                 Type = OidcConstants.ClientAssertionTypes.JwtBearer,
                 Value = $"assertion_{assertionCallCount}"

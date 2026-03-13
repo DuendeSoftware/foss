@@ -68,7 +68,7 @@ public class ClientTokenManagementTests
     public async Task Missing_client_secret_throw_exception()
     {
 
-        var mockedRequest = _mockHttp.Expect("/connect/token")
+        _ = _mockHttp.Expect("/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
         _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
@@ -150,7 +150,7 @@ public class ClientTokenManagementTests
             _mockHttp.Expect("/connect/token")
                 .WithFormData(expectedRequestFormData)
                 .WithHeaders("Authorization",
-                    "Basic " + IdentityModel.Client.BasicAuthenticationOAuthHeaderValue.EncodeCredential(The.ClientId.ToString(), The.ClientSecret.ToString()))
+                    "Basic " + BasicAuthenticationOAuthHeaderValue.EncodeCredential(The.ClientId.ToString(), The.ClientSecret.ToString()))
                 .Respond(_ => Some.TokenHttpResponse(Some.Token()));
         }
 

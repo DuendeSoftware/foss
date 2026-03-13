@@ -11,17 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebClientAssertions.Controllers;
 
-public class HomeController : Controller
+public class HomeController(IHttpClientFactory httpClientFactory, IUserTokenManager tokenManager)
+    : Controller
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IUserTokenManager _tokenManager;
-
-    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManager tokenManager)
-    {
-        _httpClientFactory = httpClientFactory;
-        _tokenManager = tokenManager;
-    }
-
     [AllowAnonymous]
     public IActionResult Index() => View();
 
@@ -34,8 +26,8 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserManual()
     {
-        var token = await _tokenManager.GetAccessTokenAsync(User).GetToken();
-        var client = _httpClientFactory.CreateClient();
+        var token = await tokenManager.GetAccessTokenAsync(User).GetToken();
+        var client = httpClientFactory.CreateClient();
         client.SetBearerToken(token.AccessToken.ToString()!);
 
         var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/dpop/test");
@@ -46,7 +38,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CallApiAsUserFactory()
     {
-        var client = _httpClientFactory.CreateClient("user_client");
+        var client = httpClientFactory.CreateClient("user_client");
         var response = await client.GetStringAsync("test");
 
         ViewBag.Json = PrettyPrint(response);
@@ -64,7 +56,7 @@ public class HomeController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> CallApiAsClientFactory()
     {
-        var client = _httpClientFactory.CreateClient("client");
+        var client = httpClientFactory.CreateClient("client");
         var response = await client.GetStringAsync("test");
 
         ViewBag.Json = PrettyPrint(response);

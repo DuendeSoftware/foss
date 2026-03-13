@@ -3,25 +3,11 @@
 
 namespace WebClientAssertions;
 
-public abstract class TypedClient
+public abstract class TypedClient(HttpClient client)
 {
-    private readonly HttpClient _client;
-
-    public TypedClient(HttpClient client) => _client = client;
-
-    public virtual async Task<string> CallApi() => await _client.GetStringAsync("test");
+    public virtual async Task<string> CallApi() => await client.GetStringAsync("test");
 }
 
-public class TypedUserClient : TypedClient
-{
-    public TypedUserClient(HttpClient client) : base(client)
-    {
-    }
-}
+public class TypedUserClient(HttpClient client) : TypedClient(client);
 
-public class TypedClientClient : TypedClient
-{
-    public TypedClientClient(HttpClient client) : base(client)
-    {
-    }
-}
+public class TypedClientClient(HttpClient client) : TypedClient(client);
