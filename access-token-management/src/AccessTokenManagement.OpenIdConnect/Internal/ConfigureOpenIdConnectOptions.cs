@@ -59,6 +59,7 @@ internal class ConfigureOpenIdConnectOptions(
             options.Events.OnRedirectToIdentityProvider = CreateCallback(options.Events.OnRedirectToIdentityProvider);
             options.Events.OnAuthorizationCodeReceived = CreateCallback(options.Events.OnAuthorizationCodeReceived);
             options.Events.OnTokenValidated = CreateCallback(options.Events.OnTokenValidated);
+            options.Events.OnPushAuthorization = CreateCallback(options.Events.OnPushAuthorization);
 
             options.BackchannelHttpHandler = new AuthorizationServerDPoPHandler(dPoPProofService, dPoPNonceStore, httpContextAccessor, loggerFactory)
             {
@@ -149,6 +150,42 @@ internal class ConfigureOpenIdConnectOptions(
             //    // and defer to the host and/or IUserTokenStore implementation to decide where the key is kept
             //    //context.Properties!.RemoveProofKey();
             //}
+        }
+
+        return Callback;
+    }
+
+    private Func<PushedAuthorizationContext, Task> CreateCallback(Func<PushedAuthorizationContext, Task> inner)
+    {
+        async Task Callback(PushedAuthorizationContext context)
+        {
+            await inner.Invoke(context);
+
+            // --- DPoP thumbprint ---
+            var dPoPKeyStore = context.HttpContext.RequestServices.GetRequiredService<IDPoPKeyStore>();
+            var key = await dPoPKeyStore.GetKeyAsync(ClientName);
+            if (key != null)
+            {
+                var jkt = dPoPProofService.GetProofKeyThumbprint(key.Value);
+                if (jkt != null)
+                {
+                    context.Properties.SetProofKey(key.Value);
+                    context.ProtocolMessage.Parameters[OidcConstants.AuthorizeRequest.DPoPKeyThumbprint] =
+                        jkt.ToString();
+                }
+            }
+
+            // --- Client assertion ---
+            var assertion = await clientAssertionService
+                .GetClientAssertionAsync(ClientName, ct: context.HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+
+            if (assertion != null)
+            {
+                context.ProtocolMessage.ClientAssertionType = assertion.Type;
+                context.ProtocolMessage.ClientAssertion = assertion.Value;
+                context.HandleClientAuthentication();
+            }
         }
 
         return Callback;

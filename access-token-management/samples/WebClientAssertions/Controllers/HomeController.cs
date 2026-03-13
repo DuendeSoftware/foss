@@ -3,8 +3,8 @@
 
 using System.Text.Json;
 using Duende.AccessTokenManagement;
+using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OpenIdConnect;
-using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +15,13 @@ public class HomeController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IUserTokenManager _tokenManager;
+    private readonly IDPoPProofService _dPoPProofService;
 
-    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManager tokenManager)
+    public HomeController(IHttpClientFactory httpClientFactory, IUserTokenManager tokenManager, IDPoPProofService dPoPProofService)
     {
         _httpClientFactory = httpClientFactory;
         _tokenManager = tokenManager;
+        _dPoPProofService = dPoPProofService;
     }
 
     [AllowAnonymous]
@@ -39,11 +41,33 @@ public class HomeController : Controller
     public async Task<IActionResult> CallApiAsUserManual()
     {
         var token = await _tokenManager.GetAccessTokenAsync(User).GetToken();
-        var client = _httpClientFactory.CreateClient();
-        client.SetBearerToken(token.AccessToken.ToString()!);
 
-        var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/dpop/test");
-        ViewBag.Json = PrettyPrint(response);
+        var url = new Uri("https://demo.duendesoftware.com/api/dpop/test");
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new ("DPoP", token.AccessToken.ToString());
+
+        if (token.DPoPJsonWebKey is { } key)
+        {
+            var proof = await _dPoPProofService.CreateProofTokenAsync(new DPoPProofRequest
+            {
+                Url = url,
+                Method = HttpMethod.Get,
+                DPoPProofKey = key,
+                AccessToken = token.AccessToken,
+            });
+
+            if (proof is not null)
+            {
+                request.SetDPoPProofToken(proof.Value);
+            }
+        }
+
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        ViewBag.Json = PrettyPrint(json);
 
         return View("CallApi");
     }
