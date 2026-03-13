@@ -34,7 +34,7 @@ internal class UserAccessAccessTokenManager(
 
         parameters ??= new UserTokenRequestParameters();
 
-        if (!user.Identity!.IsAuthenticated)
+        if (user.Identity is not { IsAuthenticated: true })
         {
             logger.CannotRetrieveAccessTokenDueToNoActiveUser(LogLevel.Information);
             return TokenResult.Failure("No active user");
