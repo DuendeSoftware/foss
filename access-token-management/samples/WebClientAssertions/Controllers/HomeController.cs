@@ -32,10 +32,6 @@ public class HomeController : Controller
     [AllowAnonymous]
     public IActionResult Login() => Challenge(new AuthenticationProperties { RedirectUri = "/" });
 
-    // -----------------------------------------------------------------------
-    //  User token endpoints (DPoP + JWT client assertion)
-    // -----------------------------------------------------------------------
-
     public async Task<IActionResult> CallApiAsUserManual()
     {
         var token = await _tokenManager.GetAccessTokenAsync(User).GetToken();
@@ -64,10 +60,6 @@ public class HomeController : Controller
 
         return View("CallApi");
     }
-
-    // -----------------------------------------------------------------------
-    //  Client token endpoints (M2M / client credentials + JWT assertion)
-    // -----------------------------------------------------------------------
 
     [AllowAnonymous]
     public async Task<IActionResult> CallApiAsClientFactory()

@@ -18,7 +18,6 @@ public static class Startup
     {
         builder.Services.AddControllersWithViews();
 
-        // --- Authentication ---
         builder.Services.AddAuthentication(options =>
             {
                 options.DefaultScheme = "cookie";
@@ -71,13 +70,6 @@ public static class Startup
         dpopJsonWebKey.Alg = "PS256";
         var dpopJwk = JsonSerializer.Serialize(dpopJsonWebKey);
 
-        // --- Access Token Management (OIDC-based) ---
-        // The library automatically:
-        //   1. Sends dpop_jkt on the authorize redirect
-        //   2. Calls IClientAssertionService during code exchange
-        //   3. Regenerates assertions on DPoP nonce retries
-        //   4. Calls IClientAssertionService during token refresh
-        // No custom OidcEvents are needed.
         builder.Services.AddOpenIdConnectAccessTokenManagement(options =>
         {
             options.DPoPJsonWebKey = DPoPProofKey.Parse(dpopJwk);
@@ -96,9 +88,6 @@ public static class Startup
                 client.Scope = Scope.Parse("api");
             });
 
-        // --- HTTP Clients ---
-
-        // User access token clients (DPoP-protected API)
         builder.Services.AddUserAccessTokenHttpClient("user_client",
             configureClient: client =>
             {
@@ -111,7 +100,6 @@ public static class Startup
             })
             .AddUserAccessTokenHandler();
 
-        // Client access token clients (M2M with JWT assertion, no DPoP)
         builder.Services.AddClientCredentialsHttpClient("client",
             ClientCredentialsClientName.Parse("m2m.jwt"),
             client =>

@@ -214,7 +214,6 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
         token.AccessTokenType.ShouldBe("DPoP");
         mockHttp.VerifyNoOutstandingExpectation();
 
-        // CRITICAL ASSERTION: The two refresh requests should have different client assertions
         capturedAssertions.Count.ShouldBe(2, "Expected two refresh token requests (initial + nonce retry)");
         capturedAssertions[0].ShouldNotBe(capturedAssertions[1],
             "Client assertion must be regenerated on DPoP nonce retry, not reused");
@@ -298,17 +297,14 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
 
         mockHttp.VerifyNoOutstandingExpectation();
 
-        // CRITICAL ASSERTION: Both code-exchange requests sent an assertion, and they differ
         capturedAssertions.Count.ShouldBe(2,
             "Expected two code-exchange requests (initial attempt + nonce retry)");
         capturedAssertions[0].ShouldNotBe(capturedAssertions[1],
             "Client assertion must be regenerated on DPoP nonce retry during code exchange");
     }
 
-    /// <summary>
-    /// A client assertion service that returns a new assertion value on each call.
-    /// Matches any client name (for integration tests where scheme-derived names vary).
-    /// </summary>
+    // A client assertion service that returns a new assertion value on each call.
+    // Matches any client name (for integration tests where scheme-derived names vary).
     private class CountingClientAssertionService(Func<string> valueFactory) : IClientAssertionService
     {
         public Task<ClientAssertion?> GetClientAssertionAsync(

@@ -23,9 +23,6 @@ namespace ClientAssertions;
 
 public class Program
 {
-    // -----------------------------------------------------------------------
-    //  Configuration - adjust these to point to your identity provider.
-    // -----------------------------------------------------------------------
     private const string Authority = "https://demo.duendesoftware.com";
     private const string TokenEndpoint = $"{Authority}/connect/token";
     private const string ClientId = "m2m.jwt";

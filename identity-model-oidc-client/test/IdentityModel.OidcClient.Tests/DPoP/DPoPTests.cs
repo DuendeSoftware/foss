@@ -139,8 +139,6 @@ public class DPoPTest : IntegrationTestBase
     [Fact]
     public async Task when_nonce_required_client_assertion_factory_should_be_called_on_retry()
     {
-        // Arrange: a mock handler that returns 400+DPoP-Nonce on the first call
-        // and 200 on the second, capturing the client_assertion from each request.
         var capturedAssertions = new List<string>();
         var callCount = 0;
         var nonce = "test-nonce-value";
@@ -190,7 +188,6 @@ public class DPoPTest : IntegrationTestBase
         var handler = new ProofTokenMessageHandler(_proofTokenFactory, mockInner);
         var client = new HttpClient(handler);
 
-        // Act: make a POST with a form body that already includes a client_assertion
         var initialContent = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("grant_type", "client_credentials"),
@@ -206,7 +203,6 @@ public class DPoPTest : IntegrationTestBase
 
         await client.SendAsync(requestMessage, _ct);
 
-        // Assert: two requests were made, each with a different assertion value
         callCount.ShouldBe(2, "Expected initial request + nonce retry");
         capturedAssertions.Count.ShouldBe(2);
         capturedAssertions[0].ShouldBe("original_assertion",
@@ -219,7 +215,6 @@ public class DPoPTest : IntegrationTestBase
     [Fact]
     public async Task when_no_client_assertion_factory_nonce_retry_does_not_modify_body()
     {
-        // Arrange: handler without ClientAssertionFactory — body should be unchanged on retry.
         var capturedAssertions = new List<string>();
         var callCount = 0;
         var nonce = "test-nonce-backward-compat";
@@ -279,10 +274,6 @@ public class DPoPTest : IntegrationTestBase
             "Without ClientAssertionFactory, body must not be modified on retry");
     }
 
-    /// <summary>
-    /// A minimal HttpMessageHandler that delegates to a callback, used for unit tests
-    /// that don't need a full IdentityServer instance.
-    /// </summary>
     private sealed class CallbackHttpMessageHandler(
         Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> callback)
         : HttpMessageHandler

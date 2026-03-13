@@ -606,7 +606,6 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task dpop_nonce_retry_should_use_fresh_client_assertion()
     {
-        // Arrange: assertion service that returns incrementing assertion values
         var callCount = 0;
         var capturedAssertions = new List<string>();
         _services.AddTransient<IClientAssertionService>(_ =>
@@ -661,26 +660,21 @@ public class ClientTokenManagementTests
         var provider = _services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        // Act
         var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
 
-        // Assert
         _mockHttp.VerifyNoOutstandingExpectation();
         token.ShouldBeEquivalentTo(Some.ClientCredentialsToken() with
         {
             DPoPJsonWebKey = The.JsonWebKey
         });
 
-        // CRITICAL ASSERTION: The two requests should have different client assertions
         capturedAssertions.Count.ShouldBe(2, "Expected two token requests (initial + nonce retry)");
         capturedAssertions[0].ShouldNotBe(capturedAssertions[1],
             "Client assertion must be regenerated on DPoP nonce retry, not reused");
     }
 
-    /// <summary>
-    /// A client assertion service that returns a new assertion value on each call,
-    /// useful for proving that assertions are (or are not) being refreshed.
-    /// </summary>
+    // A client assertion service that returns a new assertion value on each call,
+    // useful for proving that assertions are (or are not) being refreshed.
     private class CountingClientAssertionService(string name, Func<string> valueFactory) : IClientAssertionService
     {
         public Task<ClientAssertion?> GetClientAssertionAsync(
