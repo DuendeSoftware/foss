@@ -167,6 +167,114 @@ public class Introspection
         result2.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    [Fact]
+    public async Task TwoConcurrentCalls_FirstIntrospectFaults_SecondShouldRetryAndSucceed()
+    {
+        const string token = "sometoken";
+        var waitForFirstIntrospectionToStart = new ManualResetEvent(initialState: false);
+        var waitForSecondRequestToStart = new ManualResetEvent(initialState: false);
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
+        var requestCount = 0;
+
+        var messageHandler = await PipelineFactory.CreateHandler(o =>
+        {
+            _options(o);
+
+            o.Events.OnSendingRequest = async context =>
+            {
+                var count = Interlocked.Increment(ref requestCount);
+
+                if (count == 1)
+                {
+                    // Signal R2 it can proceed, then wait for R2 to be waiting on the dictionary entry
+                    waitForSecondRequestToStart.WaitOne();
+                    waitForFirstIntrospectionToStart.Set();
+                    await Task.Delay(200); // wait for R2 to reach IntrospectionDictionary
+                    throw new HttpRequestException("Simulated network error");
+                }
+                // Subsequent calls (retries) succeed normally
+            };
+        }, handler);
+
+        var client1 = new HttpClient(messageHandler);
+        var request1 = Task.Run(async () =>
+        {
+            client1.SetBearerToken(token);
+            return await client1.GetAsync("http://test");
+        });
+
+        var client2 = new HttpClient(messageHandler);
+        var request2 = Task.Run(async () =>
+        {
+            waitForSecondRequestToStart.Set();
+            waitForFirstIntrospectionToStart.WaitOne();
+            client2.SetBearerToken(token);
+            return await client2.GetAsync("http://test");
+        });
+
+        await Task.WhenAll(request1, request2);
+
+        var result1 = await request1;
+        result1.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var result2 = await request2;
+        result2.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task TwoConcurrentCalls_FirstIntrospectFaults_RetryAlsoFaults_ShouldPropagateException()
+    {
+        const string token = "sometoken";
+        var waitForFirstIntrospectionToStart = new ManualResetEvent(initialState: false);
+        var waitForSecondRequestToStart = new ManualResetEvent(initialState: false);
+        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+
+        var requestCount = 0;
+
+        var messageHandler = await PipelineFactory.CreateHandler(o =>
+        {
+            _options(o);
+
+            o.Events.OnSendingRequest = async context =>
+            {
+                var count = Interlocked.Increment(ref requestCount);
+
+                if (count == 1)
+                {
+                    // Signal R2, wait for it to reach the dictionary, then fault
+                    waitForSecondRequestToStart.WaitOne();
+                    waitForFirstIntrospectionToStart.Set();
+                    await Task.Delay(200); // wait for R2 to reach IntrospectionDictionary
+                }
+
+                // All calls (initial + retries) throw — simulating persistent failure
+                throw new HttpRequestException("Persistent network error");
+            };
+        }, handler);
+
+        var client1 = new HttpClient(messageHandler);
+        var request1 = Task.Run(async () =>
+        {
+            client1.SetBearerToken(token);
+            var doRequest = () => client1.GetAsync("http://test");
+            await doRequest.ShouldThrowAsync<HttpRequestException>();
+        });
+
+        var client2 = new HttpClient(messageHandler);
+        var request2 = Task.Run(async () =>
+        {
+            waitForSecondRequestToStart.Set();
+            waitForFirstIntrospectionToStart.WaitOne();
+            client2.SetBearerToken(token);
+            var doRequest = () => client2.GetAsync("http://test");
+            await doRequest.ShouldThrowAsync<HttpRequestException>();
+        });
+
+        // Both requests should complete (not hang) — exceptions propagate as HttpRequestException
+        await Task.WhenAll(request1, request2);
+    }
+
     [Theory]
     [InlineData(5000, "testAssertion1", "testAssertion1")]
     [InlineData(-5000, "testAssertion1", "testAssertion2")]
