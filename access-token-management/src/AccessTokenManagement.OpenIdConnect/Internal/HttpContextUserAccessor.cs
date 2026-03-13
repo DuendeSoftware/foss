@@ -19,5 +19,5 @@ internal class HttpContextUserAccessor : IUserAccessor
     public HttpContextUserAccessor(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
 
     /// <inheritdoc/>
-    public Task<ClaimsPrincipal> GetCurrentUserAsync(CT ct = default) => Task.FromResult(_httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal());
+    public Task<ClaimsPrincipal> GetCurrentUserAsync(CT ct = default) => Task.FromResult(_httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal(new ClaimsIdentity()));
 }

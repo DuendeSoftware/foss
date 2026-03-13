@@ -43,7 +43,7 @@ internal class BlazorServerUserAccessor(
 
         // If we are in neither blazor server or SSR, something weird is going on.
         logger.LogWarning("Neither an authentication state provider or http context are available to obtain the current principal.");
-        return new ClaimsPrincipal();
+        return new ClaimsPrincipal(new ClaimsIdentity());
     }
 
 }
