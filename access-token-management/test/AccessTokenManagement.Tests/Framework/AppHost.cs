@@ -21,6 +21,7 @@ public class AppHost : GenericHost
     public string ClientId;
     public string? ClientSecret;
     public SigningCredentials? ClientAssertionSigningCredentials { get; set; }
+    public PushedAuthorizationBehavior PushedAuthorizationBehavior { get; set; } = PushedAuthorizationBehavior.Disable;
 
     private readonly IdentityServerHost _identityServerHost;
     private readonly ApiHost _apiHost;
@@ -107,27 +108,13 @@ public class AppHost : GenericHost
                 }
 
                 options.ProtocolValidator.RequireNonce = false;
+                options.PushedAuthorizationBehavior = PushedAuthorizationBehavior;
             });
 
         if (ClientAssertionSigningCredentials is { } assertionCredentials)
         {
             services.AddSingleton<IClientAssertionService>(
                 new JwtClientAssertionService(ClientId, assertionCredentials));
-
-            services.Configure<OpenIdConnectOptions>("oidc", opt =>
-            {
-                opt.Events.OnAuthorizationCodeReceived = async context =>
-                {
-                    var svc = context.HttpContext.RequestServices
-                        .GetRequiredService<IClientAssertionService>();
-                    var assertion = await svc.GetClientAssertionAsync(
-                        ClientCredentialsClientName.Parse(ClientId))
-                        ?? throw new InvalidOperationException("Client assertion is null");
-
-                    context.TokenEndpointRequest!.ClientAssertionType = assertion.Type;
-                    context.TokenEndpointRequest.ClientAssertion = assertion.Value;
-                };
-            });
         }
 
         services.AddOpenIdConnectAccessTokenManagement(opt =>
