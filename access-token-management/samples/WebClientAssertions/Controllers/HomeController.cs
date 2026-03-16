@@ -24,18 +24,6 @@ public class HomeController(IHttpClientFactory httpClientFactory, IUserTokenMana
     [AllowAnonymous]
     public IActionResult Login() => Challenge(new AuthenticationProperties { RedirectUri = "/" });
 
-    public async Task<IActionResult> CallApiAsUserManual()
-    {
-        var token = await tokenManager.GetAccessTokenAsync(User).GetToken();
-        var client = httpClientFactory.CreateClient();
-        client.SetBearerToken(token.AccessToken.ToString()!);
-
-        var response = await client.GetStringAsync("https://demo.duendesoftware.com/api/dpop/test");
-        ViewBag.Json = PrettyPrint(response);
-
-        return View("CallApi");
-    }
-
     public async Task<IActionResult> CallApiAsUserFactory()
     {
         var client = httpClientFactory.CreateClient("user_client");

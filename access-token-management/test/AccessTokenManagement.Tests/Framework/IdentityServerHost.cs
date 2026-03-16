@@ -24,6 +24,8 @@ public class IdentityServerHost : GenericHost
 
     public List<Client> Clients { get; } = [];
 
+    public bool EnablePar { get; set; }
+
     public List<IdentityResource> IdentityResources { get; } =
     [
         new IdentityResources.OpenId(),
@@ -41,6 +43,7 @@ public class IdentityServerHost : GenericHost
 
     public List<Dictionary<string, string>> CapturedTokenRequests { get; } = [];
     public List<Dictionary<string, string>> CapturedRevocationRequests { get; } = [];
+    public List<Dictionary<string, string>> CapturedParRequests { get; } = [];
 
     private void ConfigureServices(IServiceCollection services)
     {
@@ -61,7 +64,7 @@ public class IdentityServerHost : GenericHost
                 options.DPoP.ProofTokenValidityDuration = TimeSpan.FromSeconds(1);
 
                 // Disable PAR (this keeps test setup simple, and we don't need to integration test PAR here - it is covered by IdentityServer itself)
-                options.Endpoints.EnablePushedAuthorizationEndpoint = false;
+                options.Endpoints.EnablePushedAuthorizationEndpoint = EnablePar;
             })
             .AddInMemoryClients(Clients)
             .AddInMemoryIdentityResources(IdentityResources)
@@ -89,6 +92,14 @@ public class IdentityServerHost : GenericHost
                     kvp => kvp.Key,
                     kvp => kvp.Value.ToString());
                 CapturedRevocationRequests.Add(capturedData);
+            }
+            else if (ctx.Request.Path == "/connect/par" && ctx.Request.Method == "POST")
+            {
+                var form = await ctx.Request.ReadFormAsync();
+                var capturedData = form.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToString());
+                CapturedParRequests.Add(capturedData);
             }
 
             await next();

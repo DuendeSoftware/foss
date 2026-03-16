@@ -97,6 +97,49 @@ public abstract class IntegrationTestBase : IAsyncDisposable
             AccessTokenLifetime = 10
         });
 
+        IdentityServerHost.Clients.Add(new Client
+        {
+            ClientId = "par-assertion",
+            ClientSecrets =
+            {
+                new Secret
+                {
+                    Type = IdentityServerConstants.SecretTypes.JsonWebKey,
+                    Value = BuildPublicJwk(ClientAssertionPrivateJwk)
+                }
+            },
+            AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
+            RedirectUris = { "https://app/signin-oidc" },
+            PostLogoutRedirectUris = { "https://app/signout-callback-oidc" },
+            AllowOfflineAccess = true,
+            AllowedScopes = { "openid", "profile", "scope1", "scope2" },
+            RequirePushedAuthorization = true,
+            AccessTokenLifetime = 10
+        });
+
+        IdentityServerHost.Clients.Add(new Client
+        {
+            ClientId = "par-dpop-assertion",
+            ClientSecrets =
+            {
+                new Secret
+                {
+                    Type = IdentityServerConstants.SecretTypes.JsonWebKey,
+                    Value = BuildPublicJwk(ClientAssertionPrivateJwk)
+                }
+            },
+            AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
+            RedirectUris = { "https://app/signin-oidc" },
+            PostLogoutRedirectUris = { "https://app/signout-callback-oidc" },
+            AllowOfflineAccess = true,
+            AllowedScopes = { "openid", "profile", "scope1", "scope2" },
+            RequirePushedAuthorization = true,
+            RequireDPoP = true,
+            DPoPValidationMode = DPoPTokenExpirationValidationMode.Nonce,
+            DPoPClockSkew = TimeSpan.FromMilliseconds(10),
+            AccessTokenLifetime = 10
+        });
+
         ApiHost = new ApiHost(output.WriteLine, IdentityServerHost, ["scope1", "scope2"]);
         AppHost = new AppHost(output.WriteLine, IdentityServerHost, ApiHost, clientId, configureUserTokenManagementOptions: configureUserTokenManagementOptions);
     }
