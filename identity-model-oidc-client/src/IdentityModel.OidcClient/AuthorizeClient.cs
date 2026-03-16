@@ -139,6 +139,7 @@ internal class AuthorizeClient
 
             ClientSecret = _options.ClientSecret,
             ClientAssertion = await _options.GetClientAssertionAsync(),
+            ClientAssertionFactory = _options.GetClientAssertionAsync,
             Parameters = CreateAuthorizeParameters(state, codeChallenge, frontChannelParameters),
         };
 
