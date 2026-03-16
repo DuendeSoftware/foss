@@ -205,7 +205,7 @@ public class OidcClient
             return new LoginResult(result.Error, result.ErrorDescription);
         }
 
-        var userInfoClaims = Enumerable.Empty<Claim>();
+        var userInfoClaims = Array.Empty<Claim>();
         if (Options.LoadProfile)
         {
             var userInfoResult = await GetUserInfoAsync(result.TokenResponse.AccessToken, cancellationToken);
@@ -217,7 +217,7 @@ public class OidcClient
                 return new LoginResult(error);
             }
 
-            userInfoClaims = userInfoResult.Claims;
+            userInfoClaims = userInfoResult.Claims.ToArray();
 
             var userInfoSub = userInfoClaims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
             if (userInfoSub == null)
@@ -230,7 +230,7 @@ public class OidcClient
 
             if (result.TokenResponse.IdentityToken != null)
             {
-                if (!string.Equals(userInfoSub.Value, result.User.FindFirst(JwtClaimTypes.Subject).Value))
+                if (!string.Equals(userInfoSub.Value, result.User.FindFirst(JwtClaimTypes.Subject)?.Value))
                 {
                     var error = "sub claim from userinfo endpoint is different than sub claim from identity token.";
                     _logger.LogError(error);
@@ -350,6 +350,7 @@ public class OidcClient
             ClientId = Options.ClientId,
             ClientSecret = Options.ClientSecret,
             ClientAssertion = await Options.GetClientAssertionAsync(),
+            ClientAssertionFactory = Options.GetClientAssertionAsync,
             ClientCredentialStyle = Options.TokenClientCredentialStyle,
             RefreshToken = refreshToken,
             Parameters = backChannelParameters,
@@ -504,6 +505,6 @@ public class OidcClient
             userClaims = combinedClaims.ToList();
         }
 
-        return new ClaimsPrincipal(new ClaimsIdentity(userClaims, user.Identity.AuthenticationType, user.Identities.First().NameClaimType, user.Identities.First().RoleClaimType));
+        return new ClaimsPrincipal(new ClaimsIdentity(userClaims, user.Identity?.AuthenticationType, user.Identities.First().NameClaimType, user.Identities.First().RoleClaimType));
     }
 }
