@@ -8,7 +8,6 @@ using Duende.AccessTokenManagement.Framework;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +22,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     public async Task Anonymous_user_should_return_user_token_error()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token_error"));
-        var token = await response.Content.ReadFromJsonAsync<FailedResult>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token_error"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<FailedResult>(_ct);
 
         token!.Error.ShouldNotBeNull();
     }
@@ -33,8 +32,8 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     public async Task Anonymous_user_should_return_client_token()
     {
         await InitializeAsync();
-        var response = await AppHost.BrowserClient!.GetAsync(AppHost.Url("/client_token"));
-        var token = await response.Content.ReadFromJsonAsync<ClientCredentialsTokenModel>();
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/client_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<ClientCredentialsTokenModel>(_ct);
 
         token!.AccessToken.ShouldNotBeNull();
         token.AccessTokenType.ShouldNotBeNull().ShouldBe("Bearer");
@@ -79,13 +78,13 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         await AppHost.LoginAsync("alice");
         // Get a user token. This should trigger a token refresh, which then get's stored and triggers
         // the custom token transform
-        await AppHost.BrowserClient!.GetAsync(AppHost.Url("/user_token"));
+        await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
 
         // Verify that the transform is used.
         transformed.ShouldBeTrue();
 
         // The transformed principal should now be used.
-        var claims = await AppHost.BrowserClient!.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"));
+        var claims = await AppHost.BrowserClient.GetFromJsonAsync<Dictionary<string, string>>(AppHost.Url("/user"), _ct);
         claims![JwtClaimTypes.Name].ShouldBe("transformed");
     }
 
@@ -509,26 +508,16 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         var mockHttp = new MockHttpMessageHandler();
         AppHost.IdentityServerHttpHandler = mockHttp;
         AppHost.ClientSecret = null;
+
+        // Use the scheme-derived client name — ConfigureOpenIdConnectOptions calls
+        // IClientAssertionService.GetClientAssertionAsync with this name during code exchange.
+        var schemeClientName = OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix + "oidc";
         AppHost.OnConfigureServices += services =>
         {
             services.AddSingleton<IClientAssertionService>(
-                new TestClientAssertionService("test", "service_type", "service_value"));
-            services.PostConfigure<OpenIdConnectOptions>("oidc", options =>
-            {
-                options.Events.OnAuthorizationCodeReceived = async context =>
-                {
-                    var clientAssertionService =
-                        context.HttpContext.RequestServices.GetRequiredService<IClientAssertionService>();
-                    var assertion =
-                        await clientAssertionService.GetClientAssertionAsync(
-                            ClientCredentialsClientName.Parse("test")) ??
-                        throw new InvalidOperationException("Client assertion is null");
-
-                    context.TokenEndpointRequest!.ClientAssertionType = assertion.Type;
-                    context.TokenEndpointRequest.ClientAssertion = assertion.Value;
-                };
-            });
+                new TestClientAssertionService(schemeClientName, "service_type", "service_value"));
         };
+
         var expectedRequestFormData = new Dictionary<string, string>
         {
             { OidcConstants.TokenRequest.ClientAssertionType, "service_type" },
@@ -555,6 +544,53 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
 
         token.ShouldNotBeNull();
         token.AccessTokenType.ShouldBe("clientAssertionsWork");
+    }
+
+    [Fact]
+    public async Task Code_exchange_sends_client_assertion_automatically_when_service_registered()
+    {
+        // This test verifies that when IClientAssertionService is registered, the assertion
+        // is automatically sent during OIDC code exchange WITHOUT any manual PostConfigure workaround.
+        // This is the fix for GitHub issue #325
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+        AppHost.ClientSecret = null;
+
+        // Use the scheme-derived client name that ConfigureOpenIdConnectOptions uses internally
+        var schemeClientName = OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix + "oidc";
+        AppHost.OnConfigureServices += services =>
+        {
+            services.AddSingleton<IClientAssertionService>(
+                new TestClientAssertionService(schemeClientName, "service_type", "auto_assertion_value"));
+        };
+
+        var expectedRequestFormData = new Dictionary<string, string>
+        {
+            { OidcConstants.TokenRequest.ClientAssertionType, "service_type" },
+            { OidcConstants.TokenRequest.ClientAssertion, "auto_assertion_value" },
+        };
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "assertionAutoSent",
+            expires_in = 3600,
+            refresh_token = "initial_refresh_token",
+        };
+
+        // The code exchange request should include the client assertion automatically
+        mockHttp.When("/connect/token")
+            .WithFormData(expectedRequestFormData)
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+
+        token.ShouldNotBeNull();
+        token.AccessTokenType.ShouldBe("assertionAutoSent");
     }
 
     [Fact]
@@ -634,5 +670,76 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
         var revocationRequest = IdentityServerHost.CapturedRevocationRequests.First();
         revocationRequest.ShouldContainKey("param_name");
         revocationRequest["param_name"].ShouldBe("param_value");
+    }
+
+    [Fact]
+    public async Task Refresh_token_request_should_use_static_assertion_when_provided()
+    {
+        // When a static Assertion is passed via UserTokenRequestParameters, it should be
+        // sent directly on the refresh request instead of calling IClientAssertionService.
+        // Covers OpenIdConnectUserTokenEndpoint.RefreshAccessTokenAsync line 67-71.
+
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+
+        var staticAssertion = new ClientAssertion
+        {
+            Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+            Value = "static_test_assertion_value"
+        };
+
+        // Code flow response with a short token lifetime to trigger refresh on first use
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "Bearer",
+            expires_in = 10,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        // Refresh response — require the static assertion in the form data
+        var refreshTokenResponse = new
+        {
+            access_token = "refreshed_access_token",
+            token_type = "Bearer",
+            expires_in = 3600,
+            refresh_token = "refreshed_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .WithFormData(OidcConstants.TokenRequest.ClientAssertionType, staticAssertion.Type)
+            .WithFormData(OidcConstants.TokenRequest.ClientAssertion, staticAssertion.Value)
+            .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse));
+
+        // Add a custom endpoint that passes the static Assertion
+        AppHost.OnConfigure += app =>
+        {
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapGet("/refresh_with_static_assertion", async context =>
+                {
+                    var token = await context.GetUserAccessTokenAsync(new UserTokenRequestParameters
+                    {
+                        Assertion = staticAssertion
+                    }).GetToken();
+                    await context.Response.WriteAsJsonAsync(UserTokenModel.BuildFrom(token));
+                });
+            });
+        };
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        // This triggers a refresh because the initial token has a 10s lifetime
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/refresh_with_static_assertion"), _ct);
+        response.EnsureSuccessStatusCode();
+
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+        token.ShouldNotBeNull();
+        token.AccessToken.ShouldBe("refreshed_access_token");
     }
 }

@@ -22,6 +22,7 @@ internal class ConfigureOpenIdConnectOptions(
     IHttpContextAccessor httpContextAccessor,
     IOptions<UserTokenManagementOptions> userAccessTokenManagementOptions,
     IAuthenticationSchemeProvider schemeProvider,
+    IClientAssertionService clientAssertionService,
     ILoggerFactory loggerFactory) : IConfigureNamedOptions<OpenIdConnectOptions>
 {
     private readonly Scheme _configScheme = GetConfigScheme(userAccessTokenManagementOptions.Value, schemeProvider);
@@ -104,9 +105,9 @@ internal class ConfigureOpenIdConnectOptions(
 
     private Func<AuthorizationCodeReceivedContext, Task> CreateCallback(Func<AuthorizationCodeReceivedContext, Task> inner)
     {
-        Task Callback(AuthorizationCodeReceivedContext context)
+        async Task Callback(AuthorizationCodeReceivedContext context)
         {
-            var result = inner.Invoke(context);
+            await inner.Invoke(context);
 
             // get key from storage
             var jwk = context.Properties?.GetProofKey();
@@ -116,7 +117,16 @@ internal class ConfigureOpenIdConnectOptions(
                 context.HttpContext.SetCodeExchangeDPoPKey(jwk.Value);
             }
 
-            return result;
+            // Automatically send client assertion during code exchange if a service is registered
+            var assertion = await clientAssertionService
+                .GetClientAssertionAsync(ClientName, ct: context.HttpContext.RequestAborted)
+                .ConfigureAwait(false);
+
+            if (assertion != null && context.TokenEndpointRequest != null)
+            {
+                context.TokenEndpointRequest.ClientAssertionType = assertion.Type;
+                context.TokenEndpointRequest.ClientAssertion = assertion.Value;
+            }
         }
 
         return Callback;
@@ -124,9 +134,9 @@ internal class ConfigureOpenIdConnectOptions(
 
     private Func<TokenValidatedContext, Task> CreateCallback(Func<TokenValidatedContext, Task> inner)
     {
-        Task Callback(TokenValidatedContext context)
+        async Task Callback(TokenValidatedContext context)
         {
-            var result = inner.Invoke(context);
+            await inner.Invoke(context);
 
             // TODO: we don't have a good approach for this right now, since the IUserTokenStore
             // just assumes that the session management has been populated with all the token values
@@ -139,8 +149,6 @@ internal class ConfigureOpenIdConnectOptions(
             //    // and defer to the host and/or IUserTokenStore implementation to decide where the key is kept
             //    //context.Properties!.RemoveProofKey();
             //}
-
-            return result;
         }
 
         return Callback;

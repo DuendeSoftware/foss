@@ -120,6 +120,24 @@ internal class OpenIdConnectUserTokenEndpoint(
 
             request.DPoPProofToken = proof;
 
+            // Regenerate the client assertion to ensure a fresh jti on retry.
+            // Only apply when using the service-based assertion path (not the static Assertion parameter).
+            if (parameters.Assertion == null)
+            {
+                var freshAssertion = await clientAssertionService
+                    .GetClientAssertionAsync(
+                        clientName: oidc.Scheme.ToClientName(),
+                        parameters,
+                        ct)
+                    .ConfigureAwait(false);
+
+                if (freshAssertion != null)
+                {
+                    request.ClientAssertion = freshAssertion;
+                    request.ClientCredentialStyle = ClientCredentialStyle.PostBody;
+                }
+            }
+
             if (request.DPoPProofToken != null)
             {
                 metrics.DPoPNonceErrorRetry(ClientId.Parse(request.ClientId), response.Error);

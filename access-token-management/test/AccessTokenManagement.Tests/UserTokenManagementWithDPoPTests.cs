@@ -7,6 +7,8 @@ using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Framework;
 using Duende.IdentityModel;
+using Duende.IdentityModel.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using RichardSzalay.MockHttp;
 
@@ -112,5 +114,204 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
         token.ShouldNotBeNull();
         token.AccessTokenType.ShouldBe("DPoP");
         mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task dpop_nonce_retry_should_use_fresh_client_assertion_on_refresh()
+    {
+        var mockHttp = new MockHttpMessageHandler(BackendDefinitionBehavior.Always);
+        AppHost.IdentityServerHttpHandler = mockHttp;
+        AppHost.ClientSecret = null;
+
+        // Register a counting client assertion service that returns unique values each call
+        var callCount = 0;
+        var capturedAssertions = new List<string>();
+        AppHost.OnConfigureServices += services =>
+        {
+            services.AddSingleton<IClientAssertionService>(
+                new CountingClientAssertionService(
+                    () => $"assertion_{Interlocked.Increment(ref callCount)}"));
+        };
+
+        // Initial login request - code exchange succeeds
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "dpop"),
+            access_token = "initial_access_token",
+            expires_in = 10,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        // First refresh token request - returns DPoP nonce error
+        var nonceResponse = new
+        {
+            error = "use_dpop_nonce",
+            error_description = "Invalid 'nonce' value.",
+        };
+        var nonce = "server-provided-nonce";
+        mockHttp.Expect("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .With(request =>
+            {
+                var content = request.Content!.ReadAsStringAsync().Result;
+                var pairs = System.Web.HttpUtility.ParseQueryString(content);
+                var assertion = pairs["client_assertion"];
+                if (assertion != null)
+                {
+                    capturedAssertions.Add(assertion);
+                }
+
+                return true;
+            })
+            .Respond(HttpStatusCode.BadRequest, headers: new Dictionary<string, string>
+            {
+                { OidcConstants.HttpHeaders.DPoPNonce, nonce }
+            },
+            "application/json", JsonSerializer.Serialize(nonceResponse));
+
+        // Second refresh request (retry with nonce) - succeeds
+        var tokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "dpop"),
+            access_token = "access_token",
+            token_type = "DPoP",
+            expires_in = 3600,
+            refresh_token = "refresh_token",
+        };
+        mockHttp.Expect("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .With(request =>
+            {
+                var content = request.Content!.ReadAsStringAsync().Result;
+                var pairs = System.Web.HttpUtility.ParseQueryString(content);
+                var assertion = pairs["client_assertion"];
+                if (assertion != null)
+                {
+                    capturedAssertions.Add(assertion);
+                }
+
+                // Also verify the nonce is in the DPoP proof
+                var dpopProof = request.Headers.GetValues("DPoP").SingleOrDefault();
+                var payload = dpopProof?.Split('.')[1];
+                var decodedPayload = Base64UrlEncoder.Decode(payload);
+                return decodedPayload.Contains($"\"nonce\":\"{nonce}\"");
+            })
+            .Respond("application/json", JsonSerializer.Serialize(tokenResponse));
+
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        // This API call triggers a refresh (token expires in 10s, within RefreshBeforeExpiration window)
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+        token.ShouldNotBeNull();
+        token.AccessTokenType.ShouldBe("DPoP");
+        mockHttp.VerifyNoOutstandingExpectation();
+
+        capturedAssertions.Count.ShouldBe(2, "Expected two refresh token requests (initial + nonce retry)");
+        capturedAssertions[0].ShouldNotBe(capturedAssertions[1],
+            "Client assertion must be regenerated on DPoP nonce retry, not reused");
+    }
+
+    [Fact]
+    public async Task dpop_nonce_retry_during_code_exchange_should_use_fresh_client_assertion()
+    {
+        var mockHttp = new MockHttpMessageHandler(BackendDefinitionBehavior.Always);
+        AppHost.IdentityServerHttpHandler = mockHttp;
+        AppHost.ClientSecret = null;
+
+        // Register a counting assertion service — returns a unique value each call
+        var callCount = 0;
+        var capturedAssertions = new List<string>();
+        AppHost.OnConfigureServices += services =>
+        {
+            services.AddSingleton<IClientAssertionService>(
+                new CountingClientAssertionService(
+                    () => $"code_assertion_{Interlocked.Increment(ref callCount)}"));
+        };
+
+        // First code-exchange request — DPoP nonce error (AuthorizationServerDPoPHandler retries internally)
+        var nonceResponse = new
+        {
+            error = "use_dpop_nonce",
+            error_description = "Invalid 'nonce' value.",
+        };
+        var nonce = "server-code-nonce";
+        mockHttp.Expect("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .With(request =>
+            {
+                var content = request.Content!.ReadAsStringAsync().Result;
+                var pairs = System.Web.HttpUtility.ParseQueryString(content);
+                var assertion = pairs["client_assertion"];
+                if (assertion != null)
+                {
+                    capturedAssertions.Add(assertion);
+                }
+
+                return true;
+            })
+            .Respond(HttpStatusCode.BadRequest, headers: new Dictionary<string, string>
+            {
+                { OidcConstants.HttpHeaders.DPoPNonce, nonce }
+            },
+            "application/json", JsonSerializer.Serialize(nonceResponse));
+
+        // Second code-exchange request (nonce retry) — succeeds
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "dpop"),
+            access_token = "initial_access_token",
+            token_type = "DPoP",
+            expires_in = 3600,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.Expect("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .With(request =>
+            {
+                var content = request.Content!.ReadAsStringAsync().Result;
+                var pairs = System.Web.HttpUtility.ParseQueryString(content);
+                var assertion = pairs["client_assertion"];
+                if (assertion != null)
+                {
+                    capturedAssertions.Add(assertion);
+                }
+
+                // Verify the nonce is present in the DPoP proof
+                var dpopProof = request.Headers.GetValues("DPoP").SingleOrDefault();
+                var payload = dpopProof?.Split('.')[1];
+                var decodedPayload = Base64UrlEncoder.Decode(payload);
+                return decodedPayload.Contains($"\"nonce\":\"{nonce}\"");
+            })
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        mockHttp.VerifyNoOutstandingExpectation();
+
+        capturedAssertions.Count.ShouldBe(2,
+            "Expected two code-exchange requests (initial attempt + nonce retry)");
+        capturedAssertions[0].ShouldNotBe(capturedAssertions[1],
+            "Client assertion must be regenerated on DPoP nonce retry during code exchange");
+    }
+
+    // A client assertion service that returns a new assertion value on each call.
+    // Matches any client name (for integration tests where scheme-derived names vary).
+    private class CountingClientAssertionService(Func<string> valueFactory) : IClientAssertionService
+    {
+        public Task<ClientAssertion?> GetClientAssertionAsync(
+            ClientCredentialsClientName? clientName = null,
+            TokenRequestParameters? parameters = null,
+            CancellationToken ct = default) => Task.FromResult<ClientAssertion?>(new ClientAssertion
+            {
+                Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+                Value = valueFactory()
+            });
     }
 }
