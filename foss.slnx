@@ -50,6 +50,7 @@
     <File Path="identity-model/README.md" />
   </Folder>
   <Folder Name="/identity-model/samples/">
+    <Project Path="identity-model/samples/ClientAssertions/ClientAssertions.csproj" />
     <Project Path="identity-model/samples/HttpClientFactory/HttpClientFactory.csproj" />
   </Folder>
   <Folder Name="/identity-model/src/">

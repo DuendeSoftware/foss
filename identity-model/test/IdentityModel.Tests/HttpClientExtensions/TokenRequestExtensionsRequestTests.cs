@@ -716,4 +716,131 @@ public class TokenRequestExtensionsRequestTests
         fields["client_assertion_type"].First().ShouldBe("type");
         fields["client_assertion"].First().ShouldBe("value");
     }
+
+    [Fact]
+    public async Task ClientAssertionFactoryShouldBeInvokedAndResultSentInBody()
+    {
+        var factoryCallCount = 0;
+
+        var response = await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+        {
+            ClientId = "client",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            Scope = "scope",
+            ClientAssertionFactory = () =>
+            {
+                factoryCallCount++;
+                return Task.FromResult(new ClientAssertion
+                {
+                    Type = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                    Value = "fresh-jwt-value"
+                });
+            }
+        }, _ct);
+
+        factoryCallCount.ShouldBe(1);
+
+        var fields = QueryHelpers.ParseQuery(_handler.Body);
+        fields["client_assertion_type"].First().ShouldBe("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        fields["client_assertion"].First().ShouldBe("fresh-jwt-value");
+    }
+
+    [Fact]
+    public async Task ClientAssertionFactoryShouldBeStoredOnRequestOptions()
+    {
+        Func<Task<ClientAssertion>> factory = () => Task.FromResult(new ClientAssertion
+        {
+            Type = "type",
+            Value = "value"
+        });
+
+        await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+        {
+            ClientId = "client",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = factory
+        }, _ct);
+
+        _handler.Request.Options
+            .TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out var storedFactory)
+            .ShouldBeTrue();
+        storedFactory.ShouldBe(factory);
+    }
+
+    [Fact]
+    public async Task ClientAssertionFactoryShouldTakePrecedenceOverFixedAssertion()
+    {
+        await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+        {
+            ClientId = "client",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertion = { Type = "fixed-type", Value = "fixed-value" },
+            ClientAssertionFactory = () => Task.FromResult(new ClientAssertion
+            {
+                Type = "factory-type",
+                Value = "factory-value"
+            })
+        }, _ct);
+
+        var fields = QueryHelpers.ParseQuery(_handler.Body);
+        fields["client_assertion_type"].First().ShouldBe("factory-type");
+        fields["client_assertion"].First().ShouldBe("factory-value");
+    }
+
+    [Fact]
+    public async Task NullClientAssertionFactoryShouldNotAffectFixedAssertion()
+    {
+        await _client.RequestTokenAsync(new TokenRequest
+        {
+            GrantType = "test",
+            ClientId = "client",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertion = { Type = "fixed-type", Value = "fixed-value" },
+            ClientAssertionFactory = null
+        }, _ct);
+
+        var fields = QueryHelpers.ParseQuery(_handler.Body);
+        fields["client_assertion_type"].First().ShouldBe("fixed-type");
+        fields["client_assertion"].First().ShouldBe("fixed-value");
+
+        _handler.Request.Options
+            .TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out _)
+            .ShouldBeFalse();
+    }
+
+    [Fact]
+    public void CloneShouldCopyClientAssertionFactory()
+    {
+        Func<Task<ClientAssertion>> factory = () => Task.FromResult(new ClientAssertion
+        {
+            Type = "type",
+            Value = "value"
+        });
+
+        var original = new TokenRequest
+        {
+            GrantType = "test",
+            ClientId = "client",
+            ClientAssertionFactory = factory
+        };
+
+        var clone = original.Clone<TokenRequest>();
+
+        clone.ClientAssertionFactory.ShouldBe(factory);
+    }
+
+    [Fact]
+    public void CloneShouldCopyNullClientAssertionFactory()
+    {
+        var original = new TokenRequest
+        {
+            GrantType = "test",
+            ClientId = "client",
+            ClientAssertionFactory = null
+        };
+
+        var clone = original.Clone<TokenRequest>();
+
+        clone.ClientAssertionFactory.ShouldBeNull();
+    }
 }

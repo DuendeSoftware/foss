@@ -213,6 +213,15 @@ public static class HttpClientTokenRequestExtensions
 
     internal static async Task<TokenResponse> RequestTokenAsync(this HttpMessageInvoker client, ProtocolRequest request, CancellationToken cancellationToken = default)
     {
+        // If a factory is set, invoke it to get a fresh assertion for this attempt and
+        // store it on Options so that DPoP retry handlers can invoke it again on each
+        // subsequent attempt. The factory always takes precedence over a fixed ClientAssertion value.
+        if (request.ClientAssertionFactory != null)
+        {
+            request.ClientAssertion = await request.ClientAssertionFactory().ConfigureAwait();
+            request.Options.Set(ProtocolRequestOptions.ClientAssertionFactory, request.ClientAssertionFactory);
+        }
+
         request.Prepare();
         request.Method = HttpMethod.Post;
 

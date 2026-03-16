@@ -7,6 +7,21 @@ using Duende.IdentityModel.Internal;
 namespace Duende.IdentityModel.Client;
 
 /// <summary>
+/// Well-known <see cref="HttpRequestOptionsKey{TValue}"/> keys used by Duende IdentityModel
+/// when passing data through handler chains.
+/// </summary>
+public static class ProtocolRequestOptions
+{
+    /// <summary>
+    /// The key used to store a <see cref="ProtocolRequest.ClientAssertionFactory"/> on
+    /// <see cref="HttpRequestMessage.Options"/>.  DPoP retry handlers read this key to obtain
+    /// a fresh <see cref="ClientAssertion"/> for each attempt.
+    /// </summary>
+    public static readonly HttpRequestOptionsKey<Func<Task<ClientAssertion>>?> ClientAssertionFactory =
+        new HttpRequestOptionsKey<Func<Task<ClientAssertion>>?>("Duende.IdentityModel.ClientAssertionFactory");
+}
+
+/// <summary>
 /// Models a base OAuth/OIDC request with client credentials
 /// </summary>
 public class ProtocolRequest : HttpRequestMessage
@@ -74,6 +89,14 @@ public class ProtocolRequest : HttpRequestMessage
     public string? DPoPProofToken { get; set; }
 
     /// <summary>
+    /// Gets or sets a factory function that creates a fresh <see cref="ClientAssertion"/> on demand.
+    /// When set, this factory is stored on <see cref="HttpRequestMessage.Options"/> so that DPoP retry
+    /// handlers can invoke it to obtain a new assertion (with a fresh <c>jti</c> and <c>iat</c>) on
+    /// each attempt, avoiding client-assertion replay rejected by servers that enforce uniqueness.
+    /// </summary>
+    public Func<Task<ClientAssertion>>? ClientAssertionFactory { get; set; }
+
+    /// <summary>
     /// Gets or sets additional protocol parameters.
     /// </summary>
     /// <value>
@@ -101,6 +124,7 @@ public class ProtocolRequest : HttpRequestMessage
             Address = Address,
             AuthorizationHeaderStyle = AuthorizationHeaderStyle,
             ClientAssertion = ClientAssertion,
+            ClientAssertionFactory = ClientAssertionFactory,
             ClientCredentialStyle = ClientCredentialStyle,
             ClientId = ClientId,
             ClientSecret = ClientSecret,

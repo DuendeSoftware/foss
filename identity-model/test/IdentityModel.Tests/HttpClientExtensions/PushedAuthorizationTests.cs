@@ -211,4 +211,65 @@ public class PushedAuthorizationTests
         var exception = await act.ShouldThrowAsync<ArgumentException>();
         exception.ParamName.ShouldBe("request_uri");
     }
+
+    [Fact]
+    public async Task ClientAssertionFactoryShouldBeInvokedAndResultSentInBody()
+    {
+        var document = File.ReadAllText(FileName.Create("success_par_response.json"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        var client = new HttpClient(handler);
+
+        var factoryCallCount = 0;
+
+        var response = await client.PushAuthorizationAsync(new PushedAuthorizationRequest
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ResponseType = "code",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = () =>
+            {
+                factoryCallCount++;
+                return Task.FromResult(new ClientAssertion
+                {
+                    Type = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                    Value = "fresh-jwt-value"
+                });
+            }
+        }, _ct);
+
+        factoryCallCount.ShouldBe(1);
+
+        var fields = QueryHelpers.ParseQuery(handler.Body);
+        fields["client_assertion_type"].First().ShouldBe("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        fields["client_assertion"].First().ShouldBe("fresh-jwt-value");
+    }
+
+    [Fact]
+    public async Task ClientAssertionFactoryShouldBeStoredOnRequestOptions()
+    {
+        var document = File.ReadAllText(FileName.Create("success_par_response.json"));
+        var handler = new NetworkHandler(document, HttpStatusCode.OK);
+        var client = new HttpClient(handler);
+
+        Func<Task<ClientAssertion>> factory = () => Task.FromResult(new ClientAssertion
+        {
+            Type = "type",
+            Value = "value"
+        });
+
+        await client.PushAuthorizationAsync(new PushedAuthorizationRequest
+        {
+            Address = Endpoint,
+            ClientId = "client",
+            ResponseType = "code",
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            ClientAssertionFactory = factory
+        }, _ct);
+
+        handler.Request.Options
+            .TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out var storedFactory)
+            .ShouldBeTrue();
+        storedFactory.ShouldBe(factory);
+    }
 }
