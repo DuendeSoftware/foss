@@ -6,6 +6,7 @@ using Duende.IdentityModel.Internal;
 
 namespace Duende.IdentityModel.Client;
 
+#if NET5_0_OR_GREATER
 /// <summary>
 /// Well-known <see cref="HttpRequestOptionsKey{TValue}"/> keys used by Duende IdentityModel
 /// when passing data through handler chains.
@@ -20,6 +21,7 @@ public static class ProtocolRequestOptions
     public static readonly HttpRequestOptionsKey<Func<Task<ClientAssertion>>?> ClientAssertionFactory =
         new HttpRequestOptionsKey<Func<Task<ClientAssertion>>?>("Duende.IdentityModel.ClientAssertionFactory");
 }
+#endif
 
 /// <summary>
 /// Models a base OAuth/OIDC request with client credentials
@@ -90,7 +92,7 @@ public class ProtocolRequest : HttpRequestMessage
 
     /// <summary>
     /// Gets or sets a factory function that creates a fresh <see cref="ClientAssertion"/> on demand.
-    /// When set, this factory is stored on <see cref="HttpRequestMessage.Options"/> so that DPoP retry
+    /// When set, this factory is stored on the <see cref="HttpRequestMessage"/> options so that DPoP retry
     /// handlers can invoke it to obtain a new assertion (with a fresh <c>jti</c> and <c>iat</c>) on
     /// each attempt, avoiding client-assertion replay rejected by servers that enforce uniqueness.
     /// </summary>

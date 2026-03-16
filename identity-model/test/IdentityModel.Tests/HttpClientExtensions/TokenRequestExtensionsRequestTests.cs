@@ -736,7 +736,7 @@ public class TokenRequestExtensionsRequestTests
                     Value = "fresh-jwt-value"
                 });
             }
-        }, _ct);
+        });
 
         factoryCallCount.ShouldBe(1);
 
@@ -759,7 +759,7 @@ public class TokenRequestExtensionsRequestTests
             ClientId = "client",
             ClientCredentialStyle = ClientCredentialStyle.PostBody,
             ClientAssertionFactory = factory
-        }, _ct);
+        });
 
         _handler.Request.Options
             .TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out var storedFactory)
@@ -780,7 +780,7 @@ public class TokenRequestExtensionsRequestTests
                 Type = "factory-type",
                 Value = "factory-value"
             })
-        }, _ct);
+        });
 
         var fields = QueryHelpers.ParseQuery(_handler.Body);
         fields["client_assertion_type"].First().ShouldBe("factory-type");
@@ -797,7 +797,7 @@ public class TokenRequestExtensionsRequestTests
             ClientCredentialStyle = ClientCredentialStyle.PostBody,
             ClientAssertion = { Type = "fixed-type", Value = "fixed-value" },
             ClientAssertionFactory = null
-        }, _ct);
+        });
 
         var fields = QueryHelpers.ParseQuery(_handler.Body);
         fields["client_assertion_type"].First().ShouldBe("fixed-type");

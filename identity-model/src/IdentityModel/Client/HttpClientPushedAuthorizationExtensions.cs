@@ -72,7 +72,9 @@ public static class HttpClientPushedAuthorizationExtensions
         if (request.ClientAssertionFactory != null)
         {
             request.ClientAssertion = await request.ClientAssertionFactory().ConfigureAwait();
+#if NET5_0_OR_GREATER
             request.Options.Set(ProtocolRequestOptions.ClientAssertionFactory, request.ClientAssertionFactory);
+#endif
         }
 
         request.Prepare();

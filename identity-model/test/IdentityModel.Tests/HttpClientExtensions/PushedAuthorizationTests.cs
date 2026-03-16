@@ -236,7 +236,7 @@ public class PushedAuthorizationTests
                     Value = "fresh-jwt-value"
                 });
             }
-        }, _ct);
+        });
 
         factoryCallCount.ShouldBe(1);
 
@@ -265,7 +265,7 @@ public class PushedAuthorizationTests
             ResponseType = "code",
             ClientCredentialStyle = ClientCredentialStyle.PostBody,
             ClientAssertionFactory = factory
-        }, _ct);
+        });
 
         handler.Request.Options
             .TryGetValue(ProtocolRequestOptions.ClientAssertionFactory, out var storedFactory)
