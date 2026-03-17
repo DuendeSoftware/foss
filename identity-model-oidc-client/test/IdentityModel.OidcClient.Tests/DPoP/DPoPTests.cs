@@ -202,7 +202,7 @@ public class DPoPTest : IntegrationTestBase
         };
         requestMessage.Options.Set(ProtocolRequestOptions.ClientAssertionFactory, factory);
 
-        await client.SendAsync(requestMessage, _ct);
+        await client.SendAsync(requestMessage, CancellationToken.None);
 
         callCount.ShouldBe(2, "Expected initial request + nonce retry");
         capturedAssertions.Count.ShouldBe(2);
@@ -265,7 +265,7 @@ public class DPoPTest : IntegrationTestBase
             })
         };
 
-        await client.SendAsync(requestMessage, _ct);
+        await client.SendAsync(requestMessage, CancellationToken.None);
 
         // Both requests should carry the same (unchanged) assertion — backward compatible
         callCount.ShouldBe(2, "Expected initial request + nonce retry");

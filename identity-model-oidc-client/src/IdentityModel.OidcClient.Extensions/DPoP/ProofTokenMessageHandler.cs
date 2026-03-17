@@ -86,6 +86,7 @@ public class ProofTokenMessageHandler : DelegatingHandler
         request.SetDPoPProofToken(proof.ProofToken);
     }
 
+#if NET5_0_OR_GREATER
     /// <summary>
     /// Reads the <see cref="ProtocolRequestOptions.ClientAssertionFactory"/> from
     /// <see cref="HttpRequestMessage.Options"/> and, if present, invokes it to obtain a
@@ -147,4 +148,16 @@ public class ProofTokenMessageHandler : DelegatingHandler
             System.Text.Encoding.UTF8,
             "application/x-www-form-urlencoded");
     }
+
+#else
+    /// <summary>
+    /// In .NET Standard 2.0, we don't have access to HttpRequestMessage.Options, so this method is a no-op.
+    /// </summary>
+    private async Task RefreshClientAssertionAsync(HttpRequestMessage request)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+#endif
+
 }
