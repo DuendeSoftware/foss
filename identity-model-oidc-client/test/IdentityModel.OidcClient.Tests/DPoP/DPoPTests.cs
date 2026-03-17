@@ -16,6 +16,7 @@ namespace Duende.IdentityModel.OidcClient.DPoP;
 
 public class DPoPTest : IntegrationTestBase
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private static readonly string _jwkJson;
     private readonly IDPoPProofTokenFactory _proofTokenFactory;
     private readonly IdentityServer.Models.Client _client;

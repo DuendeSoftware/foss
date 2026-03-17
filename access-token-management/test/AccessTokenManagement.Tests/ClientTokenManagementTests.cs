@@ -16,6 +16,7 @@ namespace Duende.AccessTokenManagement;
 
 public class ClientTokenManagementTests
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     private readonly ServiceCollection _services = [];
     private readonly MockHttpMessageHandler _mockHttp = new();
 

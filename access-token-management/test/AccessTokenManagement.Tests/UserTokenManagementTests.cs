@@ -18,6 +18,7 @@ namespace Duende.AccessTokenManagement;
 
 public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTestBase(output)
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
     [Fact]
     public async Task Anonymous_user_should_return_user_token_error()
     {

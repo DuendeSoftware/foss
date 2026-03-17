@@ -2,9 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Security.Claims;
-using Duende.AccessTokenManagement.OTel;
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Duende.AccessTokenManagement.OpenIdConnect.Internal;
+using Duende.AccessTokenManagement.OTel;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 

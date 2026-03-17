@@ -1,5 +1,6 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
+#if NET9_0_OR_GREATER
 
 using System.Net.Http.Json;
 using Duende.AccessTokenManagement.DPoP;
@@ -12,7 +13,6 @@ using JsonWebKey = Microsoft.IdentityModel.Tokens.JsonWebKey;
 
 namespace Duende.AccessTokenManagement;
 
-#if NET9_0_OR_GREATER
 /// <summary>
 /// Tests that client assertions are sent on Pushed Authorization Requests (PAR).
 /// </summary>

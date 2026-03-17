@@ -1,6 +1,6 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
-
+#pragma warning disable IDE0005 // Using directive is unnecessary. Remove unnecessary usings.
 using System.Web;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Logging;
@@ -86,7 +86,7 @@ public class ProofTokenMessageHandler : DelegatingHandler
         request.SetDPoPProofToken(proof.ProofToken);
     }
 
-    #if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER
     /// <summary>
     /// Reads the <see cref="ProtocolRequestOptions.ClientAssertionFactory"/> from
     /// <see cref="HttpRequestMessage.Options"/> and, if present, invokes it to obtain a
@@ -149,10 +149,7 @@ public class ProofTokenMessageHandler : DelegatingHandler
             "application/x-www-form-urlencoded");
     }
 #else
-    private Task RefreshClientAssertionAsync(HttpRequestMessage request)
-    {
-        return Task.CompletedTask;
-    }
+    private Task RefreshClientAssertionAsync(HttpRequestMessage request) => Task.CompletedTask;
 #endif
 
 }
