@@ -61,7 +61,7 @@ internal class ConfigureOpenIdConnectOptions(
             options.Events.OnTokenValidated = CreateCallback(options.Events.OnTokenValidated);
             options.Events.OnPushAuthorization = CreateCallback(options.Events.OnPushAuthorization);
 
-            options.BackchannelHttpHandler = new AuthorizationServerDPoPHandler(dPoPProofService, dPoPNonceStore, httpContextAccessor, loggerFactory)
+            options.BackchannelHttpHandler = new AuthorizationServerDPoPHandler(dPoPProofService, dPoPNonceStore, httpContextAccessor, ClientName, loggerFactory)
             {
                 InnerHandler = options.BackchannelHttpHandler ?? new HttpClientHandler()
             };

@@ -37,6 +37,7 @@ internal class AuthorizationServerDPoPHandler(
     IDPoPProofService dPoPProofService,
     IDPoPNonceStore dPoPNonceStore,
     IHttpContextAccessor httpContextAccessor,
+    ClientCredentialsClientName clientName,
     ILoggerFactory loggerFactory) : DelegatingHandler
 {
     // We depend on the logger factory, rather than the logger itself, since
@@ -90,7 +91,7 @@ internal class AuthorizationServerDPoPHandler(
                 _logger.DPoPErrorDuringTokenRefreshWillRetryWithServerNonce(LogLevel.Debug, response.GetDPoPError());
                 response.Dispose();
                 await SetDPoPProofTokenForCodeExchangeAsync(request, dPoPNonce, codeExchangeJwk).ConfigureAwait(false);
-                await RefreshClientAssertionAsync(request).ConfigureAwait(false);
+                await RefreshClientAssertionAsync(request, ct).ConfigureAwait(false);
                 return await base.SendAsync(request, ct).ConfigureAwait(false);
             }
         }
@@ -141,7 +142,7 @@ internal class AuthorizationServerDPoPHandler(
         }
     }
 
-    private async Task RefreshClientAssertionAsync(HttpRequestMessage request)
+    private async Task RefreshClientAssertionAsync(HttpRequestMessage request, CT ct)
     {
         if (request.Content == null)
         {
@@ -163,7 +164,7 @@ internal class AuthorizationServerDPoPHandler(
             return;
         }
 
-        var assertion = await assertionService.GetClientAssertionAsync().ConfigureAwait(false);
+        var assertion = await assertionService.GetClientAssertionAsync(clientName, ct: ct).ConfigureAwait(false);
         if (assertion == null)
         {
             return;

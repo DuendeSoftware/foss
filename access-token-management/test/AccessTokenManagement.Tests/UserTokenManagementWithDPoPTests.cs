@@ -301,6 +301,69 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
             "Client assertion must be regenerated on DPoP nonce retry during code exchange");
     }
 
+    [Fact]
+    public async Task dpop_nonce_retry_during_code_exchange_should_pass_client_name_to_assertion_service()
+    {
+        var mockHttp = new MockHttpMessageHandler(BackendDefinitionBehavior.Always);
+        AppHost.IdentityServerHttpHandler = mockHttp;
+        AppHost.ClientSecret = null;
+
+        // Register an assertion service that captures the clientName on each call
+        var capturedClientNames = new List<ClientCredentialsClientName?>();
+        AppHost.OnConfigureServices += services =>
+        {
+            services.AddSingleton<IClientAssertionService>(
+                new ClientNameCapturingAssertionService(capturedClientNames));
+        };
+
+        // First code-exchange request — DPoP nonce error
+        var nonceResponse = new
+        {
+            error = "use_dpop_nonce",
+            error_description = "Invalid 'nonce' value.",
+        };
+        var nonce = "server-code-nonce";
+        mockHttp.Expect("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond(HttpStatusCode.BadRequest, headers: new Dictionary<string, string>
+            {
+                { OidcConstants.HttpHeaders.DPoPNonce, nonce }
+            },
+            "application/json", JsonSerializer.Serialize(nonceResponse));
+
+        // Second code-exchange request (nonce retry) — succeeds
+        var tokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "dpop"),
+            access_token = "initial_access_token",
+            token_type = "DPoP",
+            expires_in = 3600,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.Expect("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(tokenResponse));
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        mockHttp.VerifyNoOutstandingExpectation();
+
+        // The assertion service should have been called at least twice:
+        // once for the initial code exchange (via ConfigureOpenIdConnectOptions),
+        // and once for the retry (via AuthorizationServerDPoPHandler.RefreshClientAssertionAsync).
+        capturedClientNames.Count.ShouldBeGreaterThanOrEqualTo(2,
+            "Expected at least 2 assertion calls (initial code exchange + nonce retry)");
+
+        // ALL calls should have received the scheme-derived client name, not null
+        var expectedPrefix = OpenIdConnect.OpenIdConnectTokenManagementDefaults.ClientCredentialsClientNamePrefix;
+        foreach (var name in capturedClientNames)
+        {
+            name.ShouldNotBeNull("clientName must not be null — the OIDC scheme name should be forwarded");
+            name.Value.ToString().ShouldStartWith(expectedPrefix);
+        }
+    }
+
     // A client assertion service that returns a new assertion value on each call.
     // Matches any client name (for integration tests where scheme-derived names vary).
     private class CountingClientAssertionService(Func<string> valueFactory) : IClientAssertionService
@@ -313,5 +376,24 @@ public class UserTokenManagementWithDPoPTests(ITestOutputHelper output)
                 Type = OidcConstants.ClientAssertionTypes.JwtBearer,
                 Value = valueFactory()
             });
+    }
+
+    // A client assertion service that captures the clientName parameter on each call.
+    private class ClientNameCapturingAssertionService(List<ClientCredentialsClientName?> capturedNames) : IClientAssertionService
+    {
+        private int _callCount;
+
+        public Task<ClientAssertion?> GetClientAssertionAsync(
+            ClientCredentialsClientName? clientName = null,
+            TokenRequestParameters? parameters = null,
+            CancellationToken ct = default)
+        {
+            capturedNames.Add(clientName);
+            return Task.FromResult<ClientAssertion?>(new ClientAssertion
+            {
+                Type = OidcConstants.ClientAssertionTypes.JwtBearer,
+                Value = $"assertion_{Interlocked.Increment(ref _callCount)}"
+            });
+        }
     }
 }
