@@ -14,7 +14,6 @@ public abstract class IntegrationTestBase : IAsyncDisposable
 {
     public TestData The { get; } = new();
     public TestDataBuilder Some => new(The);
-
     protected readonly IdentityServerHost IdentityServerHost;
     protected readonly ApiHost ApiHost;
     protected readonly AppHost AppHost;

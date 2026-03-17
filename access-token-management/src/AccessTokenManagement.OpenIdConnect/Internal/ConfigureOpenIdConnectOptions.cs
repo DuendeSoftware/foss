@@ -59,8 +59,9 @@ internal class ConfigureOpenIdConnectOptions(
             options.Events.OnRedirectToIdentityProvider = CreateCallback(options.Events.OnRedirectToIdentityProvider);
             options.Events.OnAuthorizationCodeReceived = CreateCallback(options.Events.OnAuthorizationCodeReceived);
             options.Events.OnTokenValidated = CreateCallback(options.Events.OnTokenValidated);
+#if NET9_0_OR_GREATER
             options.Events.OnPushAuthorization = CreateCallback(options.Events.OnPushAuthorization);
-
+#endif
             options.BackchannelHttpHandler = new AuthorizationServerDPoPHandler(dPoPProofService, dPoPNonceStore, httpContextAccessor, ClientName, loggerFactory)
             {
                 InnerHandler = options.BackchannelHttpHandler ?? new HttpClientHandler()
@@ -155,6 +156,7 @@ internal class ConfigureOpenIdConnectOptions(
         return Callback;
     }
 
+#if NET9_0_OR_GREATER
     private Func<PushedAuthorizationContext, Task> CreateCallback(Func<PushedAuthorizationContext, Task> inner)
     {
         async Task Callback(PushedAuthorizationContext context)
@@ -176,4 +178,5 @@ internal class ConfigureOpenIdConnectOptions(
 
         return Callback;
     }
+#endif
 }

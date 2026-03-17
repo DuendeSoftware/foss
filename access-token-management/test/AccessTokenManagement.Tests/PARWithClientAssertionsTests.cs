@@ -12,6 +12,7 @@ using JsonWebKey = Microsoft.IdentityModel.Tokens.JsonWebKey;
 
 namespace Duende.AccessTokenManagement;
 
+#if NET9_0_OR_GREATER
 /// <summary>
 /// Tests that client assertions are sent on Pushed Authorization Requests (PAR).
 /// </summary>
@@ -173,3 +174,5 @@ public sealed class PARWithDPoPAndClientAssertionsTests : IntegrationTestBase
         }
         """;
 }
+
+#endif

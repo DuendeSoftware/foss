@@ -12,8 +12,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using RichardSzalay.MockHttp;
+#if NET9_0_OR_GREATER
 using PushedAuthorizationBehavior = Microsoft.AspNetCore.Authentication.OpenIdConnect.PushedAuthorizationBehavior;
-
+#endif
 namespace Duende.AccessTokenManagement.Framework;
 
 public class AppHost : GenericHost
@@ -21,8 +22,9 @@ public class AppHost : GenericHost
     public string ClientId;
     public string? ClientSecret;
     public SigningCredentials? ClientAssertionSigningCredentials { get; set; }
+#if NET9_0_OR_GREATER
     public PushedAuthorizationBehavior PushedAuthorizationBehavior { get; set; } = PushedAuthorizationBehavior.Disable;
-
+#endif
     private readonly IdentityServerHost _identityServerHost;
     private readonly ApiHost _apiHost;
     private readonly Action<UserTokenManagementOptions>? _configureUserTokenManagementOptions;
@@ -108,7 +110,9 @@ public class AppHost : GenericHost
                 }
 
                 options.ProtocolValidator.RequireNonce = false;
+#if NET9_0_OR_GREATER
                 options.PushedAuthorizationBehavior = PushedAuthorizationBehavior;
+#endif
             });
 
         if (ClientAssertionSigningCredentials is { } assertionCredentials)

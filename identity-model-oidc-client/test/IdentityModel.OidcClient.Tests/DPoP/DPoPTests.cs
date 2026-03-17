@@ -16,7 +16,6 @@ namespace Duende.IdentityModel.OidcClient.DPoP;
 
 public class DPoPTest : IntegrationTestBase
 {
-
     private static readonly string _jwkJson;
     private readonly IDPoPProofTokenFactory _proofTokenFactory;
     private readonly IdentityServer.Models.Client _client;
