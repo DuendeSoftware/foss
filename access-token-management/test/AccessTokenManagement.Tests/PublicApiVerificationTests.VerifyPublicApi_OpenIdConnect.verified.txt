@@ -118,6 +118,7 @@
         public Duende.AccessTokenManagement.Scope? ClientCredentialsScope { get; set; }
         public Duende.AccessTokenManagement.DPoP.DPoPProofKey? DPoPJsonWebKey { get; set; }
         public System.TimeSpan RefreshBeforeExpiration { get; set; }
+        public int TokenMaxLength { get; set; }
         public bool UseChallengeSchemeScopedTokens { get; set; }
     }
     public sealed class UserTokenRequestParameters : Duende.AccessTokenManagement.TokenRequestParameters, System.IEquatable<Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters>

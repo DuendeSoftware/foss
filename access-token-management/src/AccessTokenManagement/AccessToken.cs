@@ -13,14 +13,23 @@ namespace Duende.AccessTokenManagement;
 [JsonConverter(typeof(StringValueJsonConverter<AccessToken>))]
 public readonly record struct AccessToken : IStronglyTypedValue<AccessToken>
 {
+    private const int Kilobyte = 1024;
+
     public override string ToString() => Value;
 
-    // Officially, there's no max length for JWTs, but 32k is a good limit
-    public const int MaxLength = 32 * 1024; // 32k
+    // Officially, there's no max length for JWTs, but keep construction bounded.
+    // Runtime read boundaries apply the configurable limit.
+    public const int MaxLength = 100 * Kilobyte;
 
     private static readonly ValidationRule<string>[] Validators = [
         ValidationRules.MaxLength(MaxLength)
     ];
+
+    private static ValidationRule<string>[] BuildValidators(int maxLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+        return [ValidationRules.MaxLength(maxLength)];
+    }
 
     /// <summary>
     /// Convenience method for converting a <see cref="AccessToken"/> into a string.
@@ -44,10 +53,30 @@ public readonly record struct AccessToken : IStronglyTypedValue<AccessToken>
     public static bool TryParse(string value, [NotNullWhen(true)] out AccessToken? parsed, out string[] errors) =>
         IStronglyTypedValue<AccessToken>.TryBuildValidatedObject(value, Validators, out parsed, out errors);
 
+    /// <summary>
+    /// Parses a value to a <see cref="AccessToken"/> using the supplied maximum length.
+    /// </summary>
+    public static bool TryParse(string value, int maxLength, [NotNullWhen(true)] out AccessToken? parsed, out string[] errors) =>
+        IStronglyTypedValue<AccessToken>.TryBuildValidatedObject(value, BuildValidators(maxLength), out parsed, out errors);
+
     static AccessToken IStronglyTypedValue<AccessToken>.Create(string result) => new(result);
 
     /// <summary>
     /// Parses a value to a <see cref="AccessToken"/>. This will throw an exception if the string is not valid.
     /// </summary>
     public static AccessToken Parse(string value) => StringParsers<AccessToken>.Parse(value);
+
+    /// <summary>
+    /// Parses a value to a <see cref="AccessToken"/> using the supplied maximum length.
+    /// </summary>
+    public static AccessToken Parse(string value, int maxLength)
+    {
+        if (TryParse(value, maxLength, out var parsed, out var errors))
+        {
+            return parsed.Value;
+        }
+
+        throw new InvalidOperationException(
+            $"Received an invalid {nameof(AccessToken)}. Errors: {string.Join("", errors.Select(x => $"{Environment.NewLine}\t - {x}"))}");
+    }
 }

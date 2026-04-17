@@ -231,6 +231,47 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     }
 
     [Fact]
+    public async Task Refresh_token_response_should_use_configured_token_max_length()
+    {
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "tokentype",
+            expires_in = 10,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        var refreshTokenResponse = new
+        {
+            access_token = new string('a', 9),
+            token_type = "tokentype1",
+            expires_in = 3600,
+            refresh_token = "refreshed_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .WithFormData("refresh_token", "initial_refresh_token")
+            .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse));
+
+        AppHost.OnConfigureServices += services => services.Configure<UserTokenManagementOptions>(options => options.TokenMaxLength = 8);
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        var action = async () => await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+
+        (await Should.ThrowAsync<InvalidOperationException>(action))
+            .Message.ShouldContain("The string exceeds maximum length 8.");
+    }
+
+    [Fact]
     public async Task Short_token_lifetime_should_trigger_refresh()
     {
         // This test makes an initial token request using code flow and then

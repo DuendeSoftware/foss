@@ -12,6 +12,13 @@ namespace Duende.AccessTokenManagement.OpenIdConnect;
 /// </summary>
 public sealed class UserTokenManagementOptions
 {
+    private const int Kilobyte = 1024;
+
+    /// <summary>
+    /// Maximum allowed token length when reading tokens from token responses or authentication state.
+    /// </summary>
+    public int TokenMaxLength { get; set; } = 4 * Kilobyte;
+
     /// <summary>
     /// Name of the authentication scheme to use for deriving token service configuration
     /// (will fall back to configured default challenge scheme if not set)
