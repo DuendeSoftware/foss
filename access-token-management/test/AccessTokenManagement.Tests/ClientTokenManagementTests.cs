@@ -221,6 +221,30 @@ public class ClientTokenManagementTests
     }
 
     [Fact]
+    public async Task Access_token_from_token_response_should_use_configured_token_max_length()
+    {
+        _services.AddClientCredentialsTokenManagement(options => options.TokenMaxLength = 8)
+            .AddClient("test", client => Some.ClientCredentialsClient(client));
+
+        _mockHttp.Expect(The.TokenEndpoint.ToString())
+            .Respond(_ => Some.TokenHttpResponse(Some.Token() with
+            {
+                access_token = new string('a', 9)
+            }));
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        var action = async () => await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
+
+        (await Should.ThrowAsync<InvalidOperationException>(action))
+            .Message.ShouldContain("The string exceeds maximum length 8.");
+    }
+
+    [Fact]
     public async Task Request_parameters_should_take_precedence_over_configuration()
     {
         _services.AddClientCredentialsTokenManagement()

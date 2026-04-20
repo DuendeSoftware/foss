@@ -3,11 +3,13 @@
     [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.AccessToken>))]
     public readonly struct AccessToken : System.IEquatable<Duende.AccessTokenManagement.AccessToken>
     {
-        public const int MaxLength = 32768;
+        public const int MaxLength = 102400;
         public AccessToken() { }
         public override string ToString() { }
         public static Duende.AccessTokenManagement.AccessToken Parse(string value) { }
+        public static Duende.AccessTokenManagement.AccessToken Parse(string value, int maxLength) { }
         public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.AccessToken? parsed, out string[] errors) { }
+        public static bool TryParse(string value, int maxLength, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.AccessToken? parsed, out string[] errors) { }
         public static string op_Implicit(Duende.AccessTokenManagement.AccessToken value) { }
     }
     public sealed class AccessTokenRequestHandler : System.Net.Http.DelegatingHandler
@@ -102,6 +104,7 @@
         public System.TimeSpan DefaultCacheLifetime { get; set; }
         public System.TimeSpan? LocalCacheExpiration { get; set; }
         public string NonceStoreKeyPrefix { get; set; }
+        public int TokenMaxLength { get; set; }
         public bool UseCacheAutoTuning { get; set; }
     }
     [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.ClientId>))]
@@ -180,11 +183,13 @@
     [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.RefreshToken>))]
     public readonly struct RefreshToken : System.IEquatable<Duende.AccessTokenManagement.RefreshToken>
     {
-        public const int MaxLength = 4096;
+        public const int MaxLength = 102400;
         public RefreshToken() { }
         public override string ToString() { }
         public static Duende.AccessTokenManagement.RefreshToken Parse(string value) { }
+        public static Duende.AccessTokenManagement.RefreshToken Parse(string value, int maxLength) { }
         public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.RefreshToken? parsed, out string[] errors) { }
+        public static bool TryParse(string value, int maxLength, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.RefreshToken? parsed, out string[] errors) { }
         public static string op_Implicit(Duende.AccessTokenManagement.RefreshToken value) { }
     }
     [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.Resource>))]

@@ -38,6 +38,29 @@ public class StoreTokensInAuthenticationPropertiesTests
         CompareRefreshToken(result, userToken);
     }
 
+    [Fact]
+    public void Should_validate_access_token_length_using_options_when_retrieving_tokens()
+    {
+        var authenticationProperties = new AuthenticationProperties();
+        var sut = new StoreTokensInAuthenticationProperties(
+            new TestOptionsMonitor<UserTokenManagementOptions>(new UserTokenManagementOptions
+            {
+                TokenMaxLength = 8
+            }),
+            new TestOptionsMonitor<CookieAuthenticationOptions>(),
+            new TestSchemeProvider(),
+            new NullLogger<StoreTokensInAuthenticationProperties>()
+        );
+
+        authenticationProperties.Items[".Token.access_token"] = new string('a', 9);
+        authenticationProperties.Items[".Token.refresh_token"] = "refresh";
+        authenticationProperties.Items[".Token.client_id"] = "client";
+
+        var exception = Should.Throw<InvalidOperationException>(() => sut.GetUserToken(authenticationProperties));
+
+        exception.Message.ShouldContain("The string exceeds maximum length 8.");
+    }
+
     private static void CompareRefreshToken(TokenResult<TokenForParameters> result, UserToken userToken)
     {
         var userRefreshToken = result.Token!.RefreshToken.ShouldNotBeNull();

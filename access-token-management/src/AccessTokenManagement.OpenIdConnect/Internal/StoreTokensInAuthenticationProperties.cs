@@ -47,6 +47,7 @@ internal class StoreTokensInAuthenticationProperties(
     /// <inheritdoc/>
     public TokenResult<TokenForParameters> GetUserToken(AuthenticationProperties authenticationProperties, UserTokenRequestParameters? parameters = null)
     {
+        var tokenMaxLength = tokenManagementOptionsMonitor.CurrentValue.TokenMaxLength;
         var tokens = authenticationProperties.Items.Where(i => i.Key.StartsWith(TokenPrefix)).ToList();
         if (!tokens.Any())
         {
@@ -81,7 +82,7 @@ internal class StoreTokensInAuthenticationProperties(
         var refreshToken = refreshTokenValue == null
             ? null
             : new UserRefreshToken(
-                RefreshToken.Parse(refreshTokenValue),
+                RefreshToken.Parse(refreshTokenValue, tokenMaxLength),
                 DPoPProofKey.ParseOrDefault(dpopKey));
 
         if (accessTokenValue == null && refreshToken != null)
@@ -91,7 +92,9 @@ internal class StoreTokensInAuthenticationProperties(
 
         var userToken = new UserToken
         {
-            AccessToken = AccessToken.Parse(accessTokenValue ?? throw new NullReferenceException("access_token should not be null here.")),
+            AccessToken = AccessToken.Parse(
+                accessTokenValue ?? throw new NullReferenceException("access_token should not be null here."),
+                tokenMaxLength),
             AccessTokenType = AccessTokenType.ParseOrDefault(accessTokenType),
             DPoPJsonWebKey = DPoPProofKey.ParseOrDefault(dpopKey),
             RefreshToken = refreshToken?.RefreshToken,

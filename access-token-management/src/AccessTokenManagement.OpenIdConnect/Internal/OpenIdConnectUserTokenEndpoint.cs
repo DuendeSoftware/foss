@@ -23,6 +23,8 @@ internal class OpenIdConnectUserTokenEndpoint(
     IDPoPProofService dPoPProofService,
     ILogger<OpenIdConnectUserTokenEndpoint> logger) : IOpenIdConnectUserTokenEndpoint
 {
+    private readonly UserTokenManagementOptions _options = options.Value;
+
     /// <inheritdoc/>
     public async Task<TokenResult<UserToken>> RefreshAccessTokenAsync(
         UserRefreshToken refreshToken,
@@ -47,7 +49,7 @@ internal class OpenIdConnectUserTokenEndpoint(
             Address = tokenEndpoint.ToString(),
             ClientId = oidc.ClientId.ToString(),
             ClientSecret = oidc.ClientSecret.ToString(),
-            ClientCredentialStyle = options.Value.ClientCredentialStyle,
+            ClientCredentialStyle = _options.ClientCredentialStyle,
             RefreshToken = refreshToken.RefreshToken.ToString(),
             Parameters = parameters.Parameters
         };
@@ -156,8 +158,9 @@ internal class OpenIdConnectUserTokenEndpoint(
         var token = new UserToken()
         {
             IdentityToken = IdentityToken.ParseOrDefault(response.IdentityToken),
-            AccessToken = AccessToken.Parse(response.AccessToken ??
-                                                  throw new InvalidOperationException("No access token present")),
+            AccessToken = AccessToken.Parse(
+                response.AccessToken ?? throw new InvalidOperationException("No access token present"),
+                _options.TokenMaxLength),
             AccessTokenType = AccessTokenType.ParseOrDefault(response.TokenType),
             DPoPJsonWebKey = dPoPJsonWebKey,
             Expiration = response.ExpiresIn == 0
@@ -165,7 +168,7 @@ internal class OpenIdConnectUserTokenEndpoint(
                 : DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn),
             RefreshToken = response.RefreshToken == null
                 ? refreshToken.RefreshToken // use input refresh token if none is returned
-                : RefreshToken.Parse(response.RefreshToken),
+                : RefreshToken.Parse(response.RefreshToken, _options.TokenMaxLength),
             Scope = Scope.ParseOrDefault(response.Scope),
             ClientId = oidc.ClientId
         };
@@ -197,7 +200,7 @@ internal class OpenIdConnectUserTokenEndpoint(
 
             ClientId = oidc.ClientId.ToString(),
             ClientSecret = oidc.ClientSecret.ToString(),
-            ClientCredentialStyle = options.Value.ClientCredentialStyle,
+            ClientCredentialStyle = _options.ClientCredentialStyle,
 
             Token = refreshToken.ToString(),
             TokenTypeHint = OidcConstants.TokenTypes.RefreshToken,

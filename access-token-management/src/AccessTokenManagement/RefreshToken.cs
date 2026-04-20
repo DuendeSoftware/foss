@@ -10,13 +10,21 @@ namespace Duende.AccessTokenManagement;
 [JsonConverter(typeof(StringValueJsonConverter<RefreshToken>))]
 public readonly record struct RefreshToken : IStronglyTypedValue<RefreshToken>
 {
-    public const int MaxLength = 4 * 1024;
+    private const int Kilobyte = 1024;
+
+    public const int MaxLength = 100 * Kilobyte;
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [
-        // Officially, there's no max length refresh tokens, but 4k is a good limit
+        // Keep direct construction bounded. Runtime read boundaries apply the configurable limit.
         ValidationRules.MaxLength(MaxLength)
     ];
+
+    private static ValidationRule<string>[] BuildValidators(int maxLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+        return [ValidationRules.MaxLength(maxLength)];
+    }
 
     /// <summary>
     /// You can't directly create this type.
@@ -40,10 +48,30 @@ public readonly record struct RefreshToken : IStronglyTypedValue<RefreshToken>
     public static bool TryParse(string value, [NotNullWhen(true)] out RefreshToken? parsed, out string[] errors) =>
         IStronglyTypedValue<RefreshToken>.TryBuildValidatedObject(value, Validators, out parsed, out errors);
 
+    /// <summary>
+    /// Parses a value to a <see cref="RefreshToken"/> using the supplied maximum length.
+    /// </summary>
+    public static bool TryParse(string value, int maxLength, [NotNullWhen(true)] out RefreshToken? parsed, out string[] errors) =>
+        IStronglyTypedValue<RefreshToken>.TryBuildValidatedObject(value, BuildValidators(maxLength), out parsed, out errors);
+
     static RefreshToken IStronglyTypedValue<RefreshToken>.Create(string result) => new(result);
 
     /// <summary>
     /// Parses a value to a <see cref="RefreshToken"/>. This will throw an exception if the string is not valid.
     /// </summary>
     public static RefreshToken Parse(string value) => StringParsers<RefreshToken>.Parse(value);
+
+    /// <summary>
+    /// Parses a value to a <see cref="RefreshToken"/> using the supplied maximum length.
+    /// </summary>
+    public static RefreshToken Parse(string value, int maxLength)
+    {
+        if (TryParse(value, maxLength, out var parsed, out var errors))
+        {
+            return parsed.Value;
+        }
+
+        throw new InvalidOperationException(
+            $"Received an invalid {nameof(RefreshToken)}. Errors: {string.Join("", errors.Select(x => $"{Environment.NewLine}\t - {x}"))}");
+    }
 }

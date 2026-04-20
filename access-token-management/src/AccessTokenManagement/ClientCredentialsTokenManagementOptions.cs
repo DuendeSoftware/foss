@@ -8,6 +8,13 @@ namespace Duende.AccessTokenManagement;
 /// </summary>
 public sealed class ClientCredentialsTokenManagementOptions
 {
+    private const int Kilobyte = 1024;
+
+    /// <summary>
+    /// Maximum allowed token length when reading tokens from external systems or caches.
+    /// </summary>
+    public int TokenMaxLength { get; set; } = 32 * Kilobyte;
+
     /// <summary>
     /// Used to prefix the cache key
     /// </summary>
