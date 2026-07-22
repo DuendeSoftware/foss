@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.Diagnostics;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OTel;
 using Duende.IdentityModel.Client;
@@ -33,12 +34,19 @@ internal class ClientCredentialsTokenClient(
 
         if (client.ClientId == null)
         {
-            throw new InvalidOperationException($"No ClientId configured for client {clientName}");
+            throw new InvalidOperationException($"No {nameof(client.ClientId)} configured for client {clientName}");
         }
         if (client.TokenEndpoint == null)
         {
-            throw new InvalidOperationException($"No TokenEndpoint configured for client {clientName}");
+            if (client.MetadataAddress == null)
+            {
+                throw new InvalidOperationException($"No {nameof(client.TokenEndpoint)} or {nameof(client.MetadataAddress)} configured for client {clientName}");
+            }
+
+            client.TokenEndpoint = await GetTokenEndpoint(client, ct).ConfigureAwait(false);
         }
+
+        Debug.Assert(client.TokenEndpoint != null);
 
         using var logScope = logger.BeginScope(
             (OTelParameters.ClientId, client.ClientId)
@@ -105,7 +113,7 @@ internal class ClientCredentialsTokenClient(
             request.DPoPProofToken = await CreateDPoPProofToken(client.TokenEndpoint, dpopJsonWebKey.Value, ct: ct);
         }
 
-        var httpClient = GetHttpClient(client);
+        var httpClient = ResolveHttpClient(client);
 
         logger.RequestingClientCredentialsAccessToken(LogLevel.Debug, client.TokenEndpoint);
         var response = await httpClient.RequestClientCredentialsTokenAsync(request, ct).ConfigureAwait(false);
@@ -209,5 +217,31 @@ internal class ClientCredentialsTokenClient(
         }
 
         return httpClient;
+    }
+
+    private HttpClient ResolveHttpClient(ClientCredentialsClient client) => client.HttpClient ?? GetHttpClient(client);
+
+    private async Task<Uri> GetTokenEndpoint(ClientCredentialsClient client, CT ct)
+    {
+        Debug.Assert(client.MetadataAddress != null);
+
+        var httpClient = ResolveHttpClient(client);
+
+        var metadata = await httpClient.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = client.MetadataAddress.ToString(),
+            Policy =
+            {
+                RequireHttps = client.MetadataAddress.Scheme == Uri.UriSchemeHttps,
+                ValidateIssuerName = false
+            }
+        }, ct).ConfigureAwait(false);
+
+        if (metadata.TokenEndpoint is not { Length: > 0 } tokenEndpoint)
+        {
+            throw new InvalidOperationException($"No token endpoint found in discovery document for client {client.ClientId}");
+        }
+
+        return new Uri(tokenEndpoint);
     }
 }
