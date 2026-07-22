@@ -17,12 +17,17 @@ namespace Duende.AccessTokenManagement;
 public sealed class ClientCredentialsClient
 {
     /// <summary>
+    /// The address of the metadata
+    /// </summary>
+    public Uri? MetadataAddress { get; set; }
+
+    /// <summary>
     /// The address of the token endpoint
     /// </summary>
     public Uri? TokenEndpoint { get; set; }
 
     /// <summary>
-    /// The client ID 
+    /// The client ID
     /// </summary>
     public ClientId? ClientId { get; set; }
 
@@ -55,7 +60,8 @@ public sealed class ClientCredentialsClient
     public Resource? Resource { get; set; }
 
     /// <summary>
-    /// The HTTP client name to use for the backchannel operations, will fall back to the standard backchannel client if not set
+    /// The HTTP client name to use for the backchannel operations, will fall back to the standard backchannel client if
+    /// not set
     /// </summary>
     public string? HttpClientName { get; set; }
 
@@ -79,27 +85,28 @@ public sealed class ClientCredentialsClient
     {
         public ValidateOptionsResult Validate(string? name, ClientCredentialsClient options)
         {
+            if (options.ClientId is not null && (options.MetadataAddress is not null || options.TokenEndpoint is not null))
+            {
+                return ValidateOptionsResult.Success;
+            }
+
             var subject = options.ClientId != null
                 ? "clientId " + options.ClientId
                 : "client " + (name ?? "default");
 
             var errors = new List<string>();
 
-            if (options.ClientId == null)
+            if (options.ClientId is null)
             {
                 errors.Add($"No {nameof(options.ClientId)} configured for {subject}");
             }
 
-            if (options.TokenEndpoint == null)
+            if (options.MetadataAddress is null && options.TokenEndpoint is null)
             {
-                errors.Add($"{nameof(options.TokenEndpoint)} cannot be null for {subject}");
+                errors.Add($"No {nameof(options.MetadataAddress)} or {nameof(options.TokenEndpoint)} configured for {subject}");
             }
 
-            if (errors.Any())
-            {
-                return ValidateOptionsResult.Fail(errors);
-            }
-            return ValidateOptionsResult.Success;
+            return ValidateOptionsResult.Fail(errors);
         }
     }
 }
