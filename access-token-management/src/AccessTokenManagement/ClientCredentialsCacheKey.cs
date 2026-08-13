@@ -11,8 +11,14 @@ namespace Duende.AccessTokenManagement;
 /// </summary>
 public readonly record struct ClientCredentialsCacheKey : IStronglyTypedValue<ClientCredentialsCacheKey>
 {
+    /// <summary>
+    /// Returns the wrapped cache key string.
+    /// </summary>
     public override string ToString() => Value;
 
+    /// <summary>
+    /// The maximum supported length for a cache key value.
+    /// </summary>
     public const int MaxLength = 1024;
 
     private static readonly ValidationRule<string>[] Validators = [

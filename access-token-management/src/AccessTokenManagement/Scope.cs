@@ -9,10 +9,16 @@ using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Represents one or more OAuth scope tokens as a single space-separated string.
+/// </summary>
 [TypeConverter(typeof(StringValueConverter<Scope>))]
 [JsonConverter(typeof(StringValueJsonConverter<Scope>))]
 public readonly partial record struct Scope : IStronglyTypedValue<Scope>
 {
+    /// <summary>
+    /// The maximum supported length for a scope string.
+    /// </summary>
     public const int MaxLength = 1024;
 
     /// <summary>
@@ -21,6 +27,9 @@ public readonly partial record struct Scope : IStronglyTypedValue<Scope>
     /// <param name="value"></param>
     public static implicit operator string(Scope value) => value.ToString();
 
+    /// <summary>
+    /// Returns the wrapped scope string.
+    /// </summary>
     public override string ToString() => Value;
 
     // According to RFC 6749, the scope is a space-separated list of scope-token(s).

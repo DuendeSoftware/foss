@@ -3,6 +3,9 @@
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Extension methods for working with asynchronous <see cref="TokenResult{T}"/> values.
+/// </summary>
 public static class TokenResultExtensions
 {
     /// <summary>

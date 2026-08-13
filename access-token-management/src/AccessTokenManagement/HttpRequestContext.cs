@@ -8,7 +8,18 @@ namespace Duende.AccessTokenManagement;
 /// </summary>
 public record struct HttpRequestContext
 {
+    /// <summary>
+    /// The HTTP method (for example <c>GET</c> or <c>POST</c>).
+    /// </summary>
     public required string Method { get; init; }
+
+    /// <summary>
+    /// The request URI.
+    /// </summary>
     public required Uri? RequestUri { get; init; }
+
+    /// <summary>
+    /// The request headers.
+    /// </summary>
     public required IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; init; }
 }

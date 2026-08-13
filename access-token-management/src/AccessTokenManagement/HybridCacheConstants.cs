@@ -3,6 +3,9 @@
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Well-known cache tags used by access token management.
+/// </summary>
 public static class HybridCacheConstants
 {
     /// <summary>

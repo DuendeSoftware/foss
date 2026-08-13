@@ -4,14 +4,14 @@
 namespace Duende.AccessTokenManagement.DPoP;
 
 /// <summary>
-/// The logic to generate a key to store a DPoP nonce in the Cache
+/// Generates stable cache keys for <see cref="IDPoPNonceStore"/> entries.
 /// </summary>
 public interface IDPoPNonceStoreKeyGenerator
 {
     /// <summary>
-    /// Method to generate a cache key for a DPoP nonce
+    /// Generates a cache key for a DPoP nonce context.
     /// </summary>
-    /// <param name="context"></param>
-    /// <returns></returns>
+    /// <param name="context">The request context used to derive the key.</param>
+    /// <returns>A cache key for the nonce store.</returns>
     string GenerateKey(DPoPNonceContext context);
 }

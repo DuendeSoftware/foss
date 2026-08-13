@@ -7,10 +7,20 @@ using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Represents an OpenID Connect identity token (ID token).
+/// </summary>
 [JsonConverter(typeof(StringValueJsonConverter<IdentityToken>))]
 public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
 {
+    /// <summary>
+    /// The maximum supported length for an identity token string.
+    /// </summary>
     public const int MaxLength = 32 * 1024;
+
+    /// <summary>
+    /// Returns the wrapped identity token string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [

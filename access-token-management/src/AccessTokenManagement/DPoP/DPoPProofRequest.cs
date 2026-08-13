@@ -4,7 +4,7 @@
 namespace Duende.AccessTokenManagement.DPoP;
 
 /// <summary>
-/// Models a DPoP proof token.
+/// Parameters required to create a <see cref="DPoPProof"/> for an outgoing HTTP request.
 /// </summary>
 public sealed record DPoPProofRequest
 {
@@ -19,17 +19,17 @@ public sealed record DPoPProofRequest
     public required HttpMethod Method { get; init; }
 
     /// <summary>
-    /// The JSON web key used to sign the DPoP proof.
+    /// The proof key used to sign the DPoP proof.
     /// </summary>
     public required DPoPProofKey DPoPProofKey { get; init; }
 
     /// <summary>
-    /// The nonce value for the DPoP proof token.
+    /// The server-provided nonce to include in the generated proof, when required.
     /// </summary>
     public DPoPNonce? DPoPNonce { get; init; }
 
     /// <summary>
-    /// The access token
+    /// The access token that the proof is bound to, when available.
     /// </summary>
     public AccessToken? AccessToken { get; init; }
 

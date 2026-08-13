@@ -52,6 +52,13 @@ public sealed record TokenForParameters
     /// </summary>
     public UserRefreshToken? RefreshToken { get; }
 
+    /// <summary>
+    /// Indicates whether no refresh token exists.
+    /// </summary>
+    /// <remarks>
+    /// When <see langword="true"/>, <see cref="TokenForSpecifiedParameters"/> is populated.
+    /// When <see langword="false"/>, <see cref="RefreshToken"/> is populated.
+    /// </remarks>
     [MemberNotNullWhen(true, nameof(TokenForSpecifiedParameters))]
     [MemberNotNullWhen(false, nameof(RefreshToken))]
     public bool NoRefreshToken { get; private set; }

@@ -7,8 +7,14 @@ using System.Diagnostics.Metrics;
 namespace Duende.AccessTokenManagement.OTel;
 
 
+/// <summary>
+/// Emits OpenTelemetry metrics for access token management operations.
+/// </summary>
 public sealed class AccessTokenManagementMetrics
 {
+    /// <summary>
+    /// The meter name used by this library.
+    /// </summary>
     public const string MeterName = "Duende.AccessTokenManagement";
 
     private readonly Counter<int> _accessTokenUsed;
@@ -17,6 +23,10 @@ public sealed class AccessTokenManagementMetrics
     private readonly Counter<int> _accessTokenAccessDeniedRetry;
     private readonly Counter<int> _dpopNonceErrorRetry;
 
+    /// <summary>
+    /// Creates a new metrics publisher.
+    /// </summary>
+    /// <param name="meterFactory">The meter factory used to create counters.</param>
     public AccessTokenManagementMetrics(IMeterFactory meterFactory)
     {
         var meter = meterFactory.Create(MeterName);
@@ -48,7 +58,14 @@ public sealed class AccessTokenManagementMetrics
     /// </summary>
     public enum TokenRequestType
     {
+        /// <summary>
+        /// A client-credentials token request.
+        /// </summary>
         ClientCredentials = 1,
+
+        /// <summary>
+        /// A user token request.
+        /// </summary>
         User = 2
     }
 
@@ -122,6 +139,11 @@ public sealed class AccessTokenManagementMetrics
         );
     }
 
+    /// <summary>
+    /// Writes a metric when an operation retries after a DPoP nonce-related error.
+    /// </summary>
+    /// <param name="clientId">The client identifier associated with the request.</param>
+    /// <param name="error">The reported DPoP error value.</param>
     public void DPoPNonceErrorRetry(ClientId? clientId, string? error)
     {
         if (!_dpopNonceErrorRetry.Enabled)
@@ -134,5 +156,4 @@ public sealed class AccessTokenManagementMetrics
         );
     }
 }
-
 

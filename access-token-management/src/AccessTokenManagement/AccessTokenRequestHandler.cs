@@ -21,10 +21,12 @@ public sealed class AccessTokenRequestHandler(
     ILogger<AccessTokenRequestHandler> logger)
     : DelegatingHandler
 {
+    /// <inheritdoc />
     protected override HttpResponseMessage Send(HttpRequestMessage request, CT ct) =>
         throw new NotSupportedException(
             "The (synchronous) Send() method is not supported. Please use the async SendAsync variant. ");
 
+    /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CT ct)
     {
@@ -144,6 +146,9 @@ public sealed class AccessTokenRequestHandler(
     /// </summary>
     public interface IToken
     {
+        /// <summary>
+        /// The access token value to send.
+        /// </summary>
         AccessToken AccessToken { get; }
 
         /// <summary>
@@ -156,6 +161,9 @@ public sealed class AccessTokenRequestHandler(
         /// </summary>
         ClientId ClientId { get; }
 
+        /// <summary>
+        /// The HTTP authorization scheme for the access token.
+        /// </summary>
         AccessTokenType? AccessTokenType { get; }
     }
 }

@@ -10,14 +10,17 @@ namespace Duende.AccessTokenManagement;
 /// </summary>
 public sealed class ClientCredentialsTokenManagementBuilder(IServiceCollection services)
 {
+    /// <summary>
+    /// The service collection being configured.
+    /// </summary>
     public IServiceCollection Services { get; } = services;
 
     /// <summary>
     /// Adds a client credentials client to the token management system
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="configureOptions"></param>
-    /// <returns></returns>
+    /// <param name="name">The logical name of the client configuration.</param>
+    /// <param name="configureOptions">A delegate that configures the named <see cref="ClientCredentialsClient"/> options.</param>
+    /// <returns>The same builder instance for chaining.</returns>
     public ClientCredentialsTokenManagementBuilder AddClient(string name,
         Action<ClientCredentialsClient> configureOptions)
     {

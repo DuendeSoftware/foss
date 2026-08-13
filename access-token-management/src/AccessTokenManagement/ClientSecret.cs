@@ -7,6 +7,9 @@ using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Represents an OAuth/OIDC client secret value.
+/// </summary>
 [TypeConverter(typeof(StringValueConverter<ClientSecret>))]
 public readonly record struct ClientSecret : IStronglyTypedValue<ClientSecret>
 {
@@ -16,6 +19,9 @@ public readonly record struct ClientSecret : IStronglyTypedValue<ClientSecret>
     /// <param name="value"></param>
     public static implicit operator string(ClientSecret value) => value.ToString();
 
+    /// <summary>
+    /// Returns the wrapped client secret string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [

@@ -22,6 +22,9 @@ public readonly record struct ClientCredentialsClientName : IStronglyTypedValue<
     /// <param name="value"></param>
     public static implicit operator string(ClientCredentialsClientName value) => value.ToString();
 
+    /// <summary>
+    /// Returns the wrapped client name string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [

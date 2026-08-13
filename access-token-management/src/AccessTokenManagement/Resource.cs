@@ -7,9 +7,15 @@ using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Represents an OAuth resource parameter value.
+/// </summary>
 [TypeConverter(typeof(StringValueConverter<Resource>))]
 public readonly record struct Resource : IStronglyTypedValue<Resource>
 {
+    /// <summary>
+    /// The maximum supported length for a resource string.
+    /// </summary>
     public const int MaxLength = 1024;
 
     /// <summary>
@@ -18,6 +24,9 @@ public readonly record struct Resource : IStronglyTypedValue<Resource>
     /// <param name="value"></param>
     public static implicit operator string(Resource value) => value.ToString();
 
+    /// <summary>
+    /// Returns the wrapped resource string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [

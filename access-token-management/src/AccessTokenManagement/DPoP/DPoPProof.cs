@@ -7,8 +7,13 @@ using Duende.AccessTokenManagement.Internal;
 namespace Duende.AccessTokenManagement.DPoP;
 
 /// <summary>
-/// Represents a strongly-typed DPoP proof value.
+/// Represents a single signed DPoP proof JWT value.
 /// </summary>
+/// <remarks>
+/// This value is sent in the HTTP <c>DPoP</c> header for one request.
+/// It is generated from a <see cref="DPoPProofRequest"/> by <see cref="IDPoPProofService"/>
+/// using a <see cref="DPoPProofKey"/>.
+/// </remarks>
 public readonly record struct DPoPProof : IStronglyTypedValue<DPoPProof>
 {
     /// <summary>

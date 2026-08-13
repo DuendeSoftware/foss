@@ -3,8 +3,16 @@
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Represents a protocol-level token acquisition failure.
+/// </summary>
+/// <param name="Error">The OAuth/OIDC error code.</param>
+/// <param name="ErrorDescription">An optional error description from the token endpoint.</param>
 public sealed record FailedResult(string Error, string? ErrorDescription = null) : TokenResult
 {
+    /// <summary>
+    /// Formats the failure details for logging and diagnostics.
+    /// </summary>
     public override string ToString()
     {
         var description = string.IsNullOrEmpty(ErrorDescription) ? string.Empty : $" with description {ErrorDescription}";

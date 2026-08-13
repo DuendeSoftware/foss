@@ -4,17 +4,17 @@
 namespace Duende.AccessTokenManagement.DPoP;
 
 /// <summary>
-/// The context for a DPoP nonce.
+/// Identifies the request target for storing and retrieving DPoP nonces.
 /// </summary>
 public sealed record DPoPNonceContext
 {
     /// <summary>
-    /// The HTTP URL of the request
+    /// The HTTP URL of the request.
     /// </summary>
     public required Uri Url { get; set; }
 
     /// <summary>
-    /// The HTTP method of the request
+    /// The HTTP method of the request.
     /// </summary>
     public required HttpMethod Method { get; set; }
 }

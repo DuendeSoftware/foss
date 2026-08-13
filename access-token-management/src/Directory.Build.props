@@ -4,6 +4,7 @@
   <Import Project="../../src.props" />
 
   <PropertyGroup>
+    <NoWarn>$([System.String]::Copy('$(NoWarn)').Replace(';CS1591', ''))</NoWarn>
     <MinVerTagPrefix>atm-</MinVerTagPrefix>
     <MinVerMinimumMajorMinor>3.0</MinVerMinimumMajorMinor>
     <PackageTags>OAuth 2.0;OpenID Connect;Security;BFF;IdentityServer;ASP.NET Core;SPA;Blazor;Token Management</PackageTags>
