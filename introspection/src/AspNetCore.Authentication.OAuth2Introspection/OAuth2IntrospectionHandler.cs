@@ -112,9 +112,22 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             // "If the response contains the "exp" parameter (expiration), the response MUST NOT be cached beyond the time indicated therein."
             // so we need to cache items ourselves here. There is discussion of adding this to hybrid cache:
             // https://github.com/dotnet/extensions/issues/6434, https://github.com/dotnet/aspnetcore/issues/56483
-            var response = await IntrospectionDictionary
-                .GetOrAdd(token, GetTokenIntrospectionResponseLazy)
-                .Value;
+            TokenIntrospectionResponse response;
+            try
+            {
+                response = await IntrospectionDictionary
+                    .GetOrAdd(token, GetTokenIntrospectionResponseLazy)
+                    .Value;
+            }
+            catch
+            {
+                // The shared task faulted (e.g. timeout, cancellation, network error).
+                // Evict the faulted entry so future requests start fresh, then retry
+                // once with a direct call — bypassing the dictionary — so this request
+                // is not affected by another request's failure.
+                IntrospectionDictionary.TryRemove(token, out _);
+                response = await LoadClaimsForToken(token, Context, Scheme, Events, Options);
+            }
 
             if (response.IsError)
             {
