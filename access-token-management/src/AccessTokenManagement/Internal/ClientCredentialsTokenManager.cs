@@ -17,7 +17,7 @@ internal class ClientCredentialsTokenManager(
     TimeProvider time,
     IClientCredentialsTokenEndpoint client,
     IClientCredentialsCacheKeyGenerator cacheKeyGenerator,
-    ClientCredentialsCacheDurationStore cacheDurationAutoTuningStore,
+    IClientCredentialsCacheDurationStore cacheDurationAutoTuningStore,
     ILogger<ClientCredentialsTokenManager> logger
 ) : IClientCredentialsTokenManager
 {

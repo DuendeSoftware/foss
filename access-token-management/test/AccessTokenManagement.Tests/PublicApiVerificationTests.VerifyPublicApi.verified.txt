@@ -149,6 +149,11 @@
     {
         System.Threading.Tasks.Task<Duende.IdentityModel.Client.ClientAssertion?> GetClientAssertionAsync(Duende.AccessTokenManagement.ClientCredentialsClientName? clientName = default, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null, System.Threading.CancellationToken ct = default);
     }
+    public interface IClientCredentialsCacheDurationStore
+    {
+        System.TimeSpan GetExpiration(Duende.AccessTokenManagement.ClientCredentialsCacheKey cacheKey);
+        System.TimeSpan SetExpiration(Duende.AccessTokenManagement.ClientCredentialsCacheKey cacheKey, System.DateTimeOffset expiration);
+    }
     public interface IClientCredentialsCacheKeyGenerator
     {
         Duende.AccessTokenManagement.ClientCredentialsCacheKey GenerateKey(Duende.AccessTokenManagement.ClientCredentialsClientName clientName, Duende.AccessTokenManagement.TokenRequestParameters? parameters = null);

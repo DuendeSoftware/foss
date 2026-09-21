@@ -41,7 +41,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services)
     {
         services.TryAddTransient<IClientCredentialsTokenManager, ClientCredentialsTokenManager>();
-        services.TryAddSingleton<ClientCredentialsCacheDurationStore>();
+        services.TryAddSingleton<IClientCredentialsCacheDurationStore, ClientCredentialsCacheDurationStore>();
         services.AddHybridCache();
 
         // Add a default serializer for ClientCredentialsToken
