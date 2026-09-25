@@ -58,6 +58,7 @@
         public Duende.AccessTokenManagement.DPoP.DPoPProofKey? DPoPJsonWebKey { get; set; }
         public System.Net.Http.HttpClient? HttpClient { get; set; }
         public string? HttpClientName { get; set; }
+        public System.Uri? MetadataAddress { get; set; }
         public Duende.IdentityModel.Client.Parameters Parameters { get; set; }
         public Duende.AccessTokenManagement.Resource? Resource { get; set; }
         public Duende.AccessTokenManagement.Scope? Scope { get; set; }
