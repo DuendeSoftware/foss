@@ -22,6 +22,7 @@ public static class HttpClientDeviceFlowExtensions
         var clone = request.Clone();
 
         clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Scope, request.Scope);
+        clone.Parameters.AddRequired(OidcConstants.AuthorizeRequest.ClientId, request.ClientId);
         clone.Method = HttpMethod.Post;
         clone.Prepare();
 
