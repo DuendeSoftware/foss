@@ -162,8 +162,8 @@
 //     public static partial void AuthorizationServerSuppliedNewNonce(this ILogger logger, LogLevel logLevel);
 //
 //     [LoggerMessage(
-//         Message = $"Caching access token for client: {{{OTelParameters.ClientName}}}. Expiration: {{{OTelParameters.Expiration}}}")]
-//     public static partial void CachingAccessToken(this ILogger logger, LogLevel logLevel, ClientCredentialsClientName clientName, DateTimeOffset expiration);
+//         Message = $"Caching access token for client: {{{OTelParameters.ClientName}}}. Expiration: {{{OTelParameters.Expiration}}}. Cache duration: {{{OTelParameters.CacheDuration}}}")]
+//     public static partial void CachingAccessToken(this ILogger logger, LogLevel logLevel, ClientCredentialsClientName clientName, DateTimeOffset expiration, TimeSpan cacheDuration);
 //
 //     [LoggerMessage(
 //         Message = $"Will not cache token result with error for {{{OTelParameters.ClientName}}}. Error = {{{OTelParameters.Error}}}, Description: {{{OTelParameters.ErrorDescription}}}")]
