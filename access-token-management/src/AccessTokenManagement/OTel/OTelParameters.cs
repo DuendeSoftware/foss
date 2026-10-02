@@ -17,6 +17,7 @@ internal class OTelParameters
     public const string RequestUrl = "RequestUrl";
     public const string ClientName = "ClientName";
     public const string Expiration = "Expiration";
+    public const string CacheDuration = "CacheDuration";
     public const string TokenHash = "TokenHash";
     public const string User = "User";
     public const string Resource = "Resource";
