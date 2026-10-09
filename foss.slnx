@@ -1,7 +1,4 @@
 <Solution>
-  <Folder Name="/.github/">
-    <Project Path=".github/workflow-gen/workflow-gen.csproj" />
-  </Folder>
   <Folder Name="/access-token-management/">
     <File Path="access-token-management/README.md" />
   </Folder>

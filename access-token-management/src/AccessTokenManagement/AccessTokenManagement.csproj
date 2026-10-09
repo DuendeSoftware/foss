@@ -10,10 +10,11 @@
     <PackageReadmePath>README.md</PackageReadmePath>
     <PublishAot>true</PublishAot>
     <TrimmerSingleWarn>true</TrimmerSingleWarn>
-<!--    Related to https://github.com/dotnet/sdk/issues/50676-->
-<!--    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>-->
-<!--    <CompilerGeneratedFilesOutputPath>Internal/Generated</CompilerGeneratedFilesOutputPath>-->
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Internal/Generated/**/*.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel" />

@@ -131,7 +131,7 @@ internal class ClientCredentialsTokenManager(
         // See if we need to record how long this access token is valid, to be used the next time
         // this access token is used.
         var cacheDuration = cacheDurationAutoTuningStore.SetExpiration(cacheKey, token.Expiration);
-        logger.CachingAccessToken(LogLevel.Debug, clientName, cacheDuration);
+        logger.CachingAccessToken(LogLevel.Debug, clientName, token.Expiration, cacheDuration);
 
         return token;
     }

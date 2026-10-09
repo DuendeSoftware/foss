@@ -904,10 +904,10 @@ namespace Duende.AccessTokenManagement.Internal
         }
 
         /// <summary>
-        /// Logs "Caching access token for client: {ClientName}. Expiration: {Expiration}".
+        /// Logs "Caching access token for client: {ClientName}. Expiration: {Expiration}. Cache duration: {CacheDuration}".
         /// </summary>
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Gen.Logging", "9.9.0.0")]
-        public static  void CachingAccessToken(this global::Microsoft.Extensions.Logging.ILogger logger, global::Microsoft.Extensions.Logging.LogLevel logLevel, global::Duende.AccessTokenManagement.ClientCredentialsClientName clientName, global::System.TimeSpan cacheDuration)
+        public static  void CachingAccessToken(this global::Microsoft.Extensions.Logging.ILogger logger, global::Microsoft.Extensions.Logging.LogLevel logLevel, global::Duende.AccessTokenManagement.ClientCredentialsClientName clientName, global::System.DateTimeOffset expiration, global::System.TimeSpan cacheDuration)
         {
             if (!logger.IsEnabled(logLevel))
             {
@@ -916,8 +916,9 @@ namespace Duende.AccessTokenManagement.Internal
 
             var state = global::Microsoft.Extensions.Logging.LoggerMessageHelper.ThreadLocalState;
 
-            _ = state.ReserveTagSpace(3);
-            state.TagArray[2] = new("{OriginalFormat}", "Caching access token for client: {ClientName}. Expiration: {Expiration}");
+            _ = state.ReserveTagSpace(4);
+            state.TagArray[3] = new("{OriginalFormat}", "Caching access token for client: {ClientName}. Expiration: {Expiration}. Cache duration: {CacheDuration}");
+            state.TagArray[2] = new("Expiration", expiration);
             state.TagArray[1] = new("ClientName", clientName.ToString());
             state.TagArray[0] = new("CacheDuration", cacheDuration);
 
@@ -929,9 +930,10 @@ namespace Duende.AccessTokenManagement.Internal
                 [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Gen.Logging", "9.9.0.0")] static string (s, _) =>
                 {
                     var clientName = s.TagArray[1].Value;
-                    var expiration = s.TagArray[0].Value;
+                    var expiration = s.TagArray[2].Value;
+                    var cacheDuration = s.TagArray[0].Value;
                     
-                    return string.Create(global::System.Globalization.CultureInfo.InvariantCulture, $"Caching access token for client: {clientName}. Expiration: {expiration}");
+                    return string.Create(global::System.Globalization.CultureInfo.InvariantCulture, $"Caching access token for client: {clientName}. Expiration: {expiration}. Cache duration: {cacheDuration}");
                 });
 
             state.Clear();
