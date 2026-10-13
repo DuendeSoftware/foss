@@ -118,13 +118,13 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task Missing_tokenEndpoint_with_metadataAddress_should_discover_token_endpoint()
     {
-        var metadataAddress = new Uri("https://as");
+        // Arrange
 
-        _mockHttp.Expect("https://as/.well-known/openid-configuration")
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+
+        _mockHttp.Expect(metadataAddress.ToString())
             .Respond("application/json",
-                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/.well-known/jwks"}""");
-        _mockHttp.Expect("https://as/.well-known/jwks")
-            .Respond("application/json", """{"keys":[]}""");
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token"}""");
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -143,7 +143,12 @@ public class ClientTokenManagementTests
         var provider = _services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
+        // Act
+
         var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
         _mockHttp.VerifyNoOutstandingExpectation();
 
         token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
@@ -152,6 +157,8 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task TokenEndpoint_should_take_precedence_over_metadataAddress()
     {
+        // Arrange
+
         _mockHttp.Expect(The.TokenEndpoint.ToString())
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -162,7 +169,7 @@ public class ClientTokenManagementTests
             .AddClient("test", client =>
             {
                 client.TokenEndpoint = The.TokenEndpoint;
-                client.MetadataAddress = new Uri("https://metadata.example");
+                client.MetadataAddress = new Uri("http://metadata.example/custom/metadata");
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -170,7 +177,12 @@ public class ClientTokenManagementTests
         var provider = _services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
+        // Act
+
         var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
         _mockHttp.VerifyNoOutstandingExpectation();
 
         token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
@@ -179,11 +191,10 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task Metadata_without_token_endpoint_should_throw_exception()
     {
+        // Arrange
+
         _mockHttp.Expect("https://as/.well-known/openid-configuration")
-            .Respond("application/json",
-                """{"issuer":"https://as","jwks_uri":"https://as/.well-known/jwks"}""");
-        _mockHttp.Expect("https://as/.well-known/jwks")
-            .Respond("application/json", """{"keys":[]}""");
+            .Respond("application/json", """{"issuer":"https://as"}""");
 
         _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
@@ -191,7 +202,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri("https://as");
+                client.MetadataAddress = new Uri("https://as/.well-known/openid-configuration");
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -199,8 +210,12 @@ public class ClientTokenManagementTests
         var provider = _services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
+        // Act
+
         var exception = await Should.ThrowAsync<InvalidOperationException>(
             () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
 
         exception.Message.ShouldBe($"No token endpoint found in discovery document for client {The.ClientId}");
         _mockHttp.VerifyNoOutstandingExpectation();
@@ -209,6 +224,8 @@ public class ClientTokenManagementTests
     [Fact]
     public async Task Metadata_request_failure_should_throw_exception()
     {
+        // Arrange
+
         _mockHttp.Expect("https://as/.well-known/openid-configuration")
             .Respond(HttpStatusCode.InternalServerError);
 
@@ -218,7 +235,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri("https://as");
+                client.MetadataAddress = new Uri("https://as/.well-known/openid-configuration");
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -226,21 +243,25 @@ public class ClientTokenManagementTests
         var provider = _services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
-        var exception = await Should.ThrowAsync<InvalidOperationException>(
+        // Act
+
+        var exception = await Should.ThrowAsync<HttpRequestException>(
             () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
 
-        exception.Message.ShouldBe($"No token endpoint found in discovery document for client {The.ClientId}");
+        // Assert
+
+        exception.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
     [Fact]
     public async Task Discovered_tokenEndpoint_should_be_reused()
     {
+        // Arrange
+
         var metadataRequest = _mockHttp.Expect("https://as/.well-known/openid-configuration")
             .Respond("application/json",
-                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/.well-known/jwks"}""");
-        _mockHttp.Expect("https://as/.well-known/jwks")
-            .Respond("application/json", """{"keys":[]}""");
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token"}""");
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -250,7 +271,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri("https://as");
+                client.MetadataAddress = new Uri("https://as/.well-known/openid-configuration");
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -263,25 +284,36 @@ public class ClientTokenManagementTests
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
+        // Act
+
         await sut.GetAccessTokenAsync(
             ClientCredentialsClientName.Parse("test"),
             new TokenRequestParameters { ForceTokenRenewal = true },
             _ct).GetToken();
 
+        // Assert
+
         _mockHttp.VerifyNoOutstandingExpectation();
         _mockHttp.GetMatchCount(metadataRequest).ShouldBe(1);
     }
 
-    [Fact]
-    public async Task Explicit_metadata_document_address_should_be_used_as_is()
+    [Theory]
+    [InlineData("https://as/.well-known/openid-configuration")]
+    [InlineData("https://as/.well-known/openid-configuration?tenant=test")]
+    [InlineData("https://as/.well-known/oauth-authorization-server")]
+    [InlineData("https://as/tenant/.well-known/openid-configuration")]
+    [InlineData("https://as/custom/metadata")]
+    [InlineData("https://as/custom/metadata?tenant=test")]
+    [InlineData("https://as/")]
+    public async Task Explicit_metadata_document_address_should_be_used_as_is(string address)
     {
-        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+        // Arrange
+
+        var metadataAddress = new Uri(address);
 
         _mockHttp.Expect(metadataAddress.ToString())
             .Respond("application/json",
-                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/.well-known/jwks"}""");
-        _mockHttp.Expect("https://as/.well-known/jwks")
-            .Respond("application/json", """{"keys":[]}""");
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token"}""");
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -299,10 +331,361 @@ public class ClientTokenManagementTests
         var provider = _services.BuildServiceProvider();
         var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
 
+        // Act
+
         var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
         _mockHttp.VerifyNoOutstandingExpectation();
 
         token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+    }
+
+    [Fact]
+    public async Task Advertised_jwks_endpoint_should_not_be_requested()
+    {
+        // Arrange
+
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+        var jwksRequest = _mockHttp.When("https://as/.well-known/jwks")
+            .Respond(HttpStatusCode.ServiceUnavailable);
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond("application/json",
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/.well-known/jwks"}""");
+        _mockHttp.Expect("https://as/connect/token")
+            .Respond(_ => Some.TokenHttpResponse());
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+        _mockHttp.GetMatchCount(jwksRequest).ShouldBe(0);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("authorization_endpoint", "https://signin.example/authorize")]
+    [InlineData("userinfo_endpoint", "https://profiles.example/userinfo")]
+    [InlineData("jwks_uri", "https://keys.example/jwks")]
+    [InlineData("check_session_iframe", "https://sessions.example/check")]
+    [InlineData("revocation_endpoint", "https://revocation.example/revoke")]
+    [InlineData("introspection_endpoint", "https://introspection.example/introspect")]
+    [InlineData("custom_extension_endpoint", "https://extensions.example/custom")]
+    [InlineData("jwks_uri", "http://keys.example/jwks")]
+    [InlineData("userinfo_endpoint", "not-a-uri")]
+    public async Task Unrelated_metadata_endpoints_should_not_block_token_acquisition(string endpointName, string endpointAddress)
+    {
+        // Arrange
+
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond("application/json",
+                $$"""{"issuer":"https://as","token_endpoint":"https://as/connect/token","{{endpointName}}":"{{endpointAddress}}"}""");
+        _mockHttp.Expect("https://as/connect/token")
+            .Respond(_ => Some.TokenHttpResponse());
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+        _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("http://as/.well-known/openid-configuration")]
+    [InlineData("http://192.0.2.1/custom/metadata")]
+    public async Task Non_loopback_http_metadata_should_be_rejected(string address)
+    {
+        // Arrange
+
+        var metadataAddress = new Uri(address);
+        var metadataRequest = _mockHttp.When(metadataAddress.ToString())
+            .Respond("application/json", """{"token_endpoint":"http://as/connect/token"}""");
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldContain("HTTPS is required");
+        _mockHttp.GetMatchCount(metadataRequest).ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData("http://localhost")]
+    [InlineData("http://127.0.0.1")]
+    [InlineData("http://localhost:5000")]
+    public async Task Loopback_http_metadata_and_token_endpoint_should_be_allowed(string authority)
+    {
+        // Arrange
+
+        var metadataAddress = new Uri($"{authority}/.well-known/openid-configuration");
+        var tokenEndpoint = $"{authority}/connect/token";
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond("application/json", $$"""{"issuer":"{{authority}}","token_endpoint":"{{tokenEndpoint}}"}""");
+        _mockHttp.Expect(tokenEndpoint)
+            .Respond(_ => Some.TokenHttpResponse());
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("http://as/connect/token", "Endpoint does not use HTTPS")]
+    [InlineData("https://other/connect/token", "Endpoint is on a different host than authority")]
+    [InlineData("https://as.other.example/connect/token", "Endpoint is on a different host than authority")]
+    [InlineData("https://as:8443/connect/token", "Endpoint is on a different host than authority")]
+    [InlineData("ftp://as/connect/token", "Malformed endpoint")]
+    [InlineData("not-a-uri", "Malformed endpoint")]
+    public async Task Invalid_discovered_token_endpoint_should_preserve_policy_error(string tokenEndpoint, string error)
+    {
+        // Arrange
+
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond("application/json", $$"""{"issuer":"https://as","token_endpoint":"{{tokenEndpoint}}"}""");
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldContain(error);
+        exception.Message.ShouldContain(tokenEndpoint);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Malformed_metadata_json_should_preserve_parse_error()
+    {
+        // Arrange
+
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond("application/json", """{"token_endpoint":""");
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<JsonException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.BytePositionInLine.ShouldNotBeNull();
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Metadata_network_failure_should_preserve_original_exception()
+    {
+        // Arrange
+
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+        var failure = new HttpRequestException("TLS handshake failed");
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond(_ => throw failure);
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<HttpRequestException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.ShouldBeSameAs(failure);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("null")]
+    [InlineData("\"https://as/connect/token\"")]
+    public async Task Invalid_metadata_document_shape_should_throw_exception(string document)
+    {
+        // Arrange
+
+        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
+
+        _mockHttp.Expect(metadataAddress.ToString())
+            .Respond("application/json", document);
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = metadataAddress;
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldContain("must be a JSON object");
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("metadata", UriKind.Relative)]
+    [InlineData("ftp://as/metadata", UriKind.Absolute)]
+    public async Task Invalid_metadata_address_should_throw_exception(string address, UriKind kind)
+    {
+        // Arrange
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.MetadataAddress = new Uri(address, kind);
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldContain("absolute HTTP or HTTPS URI");
+        _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
     }
 
     [Theory]
