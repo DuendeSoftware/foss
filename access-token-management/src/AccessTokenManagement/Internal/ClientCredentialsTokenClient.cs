@@ -2,8 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Diagnostics;
+using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OTel;
+using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -225,23 +227,66 @@ internal class ClientCredentialsTokenClient(
     {
         Debug.Assert(client.MetadataAddress != null);
 
+        var metadataAddress = client.MetadataAddress;
+
+        if (!metadataAddress.IsAbsoluteUri || !DiscoveryEndpoint.IsValidScheme(metadataAddress))
+        {
+            throw new InvalidOperationException($"Metadata address for client {client.ClientId} must be an absolute HTTP or HTTPS URI");
+        }
+
+        var policy = new DiscoveryPolicy
+        {
+            Authority = metadataAddress.GetLeftPart(UriPartial.Authority)
+        };
+
+        if (!DiscoveryEndpoint.IsSecureScheme(metadataAddress, policy))
+        {
+            throw new InvalidOperationException($"HTTPS is required for metadata address for client {client.ClientId}");
+        }
+
         var httpClient = ResolveHttpClient(client);
 
-        var metadata = await httpClient.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
-        {
-            Address = client.MetadataAddress.ToString(),
-            Policy =
-            {
-                RequireHttps = client.MetadataAddress.Scheme == Uri.UriSchemeHttps,
-                ValidateIssuerName = false
-            }
-        }, ct).ConfigureAwait(false);
+        // Fetch directly to preserve the document URL and avoid retrieving signing keys.
+        using var response = await httpClient.GetAsync(metadataAddress, ct).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
 
-        if (metadata.TokenEndpoint is not { Length: > 0 } tokenEndpoint)
+        var content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(content);
+
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidOperationException($"Discovery document for client {client.ClientId} must be a JSON object");
+        }
+
+        if (!document.RootElement.TryGetProperty(OidcConstants.Discovery.TokenEndpoint, out var tokenEndpointElement) ||
+            tokenEndpointElement.ValueKind != JsonValueKind.String ||
+            tokenEndpointElement.GetString() is not { Length: > 0 } tokenEndpoint)
         {
             throw new InvalidOperationException($"No token endpoint found in discovery document for client {client.ClientId}");
         }
 
-        return new Uri(tokenEndpoint);
+        if (!Uri.TryCreate(tokenEndpoint, UriKind.Absolute, out var tokenEndpointUri) ||
+            !DiscoveryEndpoint.IsValidScheme(tokenEndpointUri))
+        {
+            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: Malformed endpoint: {tokenEndpoint}");
+        }
+
+        if (!DiscoveryEndpoint.IsSecureScheme(tokenEndpointUri, policy))
+        {
+            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: Endpoint does not use HTTPS: {tokenEndpoint}");
+        }
+
+        if (!string.Equals(tokenEndpointUri.Authority, metadataAddress.Authority, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: Endpoint is on a different host than authority: {tokenEndpoint}");
+        }
+
+        var endpointValidation = policy.AuthorityValidationStrategy.IsEndpointValid(tokenEndpoint, [policy.Authority]);
+        if (!endpointValidation.Success)
+        {
+            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: {endpointValidation.ErrorMessage}");
+        }
+
+        return tokenEndpointUri;
     }
 }

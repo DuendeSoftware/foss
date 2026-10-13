@@ -17,8 +17,14 @@ namespace Duende.AccessTokenManagement;
 public sealed class ClientCredentialsClient
 {
     /// <summary>
-    /// The address of the metadata
+    /// The exact address of the metadata document used to discover the token endpoint when <see cref="TokenEndpoint"/> is not configured.
     /// </summary>
+    /// <remarks>
+    /// The address is requested as supplied; no well-known discovery path is appended.
+    /// The metadata document and discovered token endpoint require HTTPS, except for localhost and 127.0.0.1.
+    /// Only the token endpoint is validated and must belong to the metadata address's authority; other advertised endpoints are ignored.
+    /// Signing keys are neither required nor retrieved. The discovered token endpoint is reused for subsequent requests.
+    /// </remarks>
     public Uri? MetadataAddress { get; set; }
 
     /// <summary>
