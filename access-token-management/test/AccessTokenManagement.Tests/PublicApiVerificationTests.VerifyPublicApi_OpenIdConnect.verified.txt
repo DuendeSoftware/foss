@@ -1,4 +1,4 @@
-﻿namespace Duende.AccessTokenManagement.OpenIdConnect
+namespace Duende.AccessTokenManagement.OpenIdConnect
 {
     public static class HttpContextExtensions
     {
@@ -34,6 +34,7 @@
     public interface IUserTokenRequestConcurrencyControl
     {
         System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>> ExecuteWithConcurrencyControlAsync(Duende.AccessTokenManagement.OpenIdConnect.UserRefreshToken key, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>>> tokenRetriever, System.Threading.CancellationToken ct = default);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>> ExecuteWithConcurrencyControlAsync(Duende.AccessTokenManagement.OpenIdConnect.UserRefreshToken key, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters parameters, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>>> tokenRetriever, System.Threading.CancellationToken ct = default);
     }
     public interface IUserTokenStore
     {

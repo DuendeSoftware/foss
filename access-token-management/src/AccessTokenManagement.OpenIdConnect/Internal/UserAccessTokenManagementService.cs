@@ -68,9 +68,11 @@ internal class UserAccessAccessTokenManager(
             logger.TokenNeedsRefreshing(LogLevel.Debug, userName, requestedToken.TokenForSpecifiedParameters?.Expiration, parameters.ForceTokenRenewal);
 
             // Synchronize access to the token request, meaning multiple concurrent requests
-            // for the same token will be grouped together. 
+            // for the same token (same refresh token and same parameters) will be grouped together.
+            // Requests for different parameters, such as a different resource, each get their own token.
             result = await sync.ExecuteWithConcurrencyControlAsync(
                 key: requestedToken.RefreshToken,
+                parameters: parameters,
                 tokenRetriever: async () =>
                 {
                     var getRefreshedToken = await tokenClient.RefreshAccessTokenAsync(
