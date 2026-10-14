@@ -1,12 +1,12 @@
 <Project>
   <PropertyGroup>
-    <ExtensionsVersion>10.0.4</ExtensionsVersion>
-    <WilsonVersion>[8.0.1,9.0.0)</WilsonVersion>
-    <FrameworkVersion>10.0.4</FrameworkVersion>
+    <ExtensionsVersion>10.0.13</ExtensionsVersion>
+    <WilsonVersion>[8.19.2,9.0.0)</WilsonVersion>
+    <FrameworkVersion>10.0.13</FrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AngleSharp" Version="1.3.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
