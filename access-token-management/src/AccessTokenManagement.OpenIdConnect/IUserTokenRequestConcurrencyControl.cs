@@ -59,8 +59,23 @@ public interface IUserTokenRequestConcurrencyControl
     /// redeeming the newest refresh token.
     /// </para>
     /// <para>
+    /// Cancelling a request whose refresh token has already been sent loses the outcome: nobody knows whether the
+    /// token service rotated the refresh token. The default implementation cancels a request only while it waits
+    /// for its turn, or, once it has been sent, when no other request on the same refresh token could use its
+    /// result. Otherwise it lets the request finish, so the next request gets the new refresh token.
+    /// </para>
+    /// <para>
+    /// When a redemption fails without a response (for example a network error), it's unknown whether the token
+    /// service rotated the refresh token. The next request then presents the same refresh token again. If the token
+    /// service did rotate it, that request fails, and the token service may revoke the grant, so the user has to
+    /// sign in again.
+    /// </para>
+    /// <para>
     /// The default implementation coordinates requests within one process. With more than one server, use an
-    /// implementation backed by a distributed lock, or sticky sessions.
+    /// implementation backed by a distributed lock, or sticky sessions. With rotating refresh tokens and the
+    /// default cookie-based token store, concurrent HTTP requests can each return a cookie with a different refresh
+    /// token, and the browser keeps whichever response arrives last. Use a server-side session store, a reuse window
+    /// on the token service, or refresh tokens that can be reused.
     /// </para>
     /// <para>
     /// The default implementation of this interface method calls

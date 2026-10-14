@@ -15,7 +15,9 @@ namespace Duende.AccessTokenManagement.OpenIdConnect.Internal;
 /// redeemed at most once.</item>
 /// <item>Concurrent requests on the same chain with the same parameters share one result.</item>
 /// <item>Requests with different parameters (for example a different resource) each get their own result.</item>
-/// <item>A caller that cancels stops waiting. The shared request is cancelled only when all its callers have cancelled.</item>
+/// <item>A caller that cancels stops waiting. When all callers of a request have cancelled: a queued request is
+/// dropped; a request at the token service is cancelled if it's the only request on its chain, and otherwise
+/// finishes so the next request on the chain gets the new refresh token. A result nobody waits for isn't stored.</item>
 /// </list>
 /// A chain is forgotten as soon as no requests are using it.
 /// </summary>
@@ -41,6 +43,20 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
             lock (_lock)
             {
                 return _chains.Count;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The number of callers waiting for a request that still takes callers. For tests.
+    /// </summary>
+    internal int JoinableCallerCount
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _chains.Values.Distinct().SelectMany(c => c.InFlight.Values).Sum(r => r.ActiveWaiters);
             }
         }
     }
@@ -80,6 +96,7 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
     {
         var requestKey = BuildRequestKey(parameters);
         InFlightRequest request;
+        var waiter = new Waiter(store);
 
         lock (_lock)
         {
@@ -96,33 +113,61 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
                 chain.RefCount++;
                 request = new InFlightRequest(chain, requestKey);
                 var created = request;
-                request.Work = new Lazy<Task<TokenResult<UserToken>>>(() => RunAsync(created, redeem, store));
+                request.Work = new Lazy<Task<TokenResult<UserToken>>>(() => RunAsync(created, redeem));
                 chain.InFlight[requestKey] = request;
             }
 
-            request.Waiters++;
+            request.Waiters.Add(waiter);
+            request.ActiveWaiters++;
         }
 
         try
         {
-            return await request.Work.Value.WaitAsync(ct).ConfigureAwait(false);
+            var result = await request.Work.Value.WaitAsync(ct).ConfigureAwait(false);
+
+            // Storing is per caller: if storing into this caller's context failed, only this caller fails.
+            if (waiter.StoreError != null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(waiter.StoreError);
+            }
+
+            return result;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            Leave(request);
+            Leave(request, waiter);
+
+            // The work may still fail after everyone left (for example a cancelled token service call).
+            // Observe it, so it doesn't surface as an unobserved task exception.
+            _ = request.Work.Value.ContinueWith(
+                static t => _ = t.Exception,
+                CT.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
             throw;
         }
     }
 
     /// <summary>
-    /// A caller stopped waiting. When no callers are left, cancel the shared request and make sure
-    /// new callers don't join it.
+    /// A caller stopped waiting. When no callers are left, make sure new callers don't join the request, and:
+    /// <list type="bullet">
+    /// <item>if it is still queued, drop it;</item>
+    /// <item>if it is at the token service and no other request is on the chain, cancel that call, because nobody
+    /// could use its result;</item>
+    /// <item>if it is at the token service and other requests are on the chain, let it finish, so they get the new
+    /// refresh token instead of presenting one that may already be used.</item>
+    /// </list>
+    /// The decision is made under the same lock that <see cref="RunAsync"/> uses to start the request, so a
+    /// request is never both dropped and started.
     /// </summary>
-    private void Leave(InFlightRequest request)
+    private void Leave(InFlightRequest request, Waiter waiter)
     {
+        CancellationTokenSource? toCancel = null;
         lock (_lock)
         {
-            if (--request.Waiters > 0)
+            waiter.Left = true;
+
+            if (--request.ActiveWaiters > 0)
             {
                 return;
             }
@@ -131,32 +176,48 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
             {
                 request.Chain.InFlight.Remove(request.Key);
             }
+
+            if (!request.Started)
+            {
+                request.Abandoned = true;
+                toCancel = request.WaitCancellation;
+            }
+            else if (request.Chain.RefCount == 1)
+            {
+                toCancel = request.RedeemCancellation;
+            }
         }
 
         // Outside the lock: cancellation callbacks run synchronously.
-        request.Cancellation.Cancel();
+        toCancel?.Cancel();
     }
 
     private async Task<TokenResult<UserToken>> RunAsync(
         InFlightRequest request,
-        Func<UserRefreshToken, CT, Task<TokenResult<UserToken>>> redeem,
-        Func<UserToken, CT, Task> store)
+        Func<UserRefreshToken, CT, Task<TokenResult<UserToken>>> redeem)
     {
         var chain = request.Chain;
         var requestKey = request.Key;
-        var ct = request.Cancellation.Token;
         try
         {
-            await chain.Semaphore.WaitAsync(ct).ConfigureAwait(false);
+            await chain.Semaphore.WaitAsync(request.WaitCancellation.Token).ConfigureAwait(false);
             try
             {
                 UserRefreshToken refreshToken;
                 lock (_lock)
                 {
+                    // Everyone may have stopped waiting while this request was queued: nothing was sent yet,
+                    // so it's safe to stop here.
+                    if (request.Abandoned)
+                    {
+                        throw new OperationCanceledException(request.WaitCancellation.Token);
+                    }
+
+                    request.Started = true;
                     refreshToken = chain.Latest;
                 }
 
-                var result = await redeem(refreshToken, ct).ConfigureAwait(false);
+                var result = await redeem(refreshToken, request.RedeemCancellation.Token).ConfigureAwait(false);
                 if (!result.WasSuccessful(out var token))
                 {
                     return result;
@@ -192,7 +253,43 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
                     }
                 }
 
-                await store(token, ct).ConfigureAwait(false);
+                // Every caller still waiting stores the result into its own context (for example its own HTTP
+                // response), one after another while this chain is locked, so a shared store sees the refresh
+                // tokens in order. Callers that left are skipped: their context may be gone. From here on the
+                // request takes no new callers, because they would miss the stores; they start a new request,
+                // which uses the new refresh token.
+                List<Waiter> waiters;
+                lock (_lock)
+                {
+                    if (chain.InFlight.TryGetValue(requestKey, out var inFlight) && ReferenceEquals(inFlight, request))
+                    {
+                        chain.InFlight.Remove(requestKey);
+                    }
+
+                    waiters = [.. request.Waiters];
+                }
+
+                foreach (var waiter in waiters)
+                {
+                    lock (_lock)
+                    {
+                        if (waiter.Left)
+                        {
+                            continue;
+                        }
+                    }
+
+                    try
+                    {
+                        await StoreInCallerContext(waiter, token).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Reported to this caller only; if it has left, nobody needs this store.
+                        waiter.StoreError = ex;
+                    }
+                }
+
                 return result;
             }
             finally
@@ -221,6 +318,34 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Runs a caller's store in that caller's own execution context. Stores find their request through ambient
+    /// state (the default store uses IHttpContextAccessor), and <see cref="RunAsync"/> runs in the context of
+    /// whichever caller started the request.
+    /// </summary>
+    private static Task StoreInCallerContext(Waiter waiter, UserToken token)
+    {
+        if (waiter.Context == null)
+        {
+            // The caller suppressed context flow, so its context can't be restored. Run the store in an empty
+            // context rather than in the current one, which belongs to another caller: a store that needs the
+            // caller's request then fails for this caller, instead of writing through another caller's request.
+            if (ExecutionContext.IsFlowSuppressed())
+            {
+                return Task.Run(() => waiter.Store(token, CT.None));
+            }
+
+            using (ExecutionContext.SuppressFlow())
+            {
+                return Task.Run(() => waiter.Store(token, CT.None));
+            }
+        }
+
+        Task? storing = null;
+        ExecutionContext.Run(waiter.Context, _ => storing = waiter.Store(token, CT.None), null);
+        return storing!;
     }
 
     /// <summary>
@@ -267,14 +392,39 @@ internal class UserTokenRequestConcurrencyControl(ILogger<UserTokenRequestConcur
         public int RefCount { get; set; }
     }
 
+    /// <summary>
+    /// A caller waiting for a request, with the delegate that stores the result into that caller's context.
+    /// </summary>
+    private sealed class Waiter(Func<UserToken, CT, Task> store)
+    {
+        public Func<UserToken, CT, Task> Store { get; } = store;
+
+        // The caller's execution context, so its store runs against its own ambient state (its HTTP request).
+        public ExecutionContext? Context { get; } = ExecutionContext.Capture();
+
+        // Guarded by the control's lock.
+        public bool Left { get; set; }
+
+        // Written before the request's task completes, read by the caller after awaiting it.
+        public Exception? StoreError { get; set; }
+    }
+
     private sealed class InFlightRequest(Chain chain, string key)
     {
         public Chain Chain { get; } = chain;
         public string Key { get; } = key;
         public Lazy<Task<TokenResult<UserToken>>> Work { get; set; } = null!;
 
-        // Not disposed on purpose: it has no timer or linked tokens, and Leave may still call Cancel.
-        public CancellationTokenSource Cancellation { get; } = new();
-        public int Waiters { get; set; }
+        // Neither is disposed on purpose: they have no timers or linked tokens, and Leave may still call Cancel.
+        public CancellationTokenSource WaitCancellation { get; } = new();
+        public CancellationTokenSource RedeemCancellation { get; } = new();
+
+        // Guarded by the control's lock. Every caller that joined, and how many of them still wait.
+        public List<Waiter> Waiters { get; } = [];
+        public int ActiveWaiters { get; set; }
+
+        // Guarded by the control's lock: the request was sent to the token service, or was dropped before that.
+        public bool Started { get; set; }
+        public bool Abandoned { get; set; }
     }
 }

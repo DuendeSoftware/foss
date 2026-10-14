@@ -268,7 +268,7 @@ public class UserTokenRequestConcurrencyTests
     }
 
     [Fact]
-    public async Task The_shared_request_should_be_cancelled_when_all_callers_cancel()
+    public async Task A_lone_request_at_the_token_service_should_be_cancelled_when_all_its_callers_cancel()
     {
         var endpoint = new SteppedRotatingTokenEndpoint();
         var sut = CreateSut(endpoint: endpoint);
@@ -282,8 +282,56 @@ public class UserTokenRequestConcurrencyTests
         await Should.ThrowAsync<OperationCanceledException>(() => first);
         await Should.ThrowAsync<OperationCanceledException>(() => second);
 
+        // No other request is on the chain, so nobody could use the result: the call is cancelled, as before.
         await endpoint.Cancelled(0).WaitAsync(_ct);
         await WaitUntilAsync(() => _control.ActiveRefreshTokenCount == 0);
+        endpoint.RedeemedRefreshTokens.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_request_whose_caller_left_should_not_store_into_that_callers_context()
+    {
+        var endpoint = new SteppedRotatingTokenEndpoint();
+        var request1Store = new InMemoryUserTokenStore("rt_0") { ThrowOnFirstStore = true }; // its HTTP request has ended
+        var request2Store = new InMemoryUserTokenStore("rt_0");
+        var request1 = CreateSut(store: request1Store, endpoint: endpoint);
+        var request2 = CreateSut(store: request2Store, endpoint: endpoint);
+        using var request1Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var a = request1.GetAccessTokenAsync(_user, ForResource("urn:res1"), request1Cts.Token);
+        await endpoint.Entered(0).WaitAsync(_ct);
+        var b = request2.GetAccessTokenAsync(_user, ForResource("urn:res2"), _ct);
+
+        await request1Cts.CancelAsync();
+        await Should.ThrowAsync<OperationCanceledException>(() => a);
+        endpoint.Release(0);
+        endpoint.Release(1);
+        var bResult = await b;
+
+        bResult.Succeeded.ShouldBeTrue(bResult.FailedResult?.Error);
+        endpoint.RedeemedRefreshTokens.ShouldBe(["rt_0", "rt_1"]);
+        request1Store.StoreCalls.ShouldBe(0);
+        request2Store.StoreCalls.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_queued_request_should_be_dropped_when_all_its_callers_cancel()
+    {
+        var endpoint = new SteppedRotatingTokenEndpoint();
+        var sut = CreateSut(endpoint: endpoint);
+        using var queuedCts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var first = sut.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct);
+        await endpoint.Entered(0).WaitAsync(_ct);
+        var queued = sut.GetAccessTokenAsync(_user, ForResource("urn:res2"), queuedCts.Token);
+
+        await queuedCts.CancelAsync();
+        await Should.ThrowAsync<OperationCanceledException>(() => queued);
+        endpoint.Release(0);
+        (await first).Succeeded.ShouldBeTrue();
+
+        await WaitUntilAsync(() => _control.ActiveRefreshTokenCount == 0);
+        endpoint.RedeemedRefreshTokens.ShouldBe(["rt_0"]); // the queued request never reached the token service
     }
 
     [Fact]
@@ -489,6 +537,125 @@ public class UserTokenRequestConcurrencyTests
         endpoint.RedeemedRefreshTokens.ShouldBe(["rt_0", "rt_1"]);
     }
 
+    [Fact]
+    public async Task Callers_with_the_same_parameters_should_each_store_the_shared_result_in_their_own_context()
+    {
+        var endpoint = new SteppedRotatingTokenEndpoint();
+        var request1Store = new InMemoryUserTokenStore("rt_0");
+        var request2Store = new InMemoryUserTokenStore("rt_0");
+        var request1 = CreateSut(store: request1Store, endpoint: endpoint);
+        var request2 = CreateSut(store: request2Store, endpoint: endpoint);
+
+        var a = request1.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct);
+        await endpoint.Entered(0).WaitAsync(_ct);
+        var b = request2.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct);
+
+        endpoint.Release(0);
+        var results = await Task.WhenAll(a, b);
+
+        results.ShouldAllBe(r => r.Succeeded);
+        endpoint.RedeemedRefreshTokens.ShouldBe(["rt_0"]);
+        (await StoredRefreshToken(request1Store)).ShouldBe("rt_1");
+        (await StoredRefreshToken(request2Store)).ShouldBe("rt_1");
+    }
+
+    [Fact]
+    public async Task When_the_first_caller_cancels_a_caller_with_the_same_parameters_should_still_store_the_result()
+    {
+        var endpoint = new SteppedRotatingTokenEndpoint();
+        var request1Store = new InMemoryUserTokenStore("rt_0") { ThrowOnFirstStore = true }; // its HTTP request has ended
+        var request2Store = new InMemoryUserTokenStore("rt_0");
+        var request1 = CreateSut(store: request1Store, endpoint: endpoint);
+        var request2 = CreateSut(store: request2Store, endpoint: endpoint);
+        using var request1Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var a = request1.GetAccessTokenAsync(_user, ForResource("urn:res1"), request1Cts.Token);
+        await endpoint.Entered(0).WaitAsync(_ct);
+        var b = request2.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct);
+
+        await request1Cts.CancelAsync();
+        await Should.ThrowAsync<OperationCanceledException>(() => a);
+        endpoint.Release(0);
+        var bResult = await b;
+
+        bResult.Succeeded.ShouldBeTrue(bResult.FailedResult?.Error);
+        endpoint.RedeemedRefreshTokens.ShouldBe(["rt_0"]);
+        request1Store.StoreCalls.ShouldBe(0);
+        (await StoredRefreshToken(request2Store)).ShouldBe("rt_1");
+    }
+
+    [Fact]
+    public async Task Each_caller_should_store_in_its_own_ambient_request_context()
+    {
+        // Like the default store, which finds the current HTTP request through IHttpContextAccessor (an AsyncLocal).
+        var endpoint = new SteppedRotatingTokenEndpoint();
+        var request1Store = new InMemoryUserTokenStore("rt_0");
+        var request2Store = new InMemoryUserTokenStore("rt_0");
+        var sut = CreateSut(store: new AmbientRequestStore(), endpoint: endpoint);
+
+        var a = Task.Run(() => { AmbientRequestStore.Current.Value = request1Store; return sut.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct); }, _ct);
+        await endpoint.Entered(0).WaitAsync(_ct);
+        var b = Task.Run(() => { AmbientRequestStore.Current.Value = request2Store; return sut.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct); }, _ct);
+        await WaitUntilAsync(() => _control.JoinableCallerCount == 2);
+
+        endpoint.Release(0);
+        var results = await Task.WhenAll(a, b);
+
+        results.ShouldAllBe(r => r.Succeeded);
+        request1Store.StoreCalls.ShouldBe(1);
+        request2Store.StoreCalls.ShouldBe(1);
+        (await StoredRefreshToken(request2Store)).ShouldBe("rt_1");
+    }
+
+    [Fact]
+    public async Task A_caller_without_a_flowing_context_should_not_store_through_another_callers_context()
+    {
+        var endpoint = new SteppedRotatingTokenEndpoint();
+        var request1Store = new InMemoryUserTokenStore("rt_0");
+        var request2Store = new InMemoryUserTokenStore("rt_0");
+        var sut = CreateSut(store: new AmbientRequestStore(), endpoint: endpoint);
+
+        var a = Task.Run(() => { AmbientRequestStore.Current.Value = request1Store; return sut.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct); }, _ct);
+        await endpoint.Entered(0).WaitAsync(_ct);
+        var b = Task.Run(() =>
+        {
+            AmbientRequestStore.Current.Value = request2Store;
+            using (ExecutionContext.SuppressFlow())
+            {
+                return sut.GetAccessTokenAsync(_user, ForResource("urn:res1"), _ct);
+            }
+        }, _ct);
+        await WaitUntilAsync(() => _control.JoinableCallerCount == 2);
+
+        endpoint.Release(0);
+        (await a).Succeeded.ShouldBeTrue();
+        await Should.ThrowAsync<InvalidOperationException>(() => b); // its store can't find its request
+
+        request1Store.StoreCalls.ShouldBe(1);
+    }
+
+    /// <summary>
+    /// Forwards to the store of the "current request", found through an AsyncLocal like IHttpContextAccessor.
+    /// </summary>
+    private class AmbientRequestStore : IUserTokenStore
+    {
+        public static readonly AsyncLocal<InMemoryUserTokenStore?> Current = new();
+
+        private static InMemoryUserTokenStore Store => Current.Value ?? throw new InvalidOperationException("No current request.");
+
+        public Task<TokenResult<TokenForParameters>> GetTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null, CancellationToken ct = default) =>
+            Store.GetTokenAsync(user, parameters, ct);
+
+        public Task StoreTokenAsync(ClaimsPrincipal user, UserToken token, UserTokenRequestParameters? parameters = null, CancellationToken ct = default) =>
+            Store.StoreTokenAsync(user, token, parameters, ct);
+
+        public Task ClearTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null, CancellationToken ct = default) =>
+            Store.ClearTokenAsync(user, parameters, ct);
+    }
+
+    private async Task<string> StoredRefreshToken(InMemoryUserTokenStore store) =>
+        (await store.GetTokenAsync(_user, ForResource("urn:res1"), _ct)).Token!.RefreshToken!.RefreshToken.ToString();
+
     private static UserTokenRequestParameters ForResource(string resource) =>
         new() { Resource = Resource.Parse(resource) };
 
@@ -612,6 +779,8 @@ public class UserTokenRequestConcurrencyTests
         public bool ThrowOnFirstStore { get; set; }
 
         private int _stores;
+
+        public int StoreCalls => _stores;
 
         public async Task StoreTokenAsync(ClaimsPrincipal user, UserToken token, UserTokenRequestParameters? parameters = null, CancellationToken ct = default)
         {
