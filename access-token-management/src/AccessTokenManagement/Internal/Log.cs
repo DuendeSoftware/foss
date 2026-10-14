@@ -145,6 +145,10 @@ internal static partial class Log
     public static partial void ReturningRefreshedToken(this ILogger logger, LogLevel logLevel, string user);
 
     [LoggerMessage(
+        Message = "The token service returned a refresh token that an unrelated in-flight refresh already uses. The two refreshes are kept apart. Refresh tokens should be unique; check the token service.")]
+    public static partial void RefreshTokenAlreadyUsedByAnotherRefresh(this ILogger logger, LogLevel logLevel);
+
+    [LoggerMessage(
         Message = $"Returning current token for user: {{{OTelParameters.User}}}")]
     public static partial void ReturningCurrentTokenForUser(this ILogger logger, LogLevel logLevel, string user);
 

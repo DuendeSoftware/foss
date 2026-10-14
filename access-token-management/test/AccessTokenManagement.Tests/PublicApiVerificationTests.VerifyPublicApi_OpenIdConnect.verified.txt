@@ -1,4 +1,4 @@
-﻿namespace Duende.AccessTokenManagement.OpenIdConnect
+namespace Duende.AccessTokenManagement.OpenIdConnect
 {
     public static class HttpContextExtensions
     {
@@ -33,7 +33,10 @@
     }
     public interface IUserTokenRequestConcurrencyControl
     {
+        [System.Obsolete("Use the overload that takes UserTokenRequestParameters, a redeem and a store dele" +
+            "gate. This overload can\'t tell requests for different resources or scopes apart.")]
         System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>> ExecuteWithConcurrencyControlAsync(Duende.AccessTokenManagement.OpenIdConnect.UserRefreshToken key, System.Func<System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>>> tokenRetriever, System.Threading.CancellationToken ct = default);
+        System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>> ExecuteWithConcurrencyControlAsync(Duende.AccessTokenManagement.OpenIdConnect.UserRefreshToken key, Duende.AccessTokenManagement.OpenIdConnect.UserTokenRequestParameters parameters, System.Func<Duende.AccessTokenManagement.OpenIdConnect.UserRefreshToken, System.Threading.CancellationToken, System.Threading.Tasks.Task<Duende.AccessTokenManagement.TokenResult<Duende.AccessTokenManagement.OpenIdConnect.UserToken>>> redeem, System.Func<Duende.AccessTokenManagement.OpenIdConnect.UserToken, System.Threading.CancellationToken, System.Threading.Tasks.Task> store, System.Threading.CancellationToken ct = default);
     }
     public interface IUserTokenStore
     {

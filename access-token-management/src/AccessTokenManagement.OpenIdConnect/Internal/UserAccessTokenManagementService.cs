@@ -67,26 +67,20 @@ internal class UserAccessAccessTokenManager(
         {
             logger.TokenNeedsRefreshing(LogLevel.Debug, userName, requestedToken.TokenForSpecifiedParameters?.Expiration, parameters.ForceTokenRenewal);
 
-            // Synchronize access to the token request, meaning multiple concurrent requests
-            // for the same token will be grouped together. 
+            // Synchronize access to the token endpoint: concurrent requests for the same token share one
+            // request, and requests that share a refresh token run one after another. The concurrency
+            // control hands each request the refresh token to redeem, which is the newest one it knows of,
+            // so a rotated (one-time-use) refresh token isn't redeemed twice. The control records a new
+            // refresh token before it calls store, so other requests that read it from the store find it.
             result = await sync.ExecuteWithConcurrencyControlAsync(
                 key: requestedToken.RefreshToken,
-                tokenRetriever: async () =>
+                parameters: parameters,
+                redeem: (refreshToken, redeemCt) =>
+                    tokenClient.RefreshAccessTokenAsync(refreshToken, parameters, redeemCt),
+                store: async (token, storeCt) =>
                 {
-                    var getRefreshedToken = await tokenClient.RefreshAccessTokenAsync(
-                                requestedToken.RefreshToken,
-                                parameters,
-                                ct).ConfigureAwait(false);
-
-                    if (!getRefreshedToken.WasSuccessful(out var token, out var refreshError))
-                    {
-                        return refreshError;
-                    }
-
-                    await userAccessTokenStore.StoreTokenAsync(user, token, parameters, ct).ConfigureAwait(false);
+                    await userAccessTokenStore.StoreTokenAsync(user, token, parameters, storeCt).ConfigureAwait(false);
                     logger.ReturningRefreshedToken(LogLevel.Trace, userName);
-
-                    return getRefreshedToken;
                 },
                 ct: ct).ConfigureAwait(false);
         }
