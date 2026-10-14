@@ -415,6 +415,36 @@ public class ClientTokenManagementTests
     }
 
     [Fact]
+    public async Task Access_token_exceeding_default_is_accepted_and_served_from_cache_when_MaxAccessTokenLength_is_raised()
+    {
+        _services.AddClientCredentialsTokenManagement(o => o.MaxAccessTokenLength = AccessToken.MaxLength * 2)
+            .AddClient("test", client => Some.ClientCredentialsClient(client));
+
+        var longAccessToken = new string('a', AccessToken.MaxLength + 1);
+        var mockedRequest = _mockHttp.When("/connect/token")
+            .Respond(_ => Some.TokenHttpResponse(new
+            {
+                access_token = longAccessToken,
+                token_type = "Bearer",
+                expires_in = 3600,
+            }));
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+        token.AccessToken.ToString().ShouldBe(longAccessToken);
+
+        token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+        token.AccessToken.ToString().ShouldBe(longAccessToken);
+
+        _mockHttp.GetMatchCount(mockedRequest).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Service_should_hit_network_when_cache_throws_exception()
     {
         _services.AddClientCredentialsTokenManagement()
