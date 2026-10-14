@@ -25,6 +25,15 @@ internal class StoreTokensInAuthenticationProperties(
     private const string TokenNamesKey = ".TokenNames";
     private const string DPoPKeyName = "dpop_proof_key";
 
+    private const string AccessTokenOptionName =
+        nameof(UserTokenManagementOptions) + "." + nameof(UserTokenManagementOptions.MaxAccessTokenLength);
+
+    private const string RefreshTokenOptionName =
+        nameof(UserTokenManagementOptions) + "." + nameof(UserTokenManagementOptions.MaxRefreshTokenLength);
+
+    private const string IdentityTokenOptionName =
+        nameof(UserTokenManagementOptions) + "." + nameof(UserTokenManagementOptions.MaxIdentityTokenLength);
+
     /// Adds the .Token. prefix to the token name and, if the resource
     /// parameter was included, the suffix marking this token as
     /// per-resource.
@@ -78,10 +87,15 @@ internal class StoreTokensInAuthenticationProperties(
             return new FailedResult("No AccessToken or RefreshToken present in properties");
         }
 
+        var managementOptions = tokenManagementOptionsMonitor.CurrentValue;
+
         var refreshToken = refreshTokenValue == null
             ? null
             : new UserRefreshToken(
-                RefreshToken.Parse(refreshTokenValue),
+                TokenParsing.ParseRefreshToken(
+                    refreshTokenValue,
+                    managementOptions.MaxRefreshTokenLength,
+                    RefreshTokenOptionName),
                 DPoPProofKey.ParseOrDefault(dpopKey));
 
         if (accessTokenValue == null && refreshToken != null)
@@ -91,13 +105,19 @@ internal class StoreTokensInAuthenticationProperties(
 
         var userToken = new UserToken
         {
-            AccessToken = AccessToken.Parse(accessTokenValue ?? throw new NullReferenceException("access_token should not be null here.")),
+            AccessToken = TokenParsing.ParseAccessToken(
+                accessTokenValue ?? throw new NullReferenceException("access_token should not be null here."),
+                managementOptions.MaxAccessTokenLength,
+                AccessTokenOptionName),
             AccessTokenType = AccessTokenType.ParseOrDefault(accessTokenType),
             DPoPJsonWebKey = DPoPProofKey.ParseOrDefault(dpopKey),
             RefreshToken = refreshToken?.RefreshToken,
             Expiration = dtExpires,
             ClientId = ClientId.Parse(clientId ?? "unknown"),
-            IdentityToken = IdentityToken.ParseOrDefault(identityTokenValue),
+            IdentityToken = TokenParsing.ParseIdentityTokenOrDefault(
+                identityTokenValue,
+                managementOptions.MaxIdentityTokenLength,
+                IdentityTokenOptionName),
         };
         return new TokenForParameters(userToken, refreshToken);
     }

@@ -3,26 +3,45 @@
 
 using System.Buffers;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// This class makes sure the ClientCredentialsToken is serialized in an AOT compatible way. 
 /// </summary>
-internal class AotTrimCompatibleClientCredentialsTokenSerializer : IHybridCacheSerializer<ClientCredentialsToken>
+internal sealed class AotTrimCompatibleClientCredentialsTokenSerializer : IHybridCacheSerializer<ClientCredentialsToken>
 {
+    private readonly JsonTypeInfo<ClientCredentialsToken> _typeInfo;
+
+    public AotTrimCompatibleClientCredentialsTokenSerializer(IOptions<ClientCredentialsTokenManagementOptions> options)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Converters =
+            {
+                new LengthLimitedAccessTokenJsonConverter(
+                    options.Value.MaxAccessTokenLength,
+                    nameof(ClientCredentialsTokenManagementOptions) + "." + nameof(ClientCredentialsTokenManagementOptions.MaxAccessTokenLength))
+            }
+        };
+
+        _typeInfo = new DuendeAccessTokenSerializationContext(jsonOptions).ClientCredentialsToken;
+    }
+
     public ClientCredentialsToken Deserialize(ReadOnlySequence<byte> source)
     {
         var reader = new Utf8JsonReader(source);
 
-        return JsonSerializer.Deserialize(ref reader, DuendeAccessTokenSerializationContext.Default.ClientCredentialsToken)!;
+        return JsonSerializer.Deserialize(ref reader, _typeInfo)!;
     }
 
     public void Serialize(ClientCredentialsToken value, IBufferWriter<byte> target)
     {
         using var writer = new Utf8JsonWriter(target);
 
-        JsonSerializer.Serialize<ClientCredentialsToken>(writer, value, DuendeAccessTokenSerializationContext.Default.ClientCredentialsToken);
+        JsonSerializer.Serialize<ClientCredentialsToken>(writer, value, _typeInfo);
     }
 }

@@ -35,6 +35,7 @@ public static class ServiceCollectionExtensions
         services.TryAddTransient<IOpenIdConnectUserTokenEndpoint, OpenIdConnectUserTokenEndpoint>();
         services.TryAddSingleton<IStoreTokensInAuthenticationProperties, StoreTokensInAuthenticationProperties>();
         services.ConfigureOptions<ConfigureOpenIdConnectOptions>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<UserTokenManagementOptions>, UserTokenManagementOptions.Validator>());
 
 
         // By default, we assume that we are in a traditional web application
