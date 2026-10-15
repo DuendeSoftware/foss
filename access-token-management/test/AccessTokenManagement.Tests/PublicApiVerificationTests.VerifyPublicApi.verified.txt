@@ -63,6 +63,14 @@
         public Duende.AccessTokenManagement.Scope? Scope { get; set; }
         public System.Uri? TokenEndpoint { get; set; }
     }
+    public sealed class ClientCredentialsClientCacheOptions
+    {
+        public ClientCredentialsClientCacheOptions() { }
+        public int? CacheLifetimeBuffer { get; set; }
+        public System.TimeSpan? DefaultCacheLifetime { get; set; }
+        public System.TimeSpan? LocalCacheExpiration { get; set; }
+        public bool? UseCacheAutoTuning { get; set; }
+    }
     [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.ClientCredentialsClientName>))]
     public readonly struct ClientCredentialsClientName : System.IEquatable<Duende.AccessTokenManagement.ClientCredentialsClientName>
     {
@@ -87,6 +95,7 @@
         public ClientCredentialsTokenManagementBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
         public Microsoft.Extensions.DependencyInjection.IServiceCollection Services { get; }
         public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder AddClient(string name, System.Action<Duende.AccessTokenManagement.ClientCredentialsClient> configureOptions) { }
+        public Duende.AccessTokenManagement.ClientCredentialsTokenManagementBuilder ConfigureClientCache(string name, System.Action<Duende.AccessTokenManagement.ClientCredentialsClientCacheOptions> configureOptions) { }
     }
     public static class ClientCredentialsTokenManagementDefaults
     {
