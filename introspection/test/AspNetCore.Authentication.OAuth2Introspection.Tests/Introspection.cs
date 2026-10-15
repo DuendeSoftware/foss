@@ -168,111 +168,94 @@ public class Introspection
     }
 
     [Fact]
-    public async Task TwoConcurrentCalls_FirstIntrospectFaults_SecondShouldRetryAndSucceed()
+    public async Task TwoConcurrentCalls_SharedIntrospectionThrows_StarterRethrows_WaiterRetriesAndSucceeds()
     {
-        const string token = "sometoken";
-        var waitForFirstIntrospectionToStart = new ManualResetEvent(initialState: false);
-        var waitForSecondRequestToStart = new ManualResetEvent(initialState: false);
-        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+        var scenario = await StartTwoRequestsWhoseSharedIntrospectionThrows(retryThrowsToo: false);
 
-        var requestCount = 0;
+        // The request that started the call gets its own failure and doesn't retry.
+        await Should.ThrowAsync<TimeoutException>(scenario.Starter);
 
-        var messageHandler = await PipelineFactory.CreateHandler(o =>
-        {
-            _options(o);
+        // The waiting request isn't failed by the starter's call: it makes its own call, which succeeds.
+        var waiterResult = await scenario.Waiter;
+        waiterResult.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-            o.Events.OnSendingRequest = async context =>
-            {
-                var count = Interlocked.Increment(ref requestCount);
-
-                if (count == 1)
-                {
-                    // Signal R2 it can proceed, then wait for R2 to be waiting on the dictionary entry
-                    waitForSecondRequestToStart.WaitOne();
-                    waitForFirstIntrospectionToStart.Set();
-                    await Task.Delay(200); // wait for R2 to reach IntrospectionDictionary
-                    throw new HttpRequestException("Simulated network error");
-                }
-                // Subsequent calls (retries) succeed normally
-            };
-        }, handler);
-
-        var client1 = new HttpClient(messageHandler);
-        var request1 = Task.Run(async () =>
-        {
-            client1.SetBearerToken(token);
-            return await client1.GetAsync("http://test");
-        });
-
-        var client2 = new HttpClient(messageHandler);
-        var request2 = Task.Run(async () =>
-        {
-            waitForSecondRequestToStart.Set();
-            waitForFirstIntrospectionToStart.WaitOne();
-            client2.SetBearerToken(token);
-            return await client2.GetAsync("http://test");
-        });
-
-        await Task.WhenAll(request1, request2);
-
-        var result1 = await request1;
-        result1.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var result2 = await request2;
-        result2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        scenario.IntrospectionCalls().ShouldBe(2);
     }
 
     [Fact]
-    public async Task TwoConcurrentCalls_FirstIntrospectFaults_RetryAlsoFaults_ShouldPropagateException()
+    public async Task TwoConcurrentCalls_SharedIntrospectionThrows_WaiterRetryThrowsToo_BothFail()
     {
-        const string token = "sometoken";
-        var waitForFirstIntrospectionToStart = new ManualResetEvent(initialState: false);
-        var waitForSecondRequestToStart = new ManualResetEvent(initialState: false);
-        var handler = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+        var scenario = await StartTwoRequestsWhoseSharedIntrospectionThrows(retryThrowsToo: true);
 
-        var requestCount = 0;
+        await Should.ThrowAsync<TimeoutException>(scenario.Starter);
+        await Should.ThrowAsync<TimeoutException>(scenario.Waiter);
 
-        var messageHandler = await PipelineFactory.CreateHandler(o =>
-        {
-            _options(o);
+        // One shared call that the waiter joined, plus exactly one retry by the waiter.
+        scenario.IntrospectionCalls().ShouldBe(2);
+    }
 
-            o.Events.OnSendingRequest = async context =>
+    /// <summary>
+    /// Starts two requests with the same token. The first (the starter) begins the introspection call; the
+    /// second (the waiter) joins that call while it's in flight, and then the call throws. With
+    /// <paramref name="retryThrowsToo"/>, every later introspection call throws as well.
+    /// </summary>
+    private async Task<(Task<HttpResponseMessage> Starter, Task<HttpResponseMessage> Waiter, Func<int> IntrospectionCalls)>
+        StartTwoRequestsWhoseSharedIntrospectionThrows(bool retryThrowsToo)
+    {
+        // A token of its own, because the handler's in-flight dictionary is static and shared by all tests.
+        var token = Guid.NewGuid().ToString("N");
+        var timeout = TimeSpan.FromSeconds(10);
+        var starterSending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var introspectionCalls = 0;
+        GatedLookupCache? cache = null;
+
+        var messageHandler = await PipelineFactory.CreateHandler(
+            o =>
             {
-                var count = Interlocked.Increment(ref requestCount);
+                _options(o);
 
-                if (count == 1)
+                o.Events.OnSendingRequest = async _ =>
                 {
-                    // Signal R2, wait for it to reach the dictionary, then fault
-                    waitForSecondRequestToStart.WaitOne();
-                    waitForFirstIntrospectionToStart.Set();
-                    await Task.Delay(200); // wait for R2 to reach IntrospectionDictionary
-                }
+                    if (Interlocked.Increment(ref introspectionCalls) == 1)
+                    {
+                        // Yield first, so the shared Lazy has published this call's task before the waiter joins it.
+                        await Task.Yield();
+                        starterSending.SetResult();
 
-                // All calls (initial + retries) throw — simulating persistent failure
-                throw new HttpRequestException("Persistent network error");
-            };
-        }, handler);
+                        await cache!.LookupReached.WaitAsync(timeout, _ct);
+                        // Returns once the waiter is awaiting this call's task.
+                        cache.ReleaseHeldLookup();
 
-        var client1 = new HttpClient(messageHandler);
-        var request1 = Task.Run(async () =>
-        {
-            client1.SetBearerToken(token);
-            var doRequest = () => client1.GetAsync("http://test");
-            await doRequest.ShouldThrowAsync<HttpRequestException>();
-        });
+                        // What the backchannel HttpClient timeout looks like to the handler.
+                        throw new TimeoutException("Simulated introspection timeout");
+                    }
 
-        var client2 = new HttpClient(messageHandler);
-        var request2 = Task.Run(async () =>
-        {
-            waitForSecondRequestToStart.Set();
-            waitForFirstIntrospectionToStart.WaitOne();
-            client2.SetBearerToken(token);
-            var doRequest = () => client2.GetAsync("http://test");
-            await doRequest.ShouldThrowAsync<HttpRequestException>();
-        });
+                    if (retryThrowsToo)
+                    {
+                        throw new TimeoutException("Simulated introspection timeout on retry");
+                    }
+                };
+            },
+            new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active),
+            services => services.AddKeyedSingleton<HybridCache>(
+                ServiceProviderKeys.IntrospectionCache,
+                (sp, _) => cache = new GatedLookupCache(sp.GetRequiredService<HybridCache>())));
 
-        // Both requests should complete (not hang) — exceptions propagate as HttpRequestException
-        await Task.WhenAll(request1, request2);
+        var starterClient = new HttpClient(messageHandler);
+        starterClient.SetBearerToken(token);
+        var starter = starterClient.GetAsync("http://test", _ct);
+
+        await starterSending.Task.WaitAsync(timeout, _ct);
+        cache!.HoldNextLookup();
+
+        var waiterClient = new HttpClient(messageHandler);
+        waiterClient.SetBearerToken(token);
+        var waiter = waiterClient.GetAsync("http://test", _ct);
+
+        return (
+            starter.WaitAsync(timeout, _ct),
+            waiter.WaitAsync(timeout, _ct),
+            () => Volatile.Read(ref introspectionCalls));
     }
 
     [Theory]

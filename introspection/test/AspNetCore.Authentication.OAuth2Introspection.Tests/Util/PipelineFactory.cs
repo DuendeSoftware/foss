@@ -17,7 +17,8 @@ internal static class PipelineFactory
 {
     public static async Task<TestServer> CreateServer(
         Action<OAuth2IntrospectionOptions> options,
-        DelegatingHandler? backChannelHandler = null)
+        DelegatingHandler? backChannelHandler = null,
+        Action<IServiceCollection>? configureServices = null)
     {
         var host = new HostBuilder()
             .ConfigureWebHost(webHostBuilder => webHostBuilder
@@ -33,6 +34,8 @@ internal static class PipelineFactory
                         services.AddHttpClient(OAuth2IntrospectionDefaults.BackChannelHttpClientName)
                             .AddHttpMessageHandler(() => backChannelHandler);
                     }
+
+                    configureServices?.Invoke(services);
                 })
                 .Configure(app =>
                 {
@@ -74,5 +77,6 @@ internal static class PipelineFactory
 
     public static async Task<HttpMessageHandler> CreateHandler(
         Action<OAuth2IntrospectionOptions> options,
-        DelegatingHandler? handler = null) => (await CreateServer(options, handler)).CreateHandler();
+        DelegatingHandler? handler = null,
+        Action<IServiceCollection>? configureServices = null) => (await CreateServer(options, handler, configureServices)).CreateHandler();
 }
