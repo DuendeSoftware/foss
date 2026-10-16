@@ -32,6 +32,21 @@ internal class AuthenticationSessionUserAccessTokenStore(
         // that inside an HttpClient.
         var cache = GetHttpContext().RequestServices.GetRequiredService<AuthenticateResultCache>();
 
+        // Refreshes for different parameters can store concurrently within one request; don't read while
+        // another one is updating the session.
+        await cache.Lock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            return await GetTokenCoreAsync(cache, parameters).ConfigureAwait(false);
+        }
+        finally
+        {
+            cache.Lock.Release();
+        }
+    }
+
+    private async Task<TokenResult<TokenForParameters>> GetTokenCoreAsync(AuthenticateResultCache cache, UserTokenRequestParameters parameters)
+    {
         // check the cache in case the cookie was re-issued via StoreTokenAsync
         // we use String.Empty as the key for a null SignInScheme
         if (!cache.TryGetValue(parameters.SignInScheme, out var result))
@@ -74,6 +89,21 @@ internal class AuthenticationSessionUserAccessTokenStore(
         // that inside an HttpClient.
         var cache = GetHttpContext().RequestServices.GetRequiredService<AuthenticateResultCache>();
 
+        // Refreshes for different parameters can store concurrently within one request. Read, update, sign in
+        // and cache one at a time, so each store builds on the previous one and the session isn't corrupted.
+        await cache.Lock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await StoreTokenCoreAsync(cache, token, parameters, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            cache.Lock.Release();
+        }
+    }
+
+    private async Task StoreTokenCoreAsync(AuthenticateResultCache cache, UserToken token, UserTokenRequestParameters parameters, CT ct)
+    {
         // check the cache in case the cookie was re-issued via StoreTokenAsync
         // we use String.Empty as the key for a null SignInScheme
         if (!cache.TryGetValue(parameters.SignInScheme, out var result))
