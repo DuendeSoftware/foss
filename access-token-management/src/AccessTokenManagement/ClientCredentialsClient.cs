@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using Duende.AccessTokenManagement.DPoP;
+using Duende.AccessTokenManagement.Internal;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Options;
 
@@ -17,18 +18,25 @@ namespace Duende.AccessTokenManagement;
 public sealed class ClientCredentialsClient
 {
     /// <summary>
-    /// The exact address of the metadata document used to discover the token endpoint when <see cref="TokenEndpoint"/> is not configured.
+    /// The authority used to discover the token endpoint when <see cref="TokenEndpoint"/> is not configured.
     /// </summary>
     /// <remarks>
-    /// The address is requested as supplied; no well-known discovery path is appended.
-    /// The metadata document and discovered token endpoint require HTTPS, except for localhost and 127.0.0.1.
-    /// Only the token endpoint is validated and must belong to the metadata address's authority; other advertised endpoints are ignored.
-    /// Signing keys are neither required nor retrieved. The discovered token endpoint is reused for subsequent requests.
+    /// A full discovery document URL is also accepted when it ends with the default discovery path
+    /// or <see cref="DiscoveryPolicy.DiscoveryDocumentPath"/>.
+    /// Discovery is performed lazily, and the resolved endpoint is shared for the lifetime of these options.
     /// </remarks>
-    public Uri? MetadataAddress { get; set; }
+    public string? Authority { get; set; }
 
     /// <summary>
-    /// The address of the token endpoint
+    /// The policy used to retrieve and validate the discovery document.
+    /// </summary>
+    /// <remarks>
+    /// Defaults require HTTPS except on loopback addresses, validate the issuer and endpoints, and require a signing key set.
+    /// </remarks>
+    public DiscoveryPolicy DiscoveryPolicy { get; set; } = new();
+
+    /// <summary>
+    /// The address of the token endpoint. When configured, <see cref="Authority"/> is ignored.
     /// </summary>
     public Uri? TokenEndpoint { get; set; }
 
@@ -86,12 +94,13 @@ public sealed class ClientCredentialsClient
     /// </summary>
     public DPoPProofKey? DPoPJsonWebKey { get; set; }
 
+    internal AsyncLazy<Uri>? DiscoveredTokenEndpoint { get; set; }
 
     internal sealed class Validator : IValidateOptions<ClientCredentialsClient>
     {
         public ValidateOptionsResult Validate(string? name, ClientCredentialsClient options)
         {
-            if (options.ClientId is not null && (options.MetadataAddress is not null || options.TokenEndpoint is not null))
+            if (options.ClientId is not null && (!string.IsNullOrWhiteSpace(options.Authority) || options.TokenEndpoint is not null))
             {
                 return ValidateOptionsResult.Success;
             }
@@ -107,9 +116,9 @@ public sealed class ClientCredentialsClient
                 errors.Add($"No {nameof(options.ClientId)} configured for {subject}");
             }
 
-            if (options.MetadataAddress is null && options.TokenEndpoint is null)
+            if (string.IsNullOrWhiteSpace(options.Authority) && options.TokenEndpoint is null)
             {
-                errors.Add($"No {nameof(options.MetadataAddress)} or {nameof(options.TokenEndpoint)} configured for {subject}");
+                errors.Add($"No {nameof(options.Authority)} or {nameof(options.TokenEndpoint)} configured for {subject}");
             }
 
             return ValidateOptionsResult.Fail(errors);
