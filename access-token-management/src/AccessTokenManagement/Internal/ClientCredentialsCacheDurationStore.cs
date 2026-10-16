@@ -2,40 +2,37 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
 /// Store for cache duration auto-tuning state.
 /// </summary>
-internal sealed class ClientCredentialsCacheDurationStore(
-    IOptions<ClientCredentialsTokenManagementOptions> options,
-    TimeProvider time)
+internal sealed class ClientCredentialsCacheDurationStore(TimeProvider time)
 {
-    private readonly ClientCredentialsTokenManagementOptions _options = options.Value;
     private readonly ConcurrentDictionary<ClientCredentialsCacheKey, TimeSpan> _cacheDurations = new();
 
     /// <summary>
     /// Gets the cache duration for a given cache key, or returns the default value if not found.
     /// </summary>
-    public TimeSpan GetExpiration(ClientCredentialsCacheKey cacheKey)
+    public TimeSpan GetExpiration(ClientCredentialsCacheKey cacheKey, ResolvedCacheSettings settings)
     {
-        var cacheExpiration = _options.UseCacheAutoTuning
-            ? _cacheDurations.GetValueOrDefault(cacheKey, _options.DefaultCacheLifetime)
-            : _options.DefaultCacheLifetime;
+        var cacheExpiration = settings.UseCacheAutoTuning
+            ? _cacheDurations.GetValueOrDefault(cacheKey, settings.DefaultCacheLifetime)
+            : settings.DefaultCacheLifetime;
         return cacheExpiration;
     }
 
     /// <summary>
     /// Sets the cache duration for a given cache key.
     /// </summary>
-    public TimeSpan SetExpiration(ClientCredentialsCacheKey cacheKey, DateTimeOffset expiration)
+    public TimeSpan SetExpiration(ClientCredentialsCacheKey cacheKey, DateTimeOffset expiration,
+        ResolvedCacheSettings settings)
     {
-        if (!_options.UseCacheAutoTuning
+        if (!settings.UseCacheAutoTuning
             || expiration == DateTimeOffset.MaxValue)
         {
-            return _options.DefaultCacheLifetime;
+            return settings.DefaultCacheLifetime;
         }
 
         // Calculate how long this access token should be valid in the cache.
@@ -44,7 +41,7 @@ internal sealed class ClientCredentialsCacheDurationStore(
 
         var calculated = expiration
                          - time.GetUtcNow()
-                         - TimeSpan.FromSeconds(_options.CacheLifetimeBuffer);
+                         - TimeSpan.FromSeconds(settings.CacheLifetimeBuffer);
 
         _cacheDurations[cacheKey] = calculated;
 
