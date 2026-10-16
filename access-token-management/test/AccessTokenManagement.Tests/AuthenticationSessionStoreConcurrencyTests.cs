@@ -10,10 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Duende.AccessTokenManagement;
 
-/// <summary>
-/// Refreshes for different resources can store their tokens concurrently within one HTTP request.
-/// The default store must not corrupt or lose either of them.
-/// </summary>
 public class AuthenticationSessionStoreConcurrencyTests
 {
     private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
@@ -59,10 +55,6 @@ public class AuthenticationSessionStoreConcurrencyTests
         RefreshToken = RefreshToken.Parse("shared_refresh_token"),
     };
 
-    /// <summary>
-    /// Like the cookie handler within one request: every authenticate returns the same session (one
-    /// properties object). Sign-in takes a moment, so overlapping sign-ins would be seen.
-    /// </summary>
     private class SharedSessionAuthenticationService : IAuthenticationService
     {
         private readonly AuthenticationProperties _session = new();

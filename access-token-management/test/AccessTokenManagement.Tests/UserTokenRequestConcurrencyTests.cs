@@ -10,10 +10,6 @@ using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement;
 
-/// <summary>
-/// Concurrent user token requests that share a refresh token.
-/// See https://github.com/DuendeSoftware/foss/issues/360
-/// </summary>
 public class UserTokenRequestConcurrencyTests
 {
     private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
@@ -21,9 +17,6 @@ public class UserTokenRequestConcurrencyTests
     private readonly BlockingTokenEndpoint _tokenEndpoint = new();
     private readonly CountingConcurrencyControl _control = new(new UserTokenRequestConcurrencyControl());
 
-    /// <summary>
-    /// The real control, counting how many calls have reached it.
-    /// </summary>
     private class CountingConcurrencyControl(IUserTokenRequestConcurrencyControl inner) : IUserTokenRequestConcurrencyControl
     {
         private int _entered;
@@ -150,9 +143,6 @@ public class UserTokenRequestConcurrencyTests
         }
     }
 
-    /// <summary>
-    /// Always reports "no access token cached for these parameters, but here's the refresh token".
-    /// </summary>
     private class RefreshTokenOnlyStore : IUserTokenStore
     {
         public Task<TokenResult<TokenForParameters>> GetTokenAsync(ClaimsPrincipal user, UserTokenRequestParameters? parameters = null, CancellationToken ct = default) =>
@@ -166,9 +156,6 @@ public class UserTokenRequestConcurrencyTests
             Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Issues an access token that echoes the requested resource, but only after <see cref="Release"/>.
-    /// </summary>
     private class BlockingTokenEndpoint : IOpenIdConnectUserTokenEndpoint
     {
         private readonly TaskCompletionSource _firstRequestStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
