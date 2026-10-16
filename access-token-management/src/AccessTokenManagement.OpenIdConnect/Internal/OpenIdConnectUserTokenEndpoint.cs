@@ -147,7 +147,7 @@ internal class OpenIdConnectUserTokenEndpoint(
 
         if (response.IsError)
         {
-            logger.FailedToRefreshAccessToken(LogLevel.Error, response.Error, response.ErrorDescription);
+            logger.FailedToRefreshAccessToken(LogLevel.Warning, response.Error, response.ErrorDescription);
             metrics.TokenRetrievalFailed(request.ClientId, AccessTokenManagementMetrics.TokenRequestType.User, response.Error);
             return TokenResult.Failure(response.Error ?? "Failed to acquire access token", response.ErrorDescription);
         }
@@ -227,7 +227,7 @@ internal class OpenIdConnectUserTokenEndpoint(
 
         if (response.IsError)
         {
-            logger.FailedToRevokeAccessToken(LogLevel.Error, response.Error);
+            logger.FailedToRevokeAccessToken(LogLevel.Warning, response.Error);
         }
     }
 }
