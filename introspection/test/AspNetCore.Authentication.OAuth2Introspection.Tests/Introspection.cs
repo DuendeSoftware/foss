@@ -8,7 +8,6 @@ using Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
@@ -213,8 +212,8 @@ public class Introspection
 
         await Should.ThrowAsync<TaskCanceledException>(request1);
         await Should.ThrowAsync<TaskCanceledException>(request2);
-        (await serverRequests.Completed("request1"))!.Message.ShouldBe("call 1 timed out");
-        (await serverRequests.Completed("request2"))!.Message.ShouldBe("call 2 timed out");
+        (await serverRequests.ExceptionThrownFor("request1"))!.Message.ShouldBe("call 1 timed out");
+        (await serverRequests.ExceptionThrownFor("request2"))!.Message.ShouldBe("call 2 timed out");
         endpoint.Calls.ShouldBe(2);
     }
 
@@ -223,20 +222,18 @@ public class Introspection
     {
         var endpoint = new BlockingIntrospectionEndpoint();
         var cache = new GatedLookupCache();
-        var serverRequests = new ServerRequests();
-        var server = await CreateServer(endpoint, cache, serverRequests);
+        var server = await CreateServer(endpoint, cache);
         using var request2Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
 
         var request1 = Send(server);
         var call1 = await endpoint.NextCall();
 
         var heldRequest2 = cache.HoldNextLookup();
-        var request2 = Send(server, request2Cts.Token, "request2");
+        var request2 = Send(server, request2Cts.Token);
         await heldRequest2.ReleaseAndWaitUntilJoined();
 
         request2Cts.Cancel();
         await Should.ThrowAsync<OperationCanceledException>(request2);
-        await serverRequests.Completed("request2");
 
         var heldRequest3 = cache.HoldNextLookup();
         var request3 = Send(server);

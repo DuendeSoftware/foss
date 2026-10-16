@@ -7,15 +7,14 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 
-// The client stops waiting as soon as it cancels, and only sees a generic cancellation when the server throws one,
-// so this is how a test sees when the server is done with a request and what it threw.
+// When the server throws, the client only sees a generic error, so this is how a test sees what the server threw.
 internal sealed class ServerRequests : IStartupFilter
 {
     public const string HeaderName = "x-test-request";
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<Exception?>> _completed = new();
 
-    public Task<Exception?> Completed(string name) => Get(name).Task.WaitAsync(TimeSpan.FromSeconds(10));
+    public Task<Exception?> ExceptionThrownFor(string name) => Get(name).Task.WaitAsync(TimeSpan.FromSeconds(10));
 
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
     {
