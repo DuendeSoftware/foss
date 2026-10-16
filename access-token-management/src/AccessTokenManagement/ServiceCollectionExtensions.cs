@@ -121,6 +121,11 @@ public static class ServiceCollectionExtensions
             .AddDefaultAccessTokenResiliency()
             .AddClientCredentialsTokenHandler(clientName);
 
+    /// <summary>
+    /// Adds the default resilience pipeline used by access token management HTTP clients.
+    /// </summary>
+    /// <param name="httpClientBuilder">The HTTP client builder to configure.</param>
+    /// <returns>The same builder instance for chaining.</returns>
     public static IHttpClientBuilder AddDefaultAccessTokenResiliency(this IHttpClientBuilder httpClientBuilder)
     {
         httpClientBuilder.AddResilienceHandler("Duende",

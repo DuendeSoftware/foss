@@ -3,4 +3,8 @@
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Indicates whether token retrieval should bypass normal cache reuse and force renewal.
+/// </summary>
+/// <param name="Value"><see langword="true"/> to force token renewal; otherwise <see langword="false"/>.</param>
 public readonly record struct ForceTokenRenewal(bool Value);

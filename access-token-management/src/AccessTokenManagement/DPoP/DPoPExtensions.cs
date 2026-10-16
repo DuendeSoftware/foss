@@ -14,8 +14,18 @@ public static class DPoPExtensions
     private static readonly HttpRequestOptionsKey<bool> ForceRenewalOptionsKey = new("Duende.AccessTokenManagement.ForceRenewal");
     private static readonly HttpRequestOptionsKey<DPoPNonce> DPoPNonceOptionsKey = new("Duende.AccessTokenManagement.DPoPNonce");
 
+    /// <summary>
+    /// Sets whether this request should force token renewal.
+    /// </summary>
+    /// <param name="request">The request to annotate.</param>
+    /// <param name="forceTokenRenewal"><see langword="true"/> to force renewal; otherwise <see langword="false"/>.</param>
     public static void SetForceRenewal(this HttpRequestMessage request, bool forceTokenRenewal) => request.Options.Set(ForceRenewalOptionsKey, forceTokenRenewal);
 
+    /// <summary>
+    /// Gets whether this request is marked to force token renewal.
+    /// </summary>
+    /// <param name="request">The request to inspect.</param>
+    /// <returns><see langword="true"/> if force-renewal is enabled; otherwise <see langword="false"/>.</returns>
     public static bool GetForceRenewal(this HttpRequestMessage request)
     {
         if (request.Options.TryGetValue(ForceRenewalOptionsKey, out var forceRenewal))
@@ -25,6 +35,11 @@ public static class DPoPExtensions
         return false;
     }
 
+    /// <summary>
+    /// Gets the DPoP nonce associated with this request, if one was set.
+    /// </summary>
+    /// <param name="request">The request to inspect.</param>
+    /// <returns>The nonce value, or <see langword="null"/> when none is present.</returns>
     public static DPoPNonce? GetDPoPNonce(this HttpRequestMessage request)
     {
         if (request.Options.TryGetValue(DPoPNonceOptionsKey, out var nonce))
@@ -33,6 +48,12 @@ public static class DPoPExtensions
         }
         return null;
     }
+
+    /// <summary>
+    /// Sets the DPoP nonce to use when generating a proof for this request.
+    /// </summary>
+    /// <param name="request">The request to annotate.</param>
+    /// <param name="nonce">The nonce value.</param>
     public static void SetDPoPNonce(this HttpRequestMessage request, DPoPNonce nonce) => request.Options.Set(DPoPNonceOptionsKey, nonce);
 
     /// <summary>

@@ -9,12 +9,28 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Duende.AccessTokenManagement.DPoP;
 
+/// <summary>
+/// Represents the JSON Web Key (JWK) used to sign <see cref="DPoPProof"/> values.
+/// </summary>
+/// <remarks>
+/// A proof key is the long-lived key material that binds issued tokens to a client.
+/// A per-request <see cref="DPoPProof"/> is generated from this key by <see cref="IDPoPProofService"/>.
+/// </remarks>
 [TypeConverter(typeof(StringValueConverter<DPoPProofKey>))]
 [JsonConverter(typeof(StringValueJsonConverter<DPoPProofKey>))]
 public readonly record struct DPoPProofKey : IStronglyTypedValue<DPoPProofKey>
 {
+    /// <summary>
+    /// Determines whether this proof key value equals another proof key value.
+    /// </summary>
+    /// <param name="other">The other value to compare.</param>
+    /// <returns><see langword="true"/> when both values are equal; otherwise <see langword="false"/>.</returns>
     public bool Equals(DPoPProofKey other) => Value == other.Value;
 
+    /// <summary>
+    /// Returns the hash code for the wrapped key string.
+    /// </summary>
+    /// <returns>The hash code.</returns>
     public override int GetHashCode() => Value.GetHashCode();
 
     /// <summary>
@@ -25,6 +41,9 @@ public readonly record struct DPoPProofKey : IStronglyTypedValue<DPoPProofKey>
 
     private readonly JsonWebKey _jsonWebKey;
 
+    /// <summary>
+    /// Returns the wrapped JWK string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [
@@ -50,9 +69,9 @@ public readonly record struct DPoPProofKey : IStronglyTypedValue<DPoPProofKey>
         };
 
     /// <summary>
-    /// You can't directly create this type. 
+    /// Prevents creating an uninitialized <see cref="DPoPProofKey"/> instance.
     /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="InvalidOperationException">Always thrown.</exception>
     public DPoPProofKey() => throw new InvalidOperationException("Can't create null value");
     private DPoPProofKey(string value)
     {

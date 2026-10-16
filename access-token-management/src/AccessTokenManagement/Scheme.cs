@@ -16,6 +16,9 @@ namespace Duende.AccessTokenManagement;
 [TypeConverter(typeof(StringValueConverter<Scheme>))]
 public readonly record struct Scheme : IStronglyTypedValue<Scheme>
 {
+    /// <summary>
+    /// The maximum supported length for an authorization scheme value.
+    /// </summary>
     public const int MaxLength = 50;
 
     /// <summary>
@@ -24,12 +27,18 @@ public readonly record struct Scheme : IStronglyTypedValue<Scheme>
     /// <param name="value"></param>
     public static implicit operator string(Scheme value) => value.ToString();
 
+    /// <summary>
+    /// Returns the wrapped authorization scheme string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [
         ValidationRules.MaxLength(MaxLength),
     ];
 
+    /// <summary>
+    /// The standard bearer authorization scheme.
+    /// </summary>
     public static readonly Scheme
         Bearer = Parse(OidcConstants.AuthenticationSchemes.AuthorizationHeaderBearer);
 

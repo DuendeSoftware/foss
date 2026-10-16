@@ -13,9 +13,15 @@ namespace Duende.AccessTokenManagement;
 [JsonConverter(typeof(StringValueJsonConverter<AccessToken>))]
 public readonly record struct AccessToken : IStronglyTypedValue<AccessToken>
 {
+    /// <summary>
+    /// Returns the wrapped access token string.
+    /// </summary>
     public override string ToString() => Value;
 
-    // Officially, there's no max length for JWTs, but 32k is a good limit
+    /// <summary>
+    /// The maximum supported length for an access token string.
+    /// </summary>
+    // Officially, there's no max length for JWTs, but 32k is a good limit.
     public const int MaxLength = 32 * 1024; // 32k
 
     private static readonly ValidationRule<string>[] Validators = [

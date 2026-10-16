@@ -7,10 +7,20 @@ using Duende.AccessTokenManagement.Internal;
 
 namespace Duende.AccessTokenManagement;
 
+/// <summary>
+/// Represents an OAuth refresh token value.
+/// </summary>
 [JsonConverter(typeof(StringValueJsonConverter<RefreshToken>))]
 public readonly record struct RefreshToken : IStronglyTypedValue<RefreshToken>
 {
+    /// <summary>
+    /// The maximum supported length for a refresh token string.
+    /// </summary>
     public const int MaxLength = 4 * 1024;
+
+    /// <summary>
+    /// Returns the wrapped refresh token string.
+    /// </summary>
     public override string ToString() => Value;
 
     private static readonly ValidationRule<string>[] Validators = [
