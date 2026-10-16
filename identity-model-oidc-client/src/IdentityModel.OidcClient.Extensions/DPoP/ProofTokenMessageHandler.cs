@@ -1,8 +1,10 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+#if NET5_0_OR_GREATER
 using System.Web;
 using Duende.IdentityModel.Client;
+#endif
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -153,10 +155,7 @@ public class ProofTokenMessageHandler : DelegatingHandler
     /// <summary>
     /// In .NET Standard 2.0, we don't have access to HttpRequestMessage.Options, so this method is a no-op.
     /// </summary>
-    private async Task RefreshClientAssertionAsync(HttpRequestMessage request)
-    {
-        await Task.CompletedTask.ConfigureAwait(false);
-    }
+    private Task RefreshClientAssertionAsync(HttpRequestMessage request) => Task.CompletedTask;
 
 #endif
 
