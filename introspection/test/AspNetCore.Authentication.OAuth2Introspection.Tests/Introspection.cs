@@ -7,6 +7,7 @@ using System.Text.Json;
 using Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
@@ -163,6 +164,141 @@ public class Introspection
 
         var result2 = await request2;
         result2.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task When_doing_concurrent_calls_and_starter_times_out_then_waiting_request_makes_its_own_call_and_succeeds()
+    {
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var server = await CreateServer(endpoint, cache);
+
+        var request1 = Send(server);
+        var call1 = await endpoint.NextCall();
+
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server);
+        await heldRequest2.ReleaseAndWaitUntilJoined();
+
+        call1.TimeOut("call 1 timed out");
+        var call2 = await endpoint.NextCall();
+        call2.Succeed();
+
+        await Should.ThrowAsync<TaskCanceledException>(request1);
+        (await request2).StatusCode.ShouldBe(HttpStatusCode.OK);
+        endpoint.Calls.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task When_doing_concurrent_calls_and_starter_and_retry_time_out_then_each_request_gets_its_own_error()
+    {
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var serverRequests = new ServerRequests();
+        var server = await CreateServer(endpoint, cache, serverRequests);
+
+        var request1 = Send(server, name: "request1");
+        var call1 = await endpoint.NextCall();
+
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server, name: "request2");
+        await heldRequest2.ReleaseAndWaitUntilJoined();
+
+        call1.TimeOut("call 1 timed out");
+        var call2 = await endpoint.NextCall();
+        call2.TimeOut("call 2 timed out");
+
+        await Should.ThrowAsync<TaskCanceledException>(request1);
+        await Should.ThrowAsync<TaskCanceledException>(request2);
+        (await serverRequests.ExceptionThrownFor("request1"))!.Message.ShouldBe("call 1 timed out");
+        (await serverRequests.ExceptionThrownFor("request2"))!.Message.ShouldBe("call 2 timed out");
+        endpoint.Calls.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task When_doing_concurrent_calls_and_waiting_request_disconnects_then_it_stops_and_later_requests_join_the_running_call()
+    {
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var server = await CreateServer(endpoint, cache);
+        using var request2Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var request1 = Send(server);
+        var call1 = await endpoint.NextCall();
+
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server, request2Cts.Token);
+        await heldRequest2.ReleaseAndWaitUntilJoined();
+
+        request2Cts.Cancel();
+        await Should.ThrowAsync<OperationCanceledException>(request2);
+
+        var heldRequest3 = cache.HoldNextLookup();
+        var request3 = Send(server);
+        await heldRequest3.ReleaseAndWaitUntilJoined();
+
+        call1.Succeed();
+
+        (await request1).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await request3).StatusCode.ShouldBe(HttpStatusCode.OK);
+        endpoint.Calls.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task When_doing_concurrent_calls_and_starter_disconnects_then_waiting_request_makes_its_own_call_and_succeeds()
+    {
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var server = await CreateServer(endpoint, cache);
+        using var request1Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var request1 = Send(server, request1Cts.Token);
+        await endpoint.NextCall();
+
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server);
+        await heldRequest2.ReleaseAndWaitUntilJoined();
+
+        request1Cts.Cancel();
+        var call2 = await endpoint.NextCall();
+        call2.Succeed();
+
+        await Should.ThrowAsync<OperationCanceledException>(request1);
+        (await request2).StatusCode.ShouldBe(HttpStatusCode.OK);
+        endpoint.Calls.ShouldBe(2);
+    }
+
+    // The handler's in-flight introspection calls are static and shared by all tests, so each test needs its own token.
+    private readonly string _concurrentToken = Guid.NewGuid().ToString("N");
+
+    private Task<HttpMessageHandler> CreateServer(
+        BlockingIntrospectionEndpoint endpoint,
+        GatedLookupCache cache,
+        ServerRequests? serverRequests = null) =>
+        PipelineFactory.CreateHandler(_options, endpoint, services =>
+        {
+            services.AddKeyedSingleton<HybridCache>(ServiceProviderKeys.IntrospectionCache, (sp, _) =>
+            {
+                cache.Inner = sp.GetRequiredService<HybridCache>();
+                return cache;
+            });
+
+            if (serverRequests != null)
+            {
+                services.AddSingleton<IStartupFilter>(serverRequests);
+            }
+        });
+
+    private Task<HttpResponseMessage> Send(HttpMessageHandler server, CancellationToken? ct = null, string? name = null)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "http://test");
+        request.SetBearerToken(_concurrentToken);
+        if (name != null)
+        {
+            request.Headers.Add(ServerRequests.HeaderName, name);
+        }
+
+        return new HttpClient(server).SendAsync(request, ct ?? _ct).WaitAsync(TimeSpan.FromSeconds(10), _ct);
     }
 
     [Theory]
