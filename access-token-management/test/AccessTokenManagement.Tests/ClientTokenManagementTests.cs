@@ -449,11 +449,13 @@ public class ClientTokenManagementTests
     // HybridCache skips a plain MemoryDistributedCache as its second level, so wrap it.
     private sealed class SharedCache(IDistributedCache inner) : IDistributedCache
     {
+        private readonly TaskCompletionSource _written = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public int Sets;
+        public Task Written => _written.Task;
         public byte[]? Get(string key) => inner.Get(key);
         public Task<byte[]?> GetAsync(string key, CancellationToken ct = default) => inner.GetAsync(key, ct);
-        public void Set(string key, byte[] value, DistributedCacheEntryOptions o) { Sets++; inner.Set(key, value, o); }
-        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions o, CancellationToken ct = default) { Sets++; return inner.SetAsync(key, value, o, ct); }
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions o) { Sets++; inner.Set(key, value, o); _written.TrySetResult(); }
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions o, CancellationToken ct = default) { Sets++; await inner.SetAsync(key, value, o, ct); _written.TrySetResult(); }
         public void Refresh(string key) => inner.Refresh(key);
         public Task RefreshAsync(string key, CancellationToken ct = default) => inner.RefreshAsync(key, ct);
         public void Remove(string key) => inner.Remove(key);
@@ -481,6 +483,8 @@ public class ClientTokenManagementTests
         var instanceA = BuildInstance(cache, idpA, maxAccessTokenLength: 65_536);
         await instanceA.GetRequiredService<IClientCredentialsTokenManager>()
             .GetAccessTokenAsync(ClientCredentialsClientName.Parse("api"), ct: _ct).GetToken();
+        // HybridCache returns the token before it writes it to the distributed cache, so wait for that write.
+        await cache.Written.WaitAsync(TimeSpan.FromSeconds(10), _ct);
 
         var idpB = new MockHttpMessageHandler();
         var tokenRequestsB = idpB.When("/connect/token").Respond(_ => Some.TokenHttpResponse(new { access_token = new string('b', 100), token_type = "Bearer", expires_in = 3600 }));
