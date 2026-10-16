@@ -170,187 +170,140 @@ public class Introspection
     }
 
     [Fact]
-    public async Task TwoConcurrentCalls_SharedIntrospectionThrows_StarterRethrows_WaiterRetriesAndSucceeds()
+    public async Task When_doing_concurrent_calls_and_starter_times_out_then_waiting_request_makes_its_own_call_and_succeeds()
     {
-        var scenario = await StartStarterAndWaiter(
-            // What the backchannel HttpClient timeout looks like to the handler.
-            sharedCallOnceWaiterJoined: _ => throw new TimeoutException("Simulated introspection timeout"));
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var server = await CreateServer(endpoint, cache);
 
-        // The request that started the call gets its own failure and doesn't retry.
-        await Should.ThrowAsync<TimeoutException>(scenario.Starter);
+        var request1 = Send(server);
+        var call1 = await endpoint.NextCall();
 
-        // The waiting request isn't failed by the starter's call: it makes its own call, which succeeds.
-        var waiterResult = await scenario.Waiter;
-        waiterResult.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server);
+        await heldRequest2.ReleaseAndWaitUntilJoined();
 
-        scenario.IntrospectionCalls().ShouldBe(2);
+        call1.TimeOut("call 1 timed out");
+        var call2 = await endpoint.NextCall();
+        call2.Succeed();
+
+        await Should.ThrowAsync<TaskCanceledException>(request1);
+        (await request2).StatusCode.ShouldBe(HttpStatusCode.OK);
+        endpoint.Calls.ShouldBe(2);
     }
 
     [Fact]
-    public async Task TwoConcurrentCalls_SharedIntrospectionThrows_WaiterRetryThrowsToo_BothFail()
+    public async Task When_doing_concurrent_calls_and_starter_and_retry_time_out_then_each_request_gets_its_own_error()
     {
-        var scenario = await StartStarterAndWaiter(
-            sharedCallOnceWaiterJoined: _ => throw new TimeoutException("Simulated introspection timeout"),
-            laterCalls: () => throw new TimeoutException("Simulated introspection timeout on retry"));
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var serverRequests = new ServerRequests();
+        var server = await CreateServer(endpoint, cache, serverRequests);
 
-        await Should.ThrowAsync<TimeoutException>(scenario.Starter);
-        await Should.ThrowAsync<TimeoutException>(scenario.Waiter);
+        var request1 = Send(server, name: "request1");
+        var call1 = await endpoint.NextCall();
 
-        // One shared call that the waiter joined, plus exactly one retry by the waiter.
-        scenario.IntrospectionCalls().ShouldBe(2);
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server, name: "request2");
+        await heldRequest2.ReleaseAndWaitUntilJoined();
+
+        call1.TimeOut("call 1 timed out");
+        var call2 = await endpoint.NextCall();
+        call2.TimeOut("call 2 timed out");
+
+        await Should.ThrowAsync<TaskCanceledException>(request1);
+        await Should.ThrowAsync<TaskCanceledException>(request2);
+        (await serverRequests.Completed("request1"))!.Message.ShouldBe("call 1 timed out");
+        (await serverRequests.Completed("request2"))!.Message.ShouldBe("call 2 timed out");
+        endpoint.Calls.ShouldBe(2);
     }
 
     [Fact]
-    public async Task TwoConcurrentCalls_WaiterDisconnects_WaiterStopsWaiting_SharedCallContinuesForOthers()
+    public async Task When_doing_concurrent_calls_and_waiting_request_disconnects_then_it_stops_and_later_requests_join_the_running_call()
     {
-        var finishSharedCall = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var waiterCts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var serverRequests = new ServerRequests();
+        var server = await CreateServer(endpoint, cache, serverRequests);
+        using var request2Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
 
-        var scenario = await StartStarterAndWaiter(
-            sharedCallOnceWaiterJoined: _ => finishSharedCall.Task.WaitAsync(Timeout, _ct),
-            waiterCancellation: waiterCts.Token);
+        var request1 = Send(server);
+        var call1 = await endpoint.NextCall();
 
-        waiterCts.Cancel();
-        await Should.ThrowAsync<OperationCanceledException>(scenario.Waiter);
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server, request2Cts.Token, "request2");
+        await heldRequest2.ReleaseAndWaitUntilJoined();
 
-        // The waiter's handler stops while the shared call is still running.
-        await scenario.Completions.Completed(WaiterName).WaitAsync(Timeout, _ct);
+        request2Cts.Cancel();
+        await Should.ThrowAsync<OperationCanceledException>(request2);
+        await serverRequests.Completed("request2");
 
-        // The waiter left the in-flight call in place, so a later request for the token joins it.
-        var lateGate = new LookupGate();
-        scenario.Cache.HoldNextLookup(lateGate);
-        var late = Send(scenario.Handler, scenario.Token, "late", _ct);
-        await lateGate.Reached.WaitAsync(Timeout, _ct);
-        lateGate.Release();
+        var heldRequest3 = cache.HoldNextLookup();
+        var request3 = Send(server);
+        await heldRequest3.ReleaseAndWaitUntilJoined();
 
-        finishSharedCall.SetResult();
+        call1.Succeed();
 
-        (await scenario.Starter).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await late.WaitAsync(Timeout, _ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        scenario.IntrospectionCalls().ShouldBe(1);
+        (await request1).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await request3).StatusCode.ShouldBe(HttpStatusCode.OK);
+        endpoint.Calls.ShouldBe(1);
     }
 
     [Fact]
-    public async Task TwoConcurrentCalls_StarterDisconnects_SharedCallIsCancelled_WaiterRetriesAndSucceeds()
+    public async Task When_doing_concurrent_calls_and_starter_disconnects_then_waiting_request_makes_its_own_call_and_succeeds()
     {
-        using var starterCts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+        var endpoint = new BlockingIntrospectionEndpoint();
+        var cache = new GatedLookupCache();
+        var server = await CreateServer(endpoint, cache);
+        using var request1Cts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
 
-        var scenario = await StartStarterAndWaiter(
-            sharedCallOnceWaiterJoined: async httpContext =>
-            {
-                starterCts.Cancel();
-                try
-                {
-                    await Task.Delay(Timeout, httpContext.RequestAborted);
-                }
-                catch (OperationCanceledException)
-                {
-                    // The starter's request was aborted. The handler passes that on to the backchannel call.
-                }
-            },
-            starterCancellation: starterCts.Token);
+        var request1 = Send(server, request1Cts.Token);
+        await endpoint.NextCall();
 
-        await Should.ThrowAsync<OperationCanceledException>(scenario.Starter);
+        var heldRequest2 = cache.HoldNextLookup();
+        var request2 = Send(server);
+        await heldRequest2.ReleaseAndWaitUntilJoined();
 
-        // The shared call was cancelled with the starter's request, so the waiter makes its own call.
-        var waiterResult = await scenario.Waiter;
-        waiterResult.StatusCode.ShouldBe(HttpStatusCode.OK);
+        request1Cts.Cancel();
+        var call2 = await endpoint.NextCall();
+        call2.Succeed();
 
-        scenario.IntrospectionCalls().ShouldBe(2);
+        await Should.ThrowAsync<OperationCanceledException>(request1);
+        (await request2).StatusCode.ShouldBe(HttpStatusCode.OK);
+        endpoint.Calls.ShouldBe(2);
     }
 
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
-    private const string StarterName = "starter";
-    private const string WaiterName = "waiter";
+    // The handler's in-flight introspection calls are static and shared by all tests, so each test needs its own token.
+    private readonly string _concurrentToken = Guid.NewGuid().ToString("N");
 
-    private sealed record ConcurrentScenario(
-        Task<HttpResponseMessage> Starter,
-        Task<HttpResponseMessage> Waiter,
-        Func<int> IntrospectionCalls,
-        GatedLookupCache Cache,
-        RequestCompletions Completions,
-        HttpMessageHandler Handler,
-        string Token);
-
-    /// <summary>
-    /// Starts two requests with the same token. The first (the starter) begins the introspection call; the
-    /// second (the waiter) joins that call while it's in flight. The shared call then runs
-    /// <paramref name="sharedCallOnceWaiterJoined"/> with the starter's <see cref="HttpContext"/>, and every
-    /// later introspection call runs <paramref name="laterCalls"/>.
-    /// </summary>
-    private async Task<ConcurrentScenario> StartStarterAndWaiter(
-        Func<HttpContext, Task> sharedCallOnceWaiterJoined,
-        Func<Task>? laterCalls = null,
-        CancellationToken? starterCancellation = null,
-        CancellationToken? waiterCancellation = null)
-    {
-        // A token of its own, because the handler's in-flight dictionary is static and shared by all tests.
-        var token = Guid.NewGuid().ToString("N");
-        var starterSending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var waiterGate = new LookupGate();
-        var introspectionCalls = 0;
-        var completions = new RequestCompletions();
-        GatedLookupCache? cache = null;
-
-        var messageHandler = await PipelineFactory.CreateHandler(
-            o =>
+    private Task<HttpMessageHandler> CreateServer(
+        BlockingIntrospectionEndpoint endpoint,
+        GatedLookupCache cache,
+        ServerRequests? serverRequests = null) =>
+        PipelineFactory.CreateHandler(_options, endpoint, services =>
+        {
+            services.AddKeyedSingleton<HybridCache>(ServiceProviderKeys.IntrospectionCache, (sp, _) =>
             {
-                _options(o);
-
-                o.Events.OnSendingRequest = async context =>
-                {
-                    if (Interlocked.Increment(ref introspectionCalls) == 1)
-                    {
-                        // Yield first, so the shared Lazy has published this call's task before the waiter joins it.
-                        await Task.Yield();
-                        starterSending.SetResult();
-
-                        await waiterGate.Reached.WaitAsync(Timeout, _ct);
-                        // Returns once the waiter is awaiting this call's task.
-                        waiterGate.Release();
-
-                        await sharedCallOnceWaiterJoined(context.HttpContext);
-                        return;
-                    }
-
-                    if (laterCalls != null)
-                    {
-                        await laterCalls();
-                    }
-                };
-            },
-            new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active),
-            services =>
-            {
-                services.AddKeyedSingleton<HybridCache>(
-                    ServiceProviderKeys.IntrospectionCache,
-                    (sp, _) => cache = new GatedLookupCache(sp.GetRequiredService<HybridCache>()));
-                services.AddSingleton<IStartupFilter>(completions);
+                cache.Inner = sp.GetRequiredService<HybridCache>();
+                return cache;
             });
 
-        var starter = Send(messageHandler, token, StarterName, starterCancellation ?? _ct);
+            if (serverRequests != null)
+            {
+                services.AddSingleton<IStartupFilter>(serverRequests);
+            }
+        });
 
-        await starterSending.Task.WaitAsync(Timeout, _ct);
-        cache!.HoldNextLookup(waiterGate);
-
-        var waiter = Send(messageHandler, token, WaiterName, waiterCancellation ?? _ct);
-
-        return new ConcurrentScenario(
-            starter.WaitAsync(Timeout, _ct),
-            waiter.WaitAsync(Timeout, _ct),
-            () => Volatile.Read(ref introspectionCalls),
-            cache,
-            completions,
-            messageHandler,
-            token);
-    }
-
-    private static Task<HttpResponseMessage> Send(HttpMessageHandler handler, string token, string name, CancellationToken ct)
+    private Task<HttpResponseMessage> Send(HttpMessageHandler server, CancellationToken? ct = null, string? name = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "http://test");
-        request.SetBearerToken(token);
-        request.Headers.Add(RequestCompletions.HeaderName, name);
-        return new HttpClient(handler).SendAsync(request, ct);
+        request.SetBearerToken(_concurrentToken);
+        if (name != null)
+        {
+            request.Headers.Add(ServerRequests.HeaderName, name);
+        }
+
+        return new HttpClient(server).SendAsync(request, ct ?? _ct).WaitAsync(TimeSpan.FromSeconds(10), _ct);
     }
 
     [Theory]
