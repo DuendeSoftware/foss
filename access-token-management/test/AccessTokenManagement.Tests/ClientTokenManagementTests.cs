@@ -7,7 +7,9 @@ using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.Framework;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RichardSzalay.MockHttp;
@@ -412,6 +414,106 @@ public class ClientTokenManagementTests
 
         token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
         _mockHttp.GetMatchCount(mockedRequest).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Access_token_exceeding_default_is_accepted_and_served_from_cache_when_MaxAccessTokenLength_is_raised()
+    {
+        _services.AddClientCredentialsTokenManagement(o => o.MaxAccessTokenLength = AccessToken.MaxLength * 2)
+            .AddClient("test", client => Some.ClientCredentialsClient(client));
+
+        var longAccessToken = new string('a', AccessToken.MaxLength + 1);
+        var mockedRequest = _mockHttp.When("/connect/token")
+            .Respond(_ => Some.TokenHttpResponse(new
+            {
+                access_token = longAccessToken,
+                token_type = "Bearer",
+                expires_in = 3600,
+            }));
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+        token.AccessToken.ToString().ShouldBe(longAccessToken);
+
+        token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+        token.AccessToken.ToString().ShouldBe(longAccessToken);
+
+        _mockHttp.GetMatchCount(mockedRequest).ShouldBe(1);
+    }
+
+    // HybridCache skips a plain MemoryDistributedCache as its second level, so wrap it.
+    private sealed class SharedCache(IDistributedCache inner) : IDistributedCache
+    {
+        private readonly TaskCompletionSource _written = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int Sets;
+        public Task Written => _written.Task;
+        public byte[]? Get(string key) => inner.Get(key);
+        public Task<byte[]?> GetAsync(string key, CancellationToken ct = default) => inner.GetAsync(key, ct);
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions o) { Sets++; inner.Set(key, value, o); _written.TrySetResult(); }
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions o, CancellationToken ct = default) { Sets++; await inner.SetAsync(key, value, o, ct); _written.TrySetResult(); }
+        public void Refresh(string key) => inner.Refresh(key);
+        public Task RefreshAsync(string key, CancellationToken ct = default) => inner.RefreshAsync(key, ct);
+        public void Remove(string key) => inner.Remove(key);
+        public Task RemoveAsync(string key, CancellationToken ct = default) => inner.RemoveAsync(key, ct);
+    }
+
+    private ServiceProvider BuildInstance(SharedCache cache, MockHttpMessageHandler idp, int maxAccessTokenLength)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IDistributedCache>(cache);
+        services.AddClientCredentialsTokenManagement(o => o.MaxAccessTokenLength = maxAccessTokenLength)
+            .AddClient("api", client => Some.ClientCredentialsClient(client));
+        services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => idp);
+        return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public async Task Instance_with_lower_limit_is_served_the_cached_token_written_by_another_instance()
+    {
+        var cache = new SharedCache(new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions())));
+
+        var idpA = new MockHttpMessageHandler();
+        idpA.When("/connect/token").Respond(_ => Some.TokenHttpResponse(new { access_token = new string('a', 40_000), token_type = "Bearer", expires_in = 3600 }));
+        var instanceA = BuildInstance(cache, idpA, maxAccessTokenLength: 65_536);
+        await instanceA.GetRequiredService<IClientCredentialsTokenManager>()
+            .GetAccessTokenAsync(ClientCredentialsClientName.Parse("api"), ct: _ct).GetToken();
+        // HybridCache returns the token before it writes it to the distributed cache, so wait for that write.
+        await cache.Written.WaitAsync(TimeSpan.FromSeconds(10), _ct);
+
+        var idpB = new MockHttpMessageHandler();
+        var tokenRequestsB = idpB.When("/connect/token").Respond(_ => Some.TokenHttpResponse(new { access_token = new string('b', 100), token_type = "Bearer", expires_in = 3600 }));
+        var managerB = BuildInstance(cache, idpB, maxAccessTokenLength: AccessToken.MaxLength).GetRequiredService<IClientCredentialsTokenManager>();
+
+        var lengths = new List<int>();
+        for (var call = 1; call <= 3; call++)
+        {
+            var token = await managerB.GetAccessTokenAsync(ClientCredentialsClientName.Parse("api"), ct: _ct).GetToken();
+            lengths.Add(token.AccessToken.ToString().Length);
+        }
+
+        new { TokenRequestsByB = idpB.GetMatchCount(tokenRequestsB), Lengths = string.Join(",", lengths) }
+            .ShouldBe(new { TokenRequestsByB = 0, Lengths = "40000,40000,40000" });
+    }
+
+    [Fact]
+    public async Task Token_endpoint_response_over_MaxAccessTokenLength_is_rejected_and_not_cached()
+    {
+        var cache = new SharedCache(new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions())));
+        var idp = new MockHttpMessageHandler();
+        idp.When("/connect/token").Respond(_ => Some.TokenHttpResponse(new { access_token = new string('a', 40_000), token_type = "Bearer", expires_in = 3600 }));
+        var manager = BuildInstance(cache, idp, maxAccessTokenLength: AccessToken.MaxLength).GetRequiredService<IClientCredentialsTokenManager>();
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => manager.GetAccessTokenAsync(ClientCredentialsClientName.Parse("api"), ct: _ct));
+
+        exception.Message.ShouldContain("ClientCredentialsTokenManagementOptions.MaxAccessTokenLength");
+        cache.Sets.ShouldBe(0);
     }
 
     [Fact]

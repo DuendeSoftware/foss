@@ -230,6 +230,156 @@ public class UserTokenManagementTests(ITestOutputHelper output) : IntegrationTes
     }
 
     [Fact]
+    public async Task Refresh_succeeds_when_identity_token_exceeds_default_and_MaxIdentityTokenLength_is_raised()
+    {
+        AppHost.OnConfigureServices += services =>
+            services.Configure<UserTokenManagementOptions>(o => o.MaxIdentityTokenLength = IdentityToken.MaxLength * 2);
+
+        var longIdentityToken = new string('a', IdentityToken.MaxLength + 1);
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "tokentype",
+            expires_in = 10,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        var refreshTokenResponse = new
+        {
+            id_token = longIdentityToken,
+            access_token = "refreshed_access_token",
+            token_type = "tokentype",
+            expires_in = 3600,
+            refresh_token = "refreshed_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .WithFormData("refresh_token", "initial_refresh_token")
+            .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse));
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        // first request refreshes (token endpoint response)
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+        token.ShouldNotBeNull();
+        token.IdentityToken.ShouldBe(longIdentityToken);
+
+        // second request rehydrates the token from the authentication cookie
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+        token.ShouldNotBeNull();
+        token.IdentityToken.ShouldBe(longIdentityToken);
+    }
+
+    [Fact]
+    public async Task Login_and_refresh_succeed_when_refresh_token_exceeds_default_and_MaxRefreshTokenLength_is_raised()
+    {
+        AppHost.OnConfigureServices += services =>
+            services.Configure<UserTokenManagementOptions>(o => o.MaxRefreshTokenLength = RefreshToken.MaxLength * 2);
+
+        var loginRefreshToken = new string('a', RefreshToken.MaxLength + 1);
+        var refreshedRefreshToken = new string('b', RefreshToken.MaxLength + 1);
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "tokentype",
+            expires_in = 10,
+            refresh_token = loginRefreshToken,
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        var refreshTokenResponse = new
+        {
+            id_token = "refreshed_id_token",
+            access_token = "refreshed_access_token",
+            token_type = "tokentype",
+            expires_in = 3600,
+            refresh_token = refreshedRefreshToken,
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .WithFormData("refresh_token", loginRefreshToken)
+            .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse));
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        // rehydrates the long login refresh token, then refreshes with it
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+
+        token.ShouldNotBeNull();
+        token.AccessToken.ShouldBe("refreshed_access_token");
+        token.RefreshToken.ShouldBe(refreshedRefreshToken);
+    }
+
+    [Fact]
+    public async Task Refresh_succeeds_when_access_token_exceeds_default_and_MaxAccessTokenLength_is_raised()
+    {
+        AppHost.OnConfigureServices += services =>
+            services.Configure<UserTokenManagementOptions>(o => o.MaxAccessTokenLength = AccessToken.MaxLength * 2);
+
+        var longAccessToken = new string('a', AccessToken.MaxLength + 1);
+        var mockHttp = new MockHttpMessageHandler();
+        AppHost.IdentityServerHttpHandler = mockHttp;
+
+        var initialTokenResponse = new
+        {
+            id_token = IdentityServerHost.CreateIdToken("1", "web"),
+            access_token = "initial_access_token",
+            token_type = "tokentype",
+            expires_in = 10,
+            refresh_token = "initial_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "authorization_code")
+            .Respond("application/json", JsonSerializer.Serialize(initialTokenResponse));
+
+        var refreshTokenResponse = new
+        {
+            id_token = "refreshed_id_token",
+            access_token = longAccessToken,
+            token_type = "tokentype",
+            expires_in = 3600,
+            refresh_token = "refreshed_refresh_token",
+        };
+        mockHttp.When("/connect/token")
+            .WithFormData("grant_type", "refresh_token")
+            .WithFormData("refresh_token", "initial_refresh_token")
+            .Respond("application/json", JsonSerializer.Serialize(refreshTokenResponse));
+
+        await InitializeAsync();
+        await AppHost.LoginAsync("alice");
+
+        // first request refreshes (token endpoint response)
+        var response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        var token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+        token.ShouldNotBeNull();
+        token.AccessToken.ShouldBe(longAccessToken);
+
+        // second request rehydrates the token from the authentication cookie
+        response = await AppHost.BrowserClient.GetAsync(AppHost.Url("/user_token"), _ct);
+        token = await response.Content.ReadFromJsonAsync<UserTokenModel>(_ct);
+        token.ShouldNotBeNull();
+        token.AccessToken.ShouldBe(longAccessToken);
+    }
+
+    [Fact]
     public async Task Short_token_lifetime_should_trigger_refresh()
     {
         // This test makes an initial token request using code flow and then

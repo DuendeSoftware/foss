@@ -14,7 +14,8 @@ namespace Duende.AccessTokenManagement;
 public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
 {
     /// <summary>
-    /// The maximum supported length for an identity token string.
+    /// The default maximum supported length for an identity token string. It is used when no explicit maximum is supplied.
+    /// ATM read paths use the configured max length option instead.
     /// </summary>
     public const int MaxLength = 32 * 1024;
 
@@ -43,7 +44,27 @@ public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
     /// and also includes a list of errors. This is useful for validating user input or other scenarios where you want to provide feedback
     /// </summary>
     public static bool TryParse(string value, [NotNullWhen(true)] out IdentityToken? parsed, out string[] errors) =>
-        IStronglyTypedValue<IdentityToken>.TryBuildValidatedObject(value, Validators, out parsed, out errors);
+        TryParse(value, MaxLength, out parsed, out errors);
+
+    /// <summary>
+    /// Parses a value to a <see cref="IdentityToken"/> using the supplied maximum length instead of <see cref="MaxLength"/>.
+    /// This method will return false if the value is invalid and also includes a list of errors. It lets code outside
+    /// ATM (custom <c>IUserTokenStore</c> implementations, other Duende libraries) honor a configured limit.
+    /// </summary>
+    /// <param name="value">The value to parse.</param>
+    /// <param name="maxLength">The maximum accepted length. Must be greater than zero.</param>
+    /// <param name="parsed">The parsed value, if parsing succeeded.</param>
+    /// <param name="errors">The validation errors, if parsing failed.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxLength"/> is zero or negative.</exception>
+    public static bool TryParse(string value, int maxLength, [NotNullWhen(true)] out IdentityToken? parsed, out string[] errors)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+        return IStronglyTypedValue<IdentityToken>.TryBuildValidatedObject(
+            value,
+            maxLength == MaxLength ? Validators : [ValidationRules.MaxLength(maxLength)],
+            out parsed,
+            out errors);
+    }
 
     /// <summary>
     /// Convenience method for converting a <see cref="IdentityToken"/> into a string.
@@ -56,12 +77,42 @@ public readonly record struct IdentityToken : IStronglyTypedValue<IdentityToken>
     /// <summary>
     /// Parses a value to a <see cref="IdentityToken"/>. This will throw an exception if the string is not valid.
     /// </summary>
-    public static IdentityToken Parse(string value) => StringParsers<IdentityToken>.Parse(value);
+    public static IdentityToken Parse(string value) => Parse(value, MaxLength);
+
+    /// <summary>
+    /// Parses a value to a <see cref="IdentityToken"/> using the supplied maximum length instead of <see cref="MaxLength"/>.
+    /// This will throw an exception if the string is not valid. It lets code outside ATM (custom
+    /// <c>IUserTokenStore</c> implementations, other Duende libraries) honour a configured limit.
+    /// </summary>
+    /// <param name="value">The value to parse.</param>
+    /// <param name="maxLength">The maximum accepted length. Must be greater than zero.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxLength"/> is zero or negative.</exception>
+    /// <exception cref="InvalidOperationException">The value is not valid.</exception>
+    public static IdentityToken Parse(string value, int maxLength) =>
+        TryParse(value, maxLength, out var parsed, out var errors)
+            ? parsed.Value
+            : throw StringParsers<IdentityToken>.InvalidValue(errors);
 
     /// <summary>
     /// Parses a value to a <see cref="IdentityToken"/>. This will return null if the provided string
     /// is null or whitespace. This is a convenience method for when you want to parse a value that may
     /// contain null or whitespace strings.
     /// </summary>
-    public static IdentityToken? ParseOrDefault(string? value) => StringParsers<IdentityToken>.ParseOrDefault(value);
+    public static IdentityToken? ParseOrDefault(string? value) => ParseOrDefault(value, MaxLength);
+
+    /// <summary>
+    /// Parses a value to a <see cref="IdentityToken"/> using the supplied maximum length instead of
+    /// <see cref="MaxLength"/>. This will return null if the provided string is null or whitespace, and throw an
+    /// exception if it is not valid. It lets code outside ATM (custom <c>IUserTokenStore</c> implementations,
+    /// other Duende libraries) honor a configured limit.
+    /// </summary>
+    /// <param name="value">The value to parse.</param>
+    /// <param name="maxLength">The maximum accepted length. Must be greater than zero.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxLength"/> is zero or negative.</exception>
+    /// <exception cref="InvalidOperationException">The value is not valid.</exception>
+    public static IdentityToken? ParseOrDefault(string? value, int maxLength)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
+        return string.IsNullOrWhiteSpace(value) ? null : Parse(value, maxLength);
+    }
 }

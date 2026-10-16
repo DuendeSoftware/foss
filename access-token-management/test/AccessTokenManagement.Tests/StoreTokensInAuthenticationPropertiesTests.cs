@@ -350,6 +350,93 @@ public class StoreTokensInAuthenticationPropertiesTests
         resultForResource1Scheme1.Token?.TokenForSpecifiedParameters?.DPoPJsonWebKey.ShouldBeNull();
     }
 
+    [Fact]
+    public void GetUserToken_accepts_access_token_longer_than_default_when_MaxAccessTokenLength_is_raised()
+    {
+        var accessToken = new string('a', AccessToken.MaxLength + 1);
+        var sut = CreateSut(new UserTokenManagementOptions { MaxAccessTokenLength = AccessToken.MaxLength * 2 });
+
+        var result = sut.GetUserToken(PropertiesWithTokens(accessToken: accessToken));
+
+        result.Token.ShouldNotBeNull().TokenForSpecifiedParameters.ShouldNotBeNull().AccessToken.ToString().ShouldBe(accessToken);
+    }
+
+    [Fact]
+    public void GetUserToken_accepts_refresh_token_longer_than_default_when_MaxRefreshTokenLength_is_raised()
+    {
+        var refreshToken = new string('a', RefreshToken.MaxLength + 1);
+        var sut = CreateSut(new UserTokenManagementOptions { MaxRefreshTokenLength = RefreshToken.MaxLength * 2 });
+
+        var result = sut.GetUserToken(PropertiesWithTokens(refreshToken: refreshToken));
+
+        result.Token.ShouldNotBeNull().TokenForSpecifiedParameters.ShouldNotBeNull().RefreshToken.ShouldNotBeNull().ToString().ShouldBe(refreshToken);
+    }
+
+    [Fact]
+    public void GetUserToken_accepts_identity_token_longer_than_default_when_MaxIdentityTokenLength_is_raised()
+    {
+        var identityToken = new string('a', IdentityToken.MaxLength + 1);
+        var sut = CreateSut(new UserTokenManagementOptions { MaxIdentityTokenLength = IdentityToken.MaxLength * 2 });
+
+        var result = sut.GetUserToken(PropertiesWithTokens(identityToken: identityToken));
+
+        result.Token.ShouldNotBeNull().TokenForSpecifiedParameters.ShouldNotBeNull().IdentityToken.ShouldNotBeNull().ToString().ShouldBe(identityToken);
+    }
+
+    [Fact]
+    public void GetUserToken_rejects_access_token_over_MaxAccessTokenLength_naming_the_option()
+    {
+        var accessToken = new string('a', 101);
+        var sut = CreateSut(new UserTokenManagementOptions { MaxAccessTokenLength = 100 });
+
+        var exception = Should.Throw<InvalidOperationException>(() => sut.GetUserToken(PropertiesWithTokens(accessToken: accessToken)));
+
+        exception.Message.ShouldContain("UserTokenManagementOptions.MaxAccessTokenLength");
+        exception.Message.ShouldNotContain(accessToken);
+    }
+
+    [Fact]
+    public void GetUserToken_rejects_refresh_token_over_MaxRefreshTokenLength_naming_the_option()
+    {
+        var refreshToken = new string('a', 101);
+        var sut = CreateSut(new UserTokenManagementOptions { MaxRefreshTokenLength = 100 });
+
+        var exception = Should.Throw<InvalidOperationException>(() => sut.GetUserToken(PropertiesWithTokens(refreshToken: refreshToken)));
+
+        exception.Message.ShouldContain("UserTokenManagementOptions.MaxRefreshTokenLength");
+        exception.Message.ShouldNotContain(refreshToken);
+    }
+
+    [Fact]
+    public void GetUserToken_rejects_identity_token_over_MaxIdentityTokenLength_naming_the_option()
+    {
+        var identityToken = new string('a', 101);
+        var sut = CreateSut(new UserTokenManagementOptions { MaxIdentityTokenLength = 100 });
+
+        var exception = Should.Throw<InvalidOperationException>(() => sut.GetUserToken(PropertiesWithTokens(identityToken: identityToken)));
+
+        exception.Message.ShouldContain("UserTokenManagementOptions.MaxIdentityTokenLength");
+        exception.Message.ShouldNotContain(identityToken);
+    }
+
+    private static StoreTokensInAuthenticationProperties CreateSut(UserTokenManagementOptions options) => new(
+        new TestOptionsMonitor<UserTokenManagementOptions>(options),
+        new TestOptionsMonitor<CookieAuthenticationOptions>(),
+        new TestSchemeProvider(),
+        new NullLogger<StoreTokensInAuthenticationProperties>());
+
+    private static AuthenticationProperties PropertiesWithTokens(
+        string accessToken = "access_token",
+        string refreshToken = "refresh_token",
+        string identityToken = "id_token")
+    {
+        var properties = new AuthenticationProperties();
+        properties.Items[".Token.access_token"] = accessToken;
+        properties.Items[".Token.refresh_token"] = refreshToken;
+        properties.Items[".Token.id_token"] = identityToken;
+        return properties;
+    }
+
     private Random r = new(DateTimeOffset.Now.Millisecond);
 
     private UserToken GenerateRandomUserToken() => new()

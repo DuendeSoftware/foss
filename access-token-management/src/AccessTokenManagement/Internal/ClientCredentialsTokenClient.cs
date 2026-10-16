@@ -16,6 +16,7 @@ internal class ClientCredentialsTokenClient(
     AccessTokenManagementMetrics metrics,
     IHttpClientFactory httpClientFactory,
     IOptionsMonitor<ClientCredentialsClient> options,
+    IOptions<ClientCredentialsTokenManagementOptions> managementOptions,
     IClientAssertionService clientAssertionService,
     TimeProvider time,
     IDPoPKeyStore dPoPKeyMaterialService,
@@ -158,7 +159,10 @@ internal class ClientCredentialsTokenClient(
 
         var token = new ClientCredentialsToken
         {
-            AccessToken = AccessToken.Parse(response.AccessToken ?? throw new InvalidOperationException("Access token should not be null")),
+            AccessToken = TokenParsing.ParseAccessToken(
+                response.AccessToken ?? throw new InvalidOperationException("Access token should not be null"),
+                managementOptions.Value.MaxAccessTokenLength,
+                nameof(ClientCredentialsTokenManagementOptions) + "." + nameof(ClientCredentialsTokenManagementOptions.MaxAccessTokenLength)),
             AccessTokenType = AccessTokenType.ParseOrDefault(response.TokenType),
             DPoPJsonWebKey = dpopJsonWebKey,
             Expiration = response.ExpiresIn == 0

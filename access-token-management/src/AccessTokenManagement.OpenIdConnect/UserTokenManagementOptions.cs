@@ -4,6 +4,7 @@
 
 using Duende.AccessTokenManagement.DPoP;
 using Duende.IdentityModel.Client;
+using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement.OpenIdConnect;
 
@@ -51,4 +52,58 @@ public sealed class UserTokenManagementOptions
     /// The string representation of the JSON web key to use for DPoP.
     /// </summary>
     public DPoPProofKey? DPoPJsonWebKey { get; set; }
+
+    /// <summary>
+    /// The maximum accepted length of user access tokens. The limit is applied to token endpoint refresh
+    /// responses and to tokens read back from the authentication session. The value must be greater than zero.
+    /// The default is <see cref="AccessToken.MaxLength"/>. By default, user tokens are stored in the
+    /// authentication cookie or session, so raising this limit can produce a larger cookie or session.
+    /// Server or proxy header size limits may apply. Server-side sessions reduce cookie size.
+    /// </summary>
+    public int MaxAccessTokenLength { get; set; } = AccessToken.MaxLength;
+
+    /// <summary>
+    /// The maximum accepted length of user refresh tokens. The limit is applied to token endpoint refresh
+    /// responses and to tokens read back from the authentication session. The value must be greater than zero.
+    /// The default is <see cref="RefreshToken.MaxLength"/>. By default, user tokens are stored in the
+    /// authentication cookie or session, so raising this limit can produce a larger cookie or session.
+    /// Server or proxy header size limits may apply. Server-side sessions reduce cookie size.
+    /// </summary>
+    public int MaxRefreshTokenLength { get; set; } = RefreshToken.MaxLength;
+
+    /// <summary>
+    /// The maximum accepted length of user identity tokens. The limit is applied to token endpoint refresh
+    /// responses and to tokens read back from the authentication session. The value must be greater than zero.
+    /// The default is <see cref="IdentityToken.MaxLength"/>. By default, user tokens are stored in the
+    /// authentication cookie or session, so raising this limit can produce a larger cookie or session.
+    /// Server or proxy header size limits may apply. Server-side sessions reduce cookie size.
+    /// </summary>
+    public int MaxIdentityTokenLength { get; set; } = IdentityToken.MaxLength;
+
+    internal sealed class Validator : IValidateOptions<UserTokenManagementOptions>
+    {
+        public ValidateOptionsResult Validate(string? name, UserTokenManagementOptions options)
+        {
+            var errors = new List<string>();
+
+            if (options.MaxAccessTokenLength <= 0)
+            {
+                errors.Add($"{nameof(UserTokenManagementOptions)}.{nameof(MaxAccessTokenLength)} must be greater than zero.");
+            }
+
+            if (options.MaxRefreshTokenLength <= 0)
+            {
+                errors.Add($"{nameof(UserTokenManagementOptions)}.{nameof(MaxRefreshTokenLength)} must be greater than zero.");
+            }
+
+            if (options.MaxIdentityTokenLength <= 0)
+            {
+                errors.Add($"{nameof(UserTokenManagementOptions)}.{nameof(MaxIdentityTokenLength)} must be greater than zero.");
+            }
+
+            return errors.Count > 0
+                ? ValidateOptionsResult.Fail(errors)
+                : ValidateOptionsResult.Success;
+        }
+    }
 }

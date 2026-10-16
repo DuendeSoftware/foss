@@ -117,6 +117,9 @@
         public Duende.AccessTokenManagement.Resource? ClientCredentialsResource { get; set; }
         public Duende.AccessTokenManagement.Scope? ClientCredentialsScope { get; set; }
         public Duende.AccessTokenManagement.DPoP.DPoPProofKey? DPoPJsonWebKey { get; set; }
+        public int MaxAccessTokenLength { get; set; }
+        public int MaxIdentityTokenLength { get; set; }
+        public int MaxRefreshTokenLength { get; set; }
         public System.TimeSpan RefreshBeforeExpiration { get; set; }
         public bool UseChallengeSchemeScopedTokens { get; set; }
     }
