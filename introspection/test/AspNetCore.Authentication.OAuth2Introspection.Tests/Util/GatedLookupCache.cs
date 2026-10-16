@@ -6,31 +6,15 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 
 /// <summary>
-/// A <see cref="HybridCache"/> that lets a test hold one request at its cache lookup, just before the
-/// handler joins the in-flight introspection call for its token, and release it at a chosen moment.
+/// A <see cref="HybridCache"/> that lets a test hold a request at its cache lookup, just before the handler
+/// joins the in-flight introspection call for its token, and release it at a chosen moment.
 /// </summary>
-/// <remarks>
-/// The held lookup reports a cache miss. <see cref="ReleaseHeldLookup"/> completes it with continuations
-/// running synchronously, so the held request runs on the releasing thread until it awaits the shared
-/// introspection task. When <see cref="ReleaseHeldLookup"/> returns, that request is waiting on the call.
-/// </remarks>
 internal sealed class GatedLookupCache(HybridCache inner) : HybridCache
 {
-    private readonly TaskCompletionSource _lookupReached = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private LookupGate? _nextGate;
 
-    // Deliberately without RunContinuationsAsynchronously: see the remarks above.
-    private readonly TaskCompletionSource _release = new();
-
-    private int _holdNextLookup;
-
-    /// <summary>Holds the next cache lookup until <see cref="ReleaseHeldLookup"/> is called.</summary>
-    public void HoldNextLookup() => Volatile.Write(ref _holdNextLookup, 1);
-
-    /// <summary>Completes once a request has reached the held lookup.</summary>
-    public Task LookupReached => _lookupReached.Task;
-
-    /// <summary>Lets the held request continue.</summary>
-    public void ReleaseHeldLookup() => _release.SetResult();
+    /// <summary>Holds the next cache lookup at <paramref name="gate"/> until the gate is released.</summary>
+    public void HoldNextLookup(LookupGate gate) => Volatile.Write(ref _nextGate, gate);
 
     public override async ValueTask<T> GetOrCreateAsync<TState, T>(
         string key,
@@ -40,10 +24,10 @@ internal sealed class GatedLookupCache(HybridCache inner) : HybridCache
         IEnumerable<string>? tags = null,
         CancellationToken cancellationToken = default)
     {
-        if (Interlocked.Exchange(ref _holdNextLookup, 0) == 1)
+        var gate = Interlocked.Exchange(ref _nextGate, null);
+        if (gate != null)
         {
-            _lookupReached.SetResult();
-            await _release.Task;
+            await gate.Hold();
             return default!;
         }
 
@@ -63,4 +47,32 @@ internal sealed class GatedLookupCache(HybridCache inner) : HybridCache
 
     public override ValueTask RemoveByTagAsync(string tag, CancellationToken cancellationToken = default) =>
         inner.RemoveByTagAsync(tag, cancellationToken);
+}
+
+/// <summary>
+/// One held cache lookup. The held lookup reports a cache miss.
+/// </summary>
+/// <remarks>
+/// <see cref="Release"/> completes the lookup with continuations running synchronously, so the held request
+/// runs on the releasing thread until it awaits the shared introspection task. When <see cref="Release"/>
+/// returns, that request is waiting on the call.
+/// </remarks>
+internal sealed class LookupGate
+{
+    private readonly TaskCompletionSource _reached = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    // Deliberately without RunContinuationsAsynchronously: see the remarks above.
+    private readonly TaskCompletionSource _release = new();
+
+    /// <summary>Completes once a request has reached the held lookup.</summary>
+    public Task Reached => _reached.Task;
+
+    /// <summary>Lets the held request continue.</summary>
+    public void Release() => _release.SetResult();
+
+    internal Task Hold()
+    {
+        _reached.SetResult();
+        return _release.Task;
+    }
 }

@@ -119,16 +119,22 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             TokenIntrospectionResponse response;
             try
             {
-                response = await introspection.Value;
+                // The call is cancelled when the client of the request that started it disconnects. A request
+                // waiting on someone else's call stops waiting when its own client disconnects; the call keeps
+                // running for the other requests.
+                response = startedByThisRequest
+                    ? await introspection.Value
+                    : await introspection.Value.WaitAsync(Context.RequestAborted);
             }
-            catch when (!startedByThisRequest)
+            catch when (!startedByThisRequest && !Context.RequestAborted.IsCancellationRequested)
             {
                 // Another request's introspection call threw. IntrospectTokenAsync turns HTTP and network
-                // errors into an error response, so this only happens when that call was cancelled (for
-                // example by the backchannel HttpClient timeout) or an event handler or client setup threw.
-                // That failure belongs to the request that started the call, which rethrows it. This request
-                // evicts the faulted entry so later requests start fresh, and retries once with its own call
-                // that bypasses the dictionary, so it gets a full attempt of its own.
+                // errors into an error response, so this only happens when that call was cancelled (by the
+                // backchannel HttpClient timeout, or because the client of the request that started it
+                // disconnected) or an event handler or client setup threw. That failure belongs to the request
+                // that started the call, which rethrows it. This request evicts the faulted entry so later
+                // requests start fresh, and retries once with its own call that bypasses the dictionary, so it
+                // gets a full attempt of its own.
                 IntrospectionDictionary.TryRemove(KeyValuePair.Create(token, introspection));
                 response = await LoadClaimsForToken(token, Context, Scheme, Events, Options);
             }
@@ -157,7 +163,10 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         }
         finally
         {
-            if (introspection != null)
+            // A waiting request that stopped because its client disconnected leaves a still-running call in
+            // place, so later requests for the token keep joining it. The request that started the call always
+            // waits for it to finish, so it removes the entry.
+            if (introspection is { IsValueCreated: true, Value.IsCompleted: true })
             {
                 IntrospectionDictionary.TryRemove(KeyValuePair.Create(token, introspection));
             }
@@ -192,7 +201,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
         await events.SendingRequest(requestSendingContext);
 
-        return await introspectionClient.IntrospectTokenAsync(request).ConfigureAwait(false);
+        return await introspectionClient.IntrospectTokenAsync(request, context.RequestAborted).ConfigureAwait(false);
     }
 
     private static async ValueTask<TokenIntrospectionRequest> CreateTokenIntrospectionRequest(

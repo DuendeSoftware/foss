@@ -7,6 +7,8 @@ using System.Text.Json;
 using Duende.AspNetCore.Authentication.OAuth2Introspection.Util;
 using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
@@ -170,7 +172,9 @@ public class Introspection
     [Fact]
     public async Task TwoConcurrentCalls_SharedIntrospectionThrows_StarterRethrows_WaiterRetriesAndSucceeds()
     {
-        var scenario = await StartTwoRequestsWhoseSharedIntrospectionThrows(retryThrowsToo: false);
+        var scenario = await StartStarterAndWaiter(
+            // What the backchannel HttpClient timeout looks like to the handler.
+            sharedCallOnceWaiterJoined: _ => throw new TimeoutException("Simulated introspection timeout"));
 
         // The request that started the call gets its own failure and doesn't retry.
         await Should.ThrowAsync<TimeoutException>(scenario.Starter);
@@ -185,7 +189,9 @@ public class Introspection
     [Fact]
     public async Task TwoConcurrentCalls_SharedIntrospectionThrows_WaiterRetryThrowsToo_BothFail()
     {
-        var scenario = await StartTwoRequestsWhoseSharedIntrospectionThrows(retryThrowsToo: true);
+        var scenario = await StartStarterAndWaiter(
+            sharedCallOnceWaiterJoined: _ => throw new TimeoutException("Simulated introspection timeout"),
+            laterCalls: () => throw new TimeoutException("Simulated introspection timeout on retry"));
 
         await Should.ThrowAsync<TimeoutException>(scenario.Starter);
         await Should.ThrowAsync<TimeoutException>(scenario.Waiter);
@@ -194,19 +200,96 @@ public class Introspection
         scenario.IntrospectionCalls().ShouldBe(2);
     }
 
+    [Fact]
+    public async Task TwoConcurrentCalls_WaiterDisconnects_WaiterStopsWaiting_SharedCallContinuesForOthers()
+    {
+        var finishSharedCall = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var waiterCts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var scenario = await StartStarterAndWaiter(
+            sharedCallOnceWaiterJoined: _ => finishSharedCall.Task.WaitAsync(Timeout, _ct),
+            waiterCancellation: waiterCts.Token);
+
+        waiterCts.Cancel();
+        await Should.ThrowAsync<OperationCanceledException>(scenario.Waiter);
+
+        // The waiter's handler stops while the shared call is still running.
+        await scenario.Completions.Completed(WaiterName).WaitAsync(Timeout, _ct);
+
+        // The waiter left the in-flight call in place, so a later request for the token joins it.
+        var lateGate = new LookupGate();
+        scenario.Cache.HoldNextLookup(lateGate);
+        var late = Send(scenario.Handler, scenario.Token, "late", _ct);
+        await lateGate.Reached.WaitAsync(Timeout, _ct);
+        lateGate.Release();
+
+        finishSharedCall.SetResult();
+
+        (await scenario.Starter).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await late.WaitAsync(Timeout, _ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        scenario.IntrospectionCalls().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task TwoConcurrentCalls_StarterDisconnects_SharedCallIsCancelled_WaiterRetriesAndSucceeds()
+    {
+        using var starterCts = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+
+        var scenario = await StartStarterAndWaiter(
+            sharedCallOnceWaiterJoined: async httpContext =>
+            {
+                starterCts.Cancel();
+                try
+                {
+                    await Task.Delay(Timeout, httpContext.RequestAborted);
+                }
+                catch (OperationCanceledException)
+                {
+                    // The starter's request was aborted. The handler passes that on to the backchannel call.
+                }
+            },
+            starterCancellation: starterCts.Token);
+
+        await Should.ThrowAsync<OperationCanceledException>(scenario.Starter);
+
+        // The shared call was cancelled with the starter's request, so the waiter makes its own call.
+        var waiterResult = await scenario.Waiter;
+        waiterResult.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        scenario.IntrospectionCalls().ShouldBe(2);
+    }
+
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+    private const string StarterName = "starter";
+    private const string WaiterName = "waiter";
+
+    private sealed record ConcurrentScenario(
+        Task<HttpResponseMessage> Starter,
+        Task<HttpResponseMessage> Waiter,
+        Func<int> IntrospectionCalls,
+        GatedLookupCache Cache,
+        RequestCompletions Completions,
+        HttpMessageHandler Handler,
+        string Token);
+
     /// <summary>
     /// Starts two requests with the same token. The first (the starter) begins the introspection call; the
-    /// second (the waiter) joins that call while it's in flight, and then the call throws. With
-    /// <paramref name="retryThrowsToo"/>, every later introspection call throws as well.
+    /// second (the waiter) joins that call while it's in flight. The shared call then runs
+    /// <paramref name="sharedCallOnceWaiterJoined"/> with the starter's <see cref="HttpContext"/>, and every
+    /// later introspection call runs <paramref name="laterCalls"/>.
     /// </summary>
-    private async Task<(Task<HttpResponseMessage> Starter, Task<HttpResponseMessage> Waiter, Func<int> IntrospectionCalls)>
-        StartTwoRequestsWhoseSharedIntrospectionThrows(bool retryThrowsToo)
+    private async Task<ConcurrentScenario> StartStarterAndWaiter(
+        Func<HttpContext, Task> sharedCallOnceWaiterJoined,
+        Func<Task>? laterCalls = null,
+        CancellationToken? starterCancellation = null,
+        CancellationToken? waiterCancellation = null)
     {
         // A token of its own, because the handler's in-flight dictionary is static and shared by all tests.
         var token = Guid.NewGuid().ToString("N");
-        var timeout = TimeSpan.FromSeconds(10);
         var starterSending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var waiterGate = new LookupGate();
         var introspectionCalls = 0;
+        var completions = new RequestCompletions();
         GatedLookupCache? cache = null;
 
         var messageHandler = await PipelineFactory.CreateHandler(
@@ -214,7 +297,7 @@ public class Introspection
             {
                 _options(o);
 
-                o.Events.OnSendingRequest = async _ =>
+                o.Events.OnSendingRequest = async context =>
                 {
                     if (Interlocked.Increment(ref introspectionCalls) == 1)
                     {
@@ -222,40 +305,52 @@ public class Introspection
                         await Task.Yield();
                         starterSending.SetResult();
 
-                        await cache!.LookupReached.WaitAsync(timeout, _ct);
+                        await waiterGate.Reached.WaitAsync(Timeout, _ct);
                         // Returns once the waiter is awaiting this call's task.
-                        cache.ReleaseHeldLookup();
+                        waiterGate.Release();
 
-                        // What the backchannel HttpClient timeout looks like to the handler.
-                        throw new TimeoutException("Simulated introspection timeout");
+                        await sharedCallOnceWaiterJoined(context.HttpContext);
+                        return;
                     }
 
-                    if (retryThrowsToo)
+                    if (laterCalls != null)
                     {
-                        throw new TimeoutException("Simulated introspection timeout on retry");
+                        await laterCalls();
                     }
                 };
             },
             new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active),
-            services => services.AddKeyedSingleton<HybridCache>(
-                ServiceProviderKeys.IntrospectionCache,
-                (sp, _) => cache = new GatedLookupCache(sp.GetRequiredService<HybridCache>())));
+            services =>
+            {
+                services.AddKeyedSingleton<HybridCache>(
+                    ServiceProviderKeys.IntrospectionCache,
+                    (sp, _) => cache = new GatedLookupCache(sp.GetRequiredService<HybridCache>()));
+                services.AddSingleton<IStartupFilter>(completions);
+            });
 
-        var starterClient = new HttpClient(messageHandler);
-        starterClient.SetBearerToken(token);
-        var starter = starterClient.GetAsync("http://test", _ct);
+        var starter = Send(messageHandler, token, StarterName, starterCancellation ?? _ct);
 
-        await starterSending.Task.WaitAsync(timeout, _ct);
-        cache!.HoldNextLookup();
+        await starterSending.Task.WaitAsync(Timeout, _ct);
+        cache!.HoldNextLookup(waiterGate);
 
-        var waiterClient = new HttpClient(messageHandler);
-        waiterClient.SetBearerToken(token);
-        var waiter = waiterClient.GetAsync("http://test", _ct);
+        var waiter = Send(messageHandler, token, WaiterName, waiterCancellation ?? _ct);
 
-        return (
-            starter.WaitAsync(timeout, _ct),
-            waiter.WaitAsync(timeout, _ct),
-            () => Volatile.Read(ref introspectionCalls));
+        return new ConcurrentScenario(
+            starter.WaitAsync(Timeout, _ct),
+            waiter.WaitAsync(Timeout, _ct),
+            () => Volatile.Read(ref introspectionCalls),
+            cache,
+            completions,
+            messageHandler,
+            token);
+    }
+
+    private static Task<HttpResponseMessage> Send(HttpMessageHandler handler, string token, string name, CancellationToken ct)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "http://test");
+        request.SetBearerToken(token);
+        request.Headers.Add(RequestCompletions.HeaderName, name);
+        return new HttpClient(handler).SendAsync(request, ct);
     }
 
     [Theory]
