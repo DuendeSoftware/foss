@@ -481,7 +481,9 @@ public class CodeFlowResponseTestsWithNoValidation
     [Fact]
     public async Task Authorize_should_push_parameters_when_PAR_is_enabled()
     {
-        // Configure the client for PAR, authenticating with a client secret
+        // Configure the client for PAR, authenticating with a client secret.
+        // The default TokenClientCredentialStyle is PostBody, so the client
+        // secret should be sent in the POST body (not the Authorization header).
         _options.ClientSecret = "secret";
         _options.ProviderInformation.PushedAuthorizationRequestEndpoint = "https://this-is-set-so-par-will-be-used";
         var client = new OidcClient(_options);
@@ -505,7 +507,44 @@ public class CodeFlowResponseTestsWithNoValidation
         startUrlQueryParams.GetValues("client_id").Single().ShouldBe("client");
         startUrlQueryParams.GetValues("request_uri").Single().ShouldBe(requestUri);
 
-        // Validate that the client authentication during the PAR request was correct
+        // Validate that the client authentication during the PAR request used PostBody
+        var parRequest = backChannelHandler.Request;
+        parRequest.Headers.Authorization.ShouldBeNull();
+        var parContent = await parRequest.Content.ReadAsStringAsync();
+        var parParams = HttpUtility.ParseQueryString(parContent);
+        parParams.GetValues("client_id").Single().ShouldBe("client");
+        parParams.GetValues("client_secret").Single().ShouldBe("secret");
+    }
+
+    [Fact]
+    public async Task Par_should_use_authorization_header_when_configured()
+    {
+        // Configure the client for PAR with AuthorizationHeader credential style
+        _options.ClientSecret = "secret";
+        _options.TokenClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader;
+        _options.ProviderInformation.PushedAuthorizationRequestEndpoint = "https://this-is-set-so-par-will-be-used";
+        var client = new OidcClient(_options);
+
+        // Mock the response from the par endpoint
+        var requestUri = "mocked_request_uri";
+        var parResponse = new Dictionary<string, string>
+        {
+            { "request_uri", requestUri }
+        };
+        var backChannelHandler = new NetworkHandler(JsonSerializer.Serialize(parResponse), HttpStatusCode.OK);
+        _options.BackchannelHandler = backChannelHandler;
+
+        // Prepare the login to cause the backchannel PAR request
+        var state = await client.PrepareLoginAsync();
+
+        // Validate that the resulting PAR state is correct
+        var startUrl = new Uri(state.StartUrl);
+        var startUrlQueryParams = HttpUtility.ParseQueryString(startUrl.Query);
+        startUrlQueryParams.Count.ShouldBe(2);
+        startUrlQueryParams.GetValues("client_id").Single().ShouldBe("client");
+        startUrlQueryParams.GetValues("request_uri").Single().ShouldBe(requestUri);
+
+        // Validate that the client authentication during the PAR request used AuthorizationHeader
         var request = backChannelHandler.Request;
         request.Headers.Authorization.ShouldNotBeNull();
         request.Headers.Authorization.Scheme.ShouldBe("Basic");
