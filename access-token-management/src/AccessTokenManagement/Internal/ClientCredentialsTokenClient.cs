@@ -1,11 +1,8 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using System.Diagnostics;
-using System.Text.Json;
 using Duende.AccessTokenManagement.DPoP;
 using Duende.AccessTokenManagement.OTel;
-using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -39,17 +36,16 @@ internal class ClientCredentialsTokenClient(
         {
             throw new InvalidOperationException($"No {nameof(client.ClientId)} configured for client {clientName}");
         }
-        if (client.TokenEndpoint == null)
+        if (client.TokenEndpoint is not { } tokenEndpoint)
         {
-            if (client.MetadataAddress == null)
-            {
-                throw new InvalidOperationException($"No {nameof(client.TokenEndpoint)} or {nameof(client.MetadataAddress)} configured for client {clientName}");
-            }
+            ct.ThrowIfCancellationRequested();
 
-            client.TokenEndpoint = await GetTokenEndpoint(client, ct).ConfigureAwait(false);
+            var discovery = client.DiscoveredTokenEndpoint
+                ?? throw new InvalidOperationException($"No {nameof(client.TokenEndpoint)} or {nameof(client.Authority)} configured for client {clientName}");
+
+            // Cancel only this caller's wait, not the discovery shared by the options.
+            tokenEndpoint = await discovery.Value.WaitAsync(ct).ConfigureAwait(false);
         }
-
-        Debug.Assert(client.TokenEndpoint != null);
 
         using var logScope = logger.BeginScope(
             (OTelParameters.ClientId, client.ClientId)
@@ -57,7 +53,7 @@ internal class ClientCredentialsTokenClient(
 
         var request = new ClientCredentialsTokenRequest
         {
-            Address = client.TokenEndpoint.ToString(),
+            Address = tokenEndpoint.ToString(),
             Scope = client.Scope?.ToString(),
             ClientId = client.ClientId.Value.ToString(),
             ClientSecret = client.ClientSecret?.ToString(),
@@ -113,12 +109,12 @@ internal class ClientCredentialsTokenClient(
 
         if (dpopJsonWebKey != null)
         {
-            request.DPoPProofToken = await CreateDPoPProofToken(client.TokenEndpoint, dpopJsonWebKey.Value, ct: ct);
+            request.DPoPProofToken = await CreateDPoPProofToken(tokenEndpoint, dpopJsonWebKey.Value, ct: ct);
         }
 
-        var httpClient = ResolveHttpClient(client);
+        var httpClient = GetHttpClient(client, httpClientFactory);
 
-        logger.RequestingClientCredentialsAccessToken(LogLevel.Debug, client.TokenEndpoint);
+        logger.RequestingClientCredentialsAccessToken(LogLevel.Debug, tokenEndpoint);
         var response = await httpClient.RequestClientCredentialsTokenAsync(request, ct).ConfigureAwait(false);
 
         // Retry policy: if we get a DPoP nonce error, retry with the server nonce
@@ -133,7 +129,7 @@ internal class ClientCredentialsTokenClient(
             metrics.DPoPNonceErrorRetry(ClientId.Parse(request.ClientId), response.Error);
 
             request.DPoPProofToken = await CreateDPoPProofToken(
-                tokenEndpoint: client.TokenEndpoint,
+                tokenEndpoint: tokenEndpoint,
                 dpopProofKey: dpopJsonWebKey.Value,
                 dPoPNonce: DPoPNonce.Parse(response.DPoPNonce),
                 ct: ct);
@@ -206,7 +202,7 @@ internal class ClientCredentialsTokenClient(
         return proof?.ToString();
     }
 
-    private HttpClient GetHttpClient(ClientCredentialsClient client)
+    internal static HttpClient GetHttpClient(ClientCredentialsClient client, IHttpClientFactory httpClientFactory)
     {
         HttpClient httpClient;
         if (client.HttpClient != null)
@@ -223,74 +219,5 @@ internal class ClientCredentialsTokenClient(
         }
 
         return httpClient;
-    }
-
-    private HttpClient ResolveHttpClient(ClientCredentialsClient client) => client.HttpClient ?? GetHttpClient(client);
-
-    private async Task<Uri> GetTokenEndpoint(ClientCredentialsClient client, CT ct)
-    {
-        Debug.Assert(client.MetadataAddress != null);
-
-        var metadataAddress = client.MetadataAddress;
-
-        if (!metadataAddress.IsAbsoluteUri || !DiscoveryEndpoint.IsValidScheme(metadataAddress))
-        {
-            throw new InvalidOperationException($"Metadata address for client {client.ClientId} must be an absolute HTTP or HTTPS URI");
-        }
-
-        var policy = new DiscoveryPolicy
-        {
-            Authority = metadataAddress.GetLeftPart(UriPartial.Authority)
-        };
-
-        if (!DiscoveryEndpoint.IsSecureScheme(metadataAddress, policy))
-        {
-            throw new InvalidOperationException($"HTTPS is required for metadata address for client {client.ClientId}");
-        }
-
-        var httpClient = ResolveHttpClient(client);
-
-        // Fetch directly to preserve the document URL and avoid retrieving signing keys.
-        using var response = await httpClient.GetAsync(metadataAddress, ct).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-
-        var content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(content);
-
-        if (document.RootElement.ValueKind != JsonValueKind.Object)
-        {
-            throw new InvalidOperationException($"Discovery document for client {client.ClientId} must be a JSON object");
-        }
-
-        if (!document.RootElement.TryGetProperty(OidcConstants.Discovery.TokenEndpoint, out var tokenEndpointElement) ||
-            tokenEndpointElement.ValueKind != JsonValueKind.String ||
-            tokenEndpointElement.GetString() is not { Length: > 0 } tokenEndpoint)
-        {
-            throw new InvalidOperationException($"No token endpoint found in discovery document for client {client.ClientId}");
-        }
-
-        if (!Uri.TryCreate(tokenEndpoint, UriKind.Absolute, out var tokenEndpointUri) ||
-            !DiscoveryEndpoint.IsValidScheme(tokenEndpointUri))
-        {
-            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: Malformed endpoint: {tokenEndpoint}");
-        }
-
-        if (!DiscoveryEndpoint.IsSecureScheme(tokenEndpointUri, policy))
-        {
-            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: Endpoint does not use HTTPS: {tokenEndpoint}");
-        }
-
-        if (!string.Equals(tokenEndpointUri.Authority, metadataAddress.Authority, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: Endpoint is on a different host than authority: {tokenEndpoint}");
-        }
-
-        var endpointValidation = policy.AuthorityValidationStrategy.IsEndpointValid(tokenEndpoint, [policy.Authority]);
-        if (!endpointValidation.Success)
-        {
-            throw new InvalidOperationException($"Invalid discovery document for client {client.ClientId}: {endpointValidation.ErrorMessage}");
-        }
-
-        return tokenEndpointUri;
     }
 }

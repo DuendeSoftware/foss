@@ -94,14 +94,17 @@ public class ClientTokenManagementTests
 
     }
 
-    [Fact]
-    public async Task Missing_tokenEndpoint_and_metadataAddress_throw_exception()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Missing_tokenEndpoint_and_authority_throw_exception(string? authority)
     {
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
                 client.TokenEndpoint = null;
-                client.MetadataAddress = null;
+                client.Authority = authority;
                 client.ClientId = ClientId.Parse("test");
                 client.ClientSecret = ClientSecret.Parse("notnull");
             });
@@ -111,20 +114,21 @@ public class ClientTokenManagementTests
 
         var action = async () => await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
-        (await Should.ThrowAsync<OptionsValidationException>(action))
-            .Message.ShouldContain("TokenEndpoint");
+        var exception = await Should.ThrowAsync<OptionsValidationException>(action);
+        exception.Message.ShouldContain("TokenEndpoint");
+        exception.Message.ShouldContain("Authority");
     }
 
     [Fact]
-    public async Task Missing_tokenEndpoint_with_metadataAddress_should_discover_token_endpoint()
+    public async Task Missing_tokenEndpoint_with_authority_should_discover_token_endpoint()
     {
         // Arrange
 
-        var metadataAddress = new Uri("https://as/.well-known/openid-configuration");
-
-        _mockHttp.Expect(metadataAddress.ToString())
+        _mockHttp.Expect("https://as/.well-known/openid-configuration")
             .Respond("application/json",
-                """{"issuer":"https://as","token_endpoint":"https://as/connect/token"}""");
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/jwks"}""");
+        _mockHttp.Expect("https://as/jwks")
+            .Respond("application/json", """{"keys":[]}""");
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -135,7 +139,7 @@ public class ClientTokenManagementTests
             .AddClient("test", client =>
             {
                 client.TokenEndpoint = null;
-                client.MetadataAddress = metadataAddress;
+                client.Authority = "https://as";
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -155,7 +159,7 @@ public class ClientTokenManagementTests
     }
 
     [Fact]
-    public async Task TokenEndpoint_should_take_precedence_over_metadataAddress()
+    public async Task TokenEndpoint_should_take_precedence_over_authority()
     {
         // Arrange
 
@@ -169,7 +173,7 @@ public class ClientTokenManagementTests
             .AddClient("test", client =>
             {
                 client.TokenEndpoint = The.TokenEndpoint;
-                client.MetadataAddress = new Uri("http://metadata.example/custom/metadata");
+                client.Authority = "http://metadata.example";
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -194,7 +198,9 @@ public class ClientTokenManagementTests
         // Arrange
 
         _mockHttp.Expect("https://as/.well-known/openid-configuration")
-            .Respond("application/json", """{"issuer":"https://as"}""");
+            .Respond("application/json", """{"issuer":"https://as","jwks_uri":"https://as/jwks"}""");
+        _mockHttp.Expect("https://as/jwks")
+            .Respond("application/json", """{"keys":[]}""");
 
         _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
@@ -202,7 +208,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri("https://as/.well-known/openid-configuration");
+                client.Authority = "https://as";
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -235,7 +241,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri("https://as/.well-known/openid-configuration");
+                client.Authority = "https://as";
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -245,12 +251,13 @@ public class ClientTokenManagementTests
 
         // Act
 
-        var exception = await Should.ThrowAsync<HttpRequestException>(
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
             () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
 
         // Assert
 
-        exception.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        exception.Message.ShouldStartWith("Discovery endpoint https://as is unavailable:");
+        exception.Message.ShouldContain("Internal Server Error");
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
@@ -261,7 +268,9 @@ public class ClientTokenManagementTests
 
         var metadataRequest = _mockHttp.Expect("https://as/.well-known/openid-configuration")
             .Respond("application/json",
-                """{"issuer":"https://as","token_endpoint":"https://as/connect/token"}""");
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/jwks"}""");
+        _mockHttp.Expect("https://as/jwks")
+            .Respond("application/json", """{"keys":[]}""");
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -271,7 +280,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri("https://as/.well-known/openid-configuration");
+                client.Authority = "https://as";
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -295,25 +304,23 @@ public class ClientTokenManagementTests
 
         _mockHttp.VerifyNoOutstandingExpectation();
         _mockHttp.GetMatchCount(metadataRequest).ShouldBe(1);
+        provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test").TokenEndpoint.ShouldBeNull();
     }
 
     [Theory]
-    [InlineData("https://as/.well-known/openid-configuration")]
-    [InlineData("https://as/.well-known/openid-configuration?tenant=test")]
-    [InlineData("https://as/.well-known/oauth-authorization-server")]
-    [InlineData("https://as/tenant/.well-known/openid-configuration")]
-    [InlineData("https://as/custom/metadata")]
-    [InlineData("https://as/custom/metadata?tenant=test")]
-    [InlineData("https://as/")]
-    public async Task Explicit_metadata_document_address_should_be_used_as_is(string address)
+    [InlineData("https://as/.well-known/openid-configuration", null)]
+    [InlineData("https://as/.well-known/oauth-authorization-server", ".well-known/oauth-authorization-server")]
+    [InlineData("https://as/custom/metadata", "custom/metadata")]
+    [InlineData("https://as/custom/metadata?tenant=test", "custom/metadata?tenant=test")]
+    public async Task Full_discovery_document_url_should_be_supported(string address, string? discoveryPath)
     {
         // Arrange
 
-        var metadataAddress = new Uri(address);
-
-        _mockHttp.Expect(metadataAddress.ToString())
+        _mockHttp.Expect(address)
             .Respond("application/json",
-                """{"issuer":"https://as","token_endpoint":"https://as/connect/token"}""");
+                """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/jwks"}""");
+        _mockHttp.Expect("https://as/jwks")
+            .Respond("application/json", """{"keys":[]}""");
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -323,7 +330,8 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = address;
+                client.DiscoveryPolicy.DiscoveryDocumentPath = discoveryPath;
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -343,7 +351,7 @@ public class ClientTokenManagementTests
     }
 
     [Fact]
-    public async Task Advertised_jwks_endpoint_should_not_be_requested()
+    public async Task Advertised_jwks_endpoint_failure_should_throw_exception()
     {
         // Arrange
 
@@ -354,8 +362,6 @@ public class ClientTokenManagementTests
         _mockHttp.Expect(metadataAddress.ToString())
             .Respond("application/json",
                 """{"issuer":"https://as","token_endpoint":"https://as/connect/token","jwks_uri":"https://as/.well-known/jwks"}""");
-        _mockHttp.Expect("https://as/connect/token")
-            .Respond(_ => Some.TokenHttpResponse());
 
         _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
@@ -363,7 +369,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -373,12 +379,14 @@ public class ClientTokenManagementTests
 
         // Act
 
-        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
 
         // Assert
 
-        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
-        _mockHttp.GetMatchCount(jwksRequest).ShouldBe(0);
+        exception.Message.ShouldStartWith($"Discovery endpoint {metadataAddress} is unavailable:");
+        exception.Message.ShouldContain("https://as/.well-known/jwks");
+        _mockHttp.GetMatchCount(jwksRequest).ShouldBe(1);
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
@@ -390,9 +398,7 @@ public class ClientTokenManagementTests
     [InlineData("revocation_endpoint", "https://revocation.example/revoke")]
     [InlineData("introspection_endpoint", "https://introspection.example/introspect")]
     [InlineData("custom_extension_endpoint", "https://extensions.example/custom")]
-    [InlineData("jwks_uri", "http://keys.example/jwks")]
-    [InlineData("userinfo_endpoint", "not-a-uri")]
-    public async Task Unrelated_metadata_endpoints_should_not_block_token_acquisition(string endpointName, string endpointAddress)
+    public async Task Discovery_policy_should_allow_additional_endpoint_hosts(string endpointName, string endpointAddress)
     {
         // Arrange
 
@@ -401,6 +407,11 @@ public class ClientTokenManagementTests
         _mockHttp.Expect(metadataAddress.ToString())
             .Respond("application/json",
                 $$"""{"issuer":"https://as","token_endpoint":"https://as/connect/token","{{endpointName}}":"{{endpointAddress}}"}""");
+        if (endpointName == "jwks_uri")
+        {
+            _mockHttp.Expect(endpointAddress)
+                .Respond("application/json", """{"keys":[]}""");
+        }
         _mockHttp.Expect("https://as/connect/token")
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -410,7 +421,10 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
+                client.DiscoveryPolicy.RequireKeySet = false;
+                client.DiscoveryPolicy.AdditionalEndpointBaseAddresses.Add(
+                    new Uri(endpointAddress).GetLeftPart(UriPartial.Authority));
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -446,7 +460,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -461,7 +475,8 @@ public class ClientTokenManagementTests
 
         // Assert
 
-        exception.Message.ShouldContain("HTTPS is required");
+        exception.Message.ShouldStartWith($"Error parsing discovery document from {metadataAddress}:");
+        exception.Message.ShouldContain("HTTPS required");
         _mockHttp.GetMatchCount(metadataRequest).ShouldBe(0);
     }
 
@@ -477,7 +492,10 @@ public class ClientTokenManagementTests
         var tokenEndpoint = $"{authority}/connect/token";
 
         _mockHttp.Expect(metadataAddress.ToString())
-            .Respond("application/json", $$"""{"issuer":"{{authority}}","token_endpoint":"{{tokenEndpoint}}"}""");
+            .Respond("application/json",
+                $$"""{"issuer":"{{authority}}","token_endpoint":"{{tokenEndpoint}}","jwks_uri":"{{authority}}/jwks"}""");
+        _mockHttp.Expect($"{authority}/jwks")
+            .Respond("application/json", """{"keys":[]}""");
         _mockHttp.Expect(tokenEndpoint)
             .Respond(_ => Some.TokenHttpResponse());
 
@@ -487,7 +505,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -527,7 +545,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -548,7 +566,7 @@ public class ClientTokenManagementTests
     }
 
     [Fact]
-    public async Task Malformed_metadata_json_should_preserve_parse_error()
+    public async Task Malformed_metadata_json_should_preserve_underlying_exception()
     {
         // Arrange
 
@@ -563,7 +581,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -573,12 +591,14 @@ public class ClientTokenManagementTests
 
         // Act
 
-        var exception = await Should.ThrowAsync<JsonException>(
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
             () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
 
         // Assert
 
-        exception.BytePositionInLine.ShouldNotBeNull();
+        exception.Message.ShouldContain(metadataAddress.ToString());
+        exception.Message.ShouldNotContain("No token endpoint found");
+        exception.InnerException.ShouldBeAssignableTo<JsonException>();
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
@@ -599,7 +619,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -609,12 +629,13 @@ public class ClientTokenManagementTests
 
         // Act
 
-        var exception = await Should.ThrowAsync<HttpRequestException>(
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
             () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
 
         // Assert
 
-        exception.ShouldBeSameAs(failure);
+        exception.Message.ShouldStartWith($"Error parsing discovery document from {metadataAddress}:");
+        exception.InnerException.ShouldBeSameAs(failure);
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
@@ -637,7 +658,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = metadataAddress;
+                client.Authority = metadataAddress.ToString();
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -652,14 +673,14 @@ public class ClientTokenManagementTests
 
         // Assert
 
-        exception.Message.ShouldContain("must be a JSON object");
+        exception.Message.ShouldStartWith($"Error parsing discovery document from {metadataAddress}:");
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
     [Theory]
-    [InlineData("metadata", UriKind.Relative)]
-    [InlineData("ftp://as/metadata", UriKind.Absolute)]
-    public async Task Invalid_metadata_address_should_throw_exception(string address, UriKind kind)
+    [InlineData("metadata")]
+    [InlineData("ftp://as/metadata")]
+    public async Task Invalid_authority_should_throw_exception(string address)
     {
         // Arrange
 
@@ -669,7 +690,7 @@ public class ClientTokenManagementTests
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
-                client.MetadataAddress = new Uri(address, kind);
+                client.Authority = address;
                 client.ClientId = The.ClientId;
                 client.ClientSecret = The.ClientSecret;
             });
@@ -684,7 +705,7 @@ public class ClientTokenManagementTests
 
         // Assert
 
-        exception.Message.ShouldContain("absolute HTTP or HTTPS URI");
+        exception.Message.ShouldBe("Malformed URL");
         _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
     }
 
