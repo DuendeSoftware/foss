@@ -12,6 +12,7 @@ namespace Duende.AccessTokenManagement.Internal;
 internal class ClientCredentialsTokenManager(
     AccessTokenManagementMetrics metrics,
     IOptions<ClientCredentialsTokenManagementOptions> options,
+    IOptionsMonitor<ClientCredentialsClientCacheOptions> clientCacheOptions,
     [FromKeyedServices(ServiceProviderKeys.ClientCredentialsTokenCache)]
     HybridCache cache,
     TimeProvider time,
@@ -33,11 +34,13 @@ internal class ClientCredentialsTokenManager(
         TokenRequestParameters? parameters = null,
         CT ct = default)
     {
+        var cacheSettings = ResolvedCacheSettings.Resolve(clientCacheOptions.Get(clientName.ToString()), _options);
+
         var cacheKey = cacheKeyGenerator.GenerateKey(clientName, parameters);
 
         parameters ??= new TokenRequestParameters();
 
-        var cacheExpiration = cacheDurationAutoTuningStore.GetExpiration(cacheKey);
+        var cacheExpiration = cacheDurationAutoTuningStore.GetExpiration(cacheKey, cacheSettings);
 
         // On force renewal, don't read from the cache, so we always get a new token.
         var disableDistributedCacheRead = parameters.ForceTokenRenewal
@@ -47,7 +50,7 @@ internal class ClientCredentialsTokenManager(
         var entryOptions = new HybridCacheEntryOptions()
         {
             Expiration = cacheExpiration,
-            LocalCacheExpiration = _options.LocalCacheExpiration,
+            LocalCacheExpiration = cacheSettings.LocalCacheExpiration,
             Flags = disableDistributedCacheRead,
         };
 
@@ -56,7 +59,7 @@ internal class ClientCredentialsTokenManager(
         {
             token = await cache.GetOrCreateAsync(
                 key: cacheKey.ToString(),
-                factory: async (c) => await RequestToken(cacheKey, clientName, parameters, c),
+                factory: async (c) => await RequestToken(cacheKey, clientName, parameters, cacheSettings, c),
                 options: entryOptions,
                 tags: [HybridCacheConstants.CacheTag, clientName.ToString()],
                 cancellationToken: ct);
@@ -77,13 +80,13 @@ internal class ClientCredentialsTokenManager(
         {
             // if there was an exception in the cache, we'll just retry without the cache and hope for the best
             logger.ExceptionWhileReadingFromCache(LogLevel.Warning, ex, clientName);
-            token = await RequestToken(cacheKey, clientName, parameters, ct);
+            token = await RequestToken(cacheKey, clientName, parameters, cacheSettings, ct);
         }
 
         // Check if token has expired. Ideally, the cache lifetime auto-tuning should prevent this,
         // but for the first request OR if the token lifetime is changed, we might end up here.
         if (!parameters.ForceTokenRenewal
-            && token.Expiration - TimeSpan.FromSeconds(_options.CacheLifetimeBuffer) <= time.GetUtcNow())
+            && token.Expiration - TimeSpan.FromSeconds(cacheSettings.CacheLifetimeBuffer) <= time.GetUtcNow())
         {
             // retry the request, but force a renewal
             var tokenResult = await GetAccessTokenAsync(clientName, parameters with
@@ -105,7 +108,8 @@ internal class ClientCredentialsTokenManager(
     }
 
     private async Task<ClientCredentialsToken> RequestToken(ClientCredentialsCacheKey cacheKey,
-        ClientCredentialsClientName clientName, TokenRequestParameters parameters, CT ct)
+        ClientCredentialsClientName clientName, TokenRequestParameters parameters,
+        ResolvedCacheSettings cacheSettings, CT ct)
     {
         TokenResult<ClientCredentialsToken> tokenResult;
         try
@@ -130,7 +134,7 @@ internal class ClientCredentialsTokenManager(
 
         // See if we need to record how long this access token is valid, to be used the next time
         // this access token is used.
-        var cacheDuration = cacheDurationAutoTuningStore.SetExpiration(cacheKey, token.Expiration);
+        var cacheDuration = cacheDurationAutoTuningStore.SetExpiration(cacheKey, token.Expiration, cacheSettings);
         logger.CachingAccessToken(LogLevel.Debug, clientName, token.Expiration, cacheDuration);
 
         return token;

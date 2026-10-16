@@ -702,6 +702,141 @@ public class ClientTokenManagementTests
     }
 
     [Fact]
+    public async Task Per_client_cache_settings_should_override_global_settings()
+    {
+        var tokenExpiry = (int)TimeSpan.FromDays(7).TotalSeconds;
+
+        var fakeCache = new FakeHybridCache();
+        _services.AddSingleton<HybridCache>(fakeCache);
+
+        _services.AddClientCredentialsTokenManagement(options =>
+        {
+            options.UseCacheAutoTuning = false;
+            options.DefaultCacheLifetime = TimeSpan.FromMinutes(5);
+            options.CacheLifetimeBuffer = 60;
+            options.LocalCacheExpiration = TimeSpan.FromMinutes(1);
+        })
+        .AddClient("test", client => Some.ClientCredentialsClient(client))
+        .ConfigureClientCache("test", options =>
+        {
+            options.UseCacheAutoTuning = true;
+            options.DefaultCacheLifetime = TimeSpan.FromSeconds(30);
+            options.CacheLifetimeBuffer = 10;
+            options.LocalCacheExpiration = TimeSpan.FromSeconds(20);
+        });
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        var sut = _services.BuildServiceProvider().GetRequiredService<IClientCredentialsTokenManager>();
+        var clientName = ClientCredentialsClientName.Parse("test");
+
+        ExpectTokenRequest(tokenExpiry);
+        await sut.GetAccessTokenAsync(clientName, ct: _ct).GetToken();
+        _mockHttp.VerifyNoOutstandingExpectation();
+
+        fakeCache.LastOptions!.Expiration.ShouldBe(TimeSpan.FromSeconds(30));
+        fakeCache.LastOptions!.LocalCacheExpiration.ShouldBe(TimeSpan.FromSeconds(20));
+
+        ExpectTokenRequest(tokenExpiry);
+        await sut.GetAccessTokenAsync(clientName, ct: _ct).GetToken();
+        _mockHttp.VerifyNoOutstandingExpectation();
+
+        fakeCache.LastOptions!.Expiration.ShouldBe(TimeSpan.FromSeconds(tokenExpiry) - TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task Clients_with_different_cache_settings_should_not_affect_each_other()
+    {
+        var tokenExpiry = (int)TimeSpan.FromDays(7).TotalSeconds;
+
+        var fakeCache = new FakeHybridCache();
+        _services.AddSingleton<HybridCache>(fakeCache);
+
+        _services.AddClientCredentialsTokenManagement(options =>
+        {
+            options.UseCacheAutoTuning = true;
+            options.DefaultCacheLifetime = TimeSpan.FromSeconds(30);
+            options.CacheLifetimeBuffer = 60;
+        })
+        .AddClient("tuned", client => Some.ClientCredentialsClient(client))
+        .AddClient("untuned", client => Some.ClientCredentialsClient(client))
+        .ConfigureClientCache("untuned", options => options.UseCacheAutoTuning = false);
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        var sut = _services.BuildServiceProvider().GetRequiredService<IClientCredentialsTokenManager>();
+        var tuned = ClientCredentialsClientName.Parse("tuned");
+        var untuned = ClientCredentialsClientName.Parse("untuned");
+
+        async Task<HybridCacheEntryOptions> GetTokenAndCaptureCacheOptions(ClientCredentialsClientName clientName)
+        {
+            ExpectTokenRequest(tokenExpiry);
+            await sut.GetAccessTokenAsync(clientName, ct: _ct).GetToken();
+            _mockHttp.VerifyNoOutstandingExpectation();
+            return fakeCache.LastOptions!;
+        }
+
+        var tunedFirst = await GetTokenAndCaptureCacheOptions(tuned);
+        var untunedFirst = await GetTokenAndCaptureCacheOptions(untuned);
+        var tunedSecond = await GetTokenAndCaptureCacheOptions(tuned);
+        var untunedSecond = await GetTokenAndCaptureCacheOptions(untuned);
+
+        tunedFirst.Expiration.ShouldBe(TimeSpan.FromSeconds(30));
+        tunedSecond.Expiration.ShouldBe(TimeSpan.FromSeconds(tokenExpiry) - TimeSpan.FromSeconds(60));
+        untunedFirst.Expiration.ShouldBe(TimeSpan.FromSeconds(30));
+        untunedSecond.Expiration.ShouldBe(TimeSpan.FromSeconds(30));
+        untunedSecond.LocalCacheExpiration.ShouldBe(new ClientCredentialsTokenManagementOptions().LocalCacheExpiration);
+    }
+
+    [Fact]
+    public async Task Expired_token_check_should_use_per_client_cache_lifetime_buffer()
+    {
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client => Some.ClientCredentialsClient(client))
+            .ConfigureClientCache("test", options => options.CacheLifetimeBuffer = 0);
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        // With the global 60 second buffer, a 10 second token counts as already expired and would be
+        // renewed, hitting the throwing fallback handler. A per-client buffer of 0 keeps it valid.
+        ExpectTokenRequest(10);
+
+        var sut = _services.BuildServiceProvider().GetRequiredService<IClientCredentialsTokenManager>();
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Per_client_cache_settings_should_apply_without_registered_client_options()
+    {
+        var fakeCache = new FakeHybridCache();
+        _services.AddSingleton<HybridCache>(fakeCache);
+
+        var expectedToken = Some.ClientCredentialsToken();
+        _services.AddSingleton<IClientCredentialsTokenEndpoint>(new FixedTokenEndpoint(expectedToken));
+
+        _services.AddClientCredentialsTokenManagement()
+            .ConfigureClientCache("custom", options => options.DefaultCacheLifetime = TimeSpan.FromSeconds(30));
+
+        var sut = _services.BuildServiceProvider().GetRequiredService<IClientCredentialsTokenManager>();
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("custom"), ct: _ct).GetToken();
+
+        token.ShouldBe(expectedToken);
+        fakeCache.LastOptions!.Expiration.ShouldBe(TimeSpan.FromSeconds(30));
+    }
+
+    private void ExpectTokenRequest(int expiresIn) =>
+        _mockHttp.Expect("/connect/token")
+            .Respond(_ => Some.TokenHttpResponse(Some.Token() with
+            {
+                expires_in = expiresIn
+            }));
+
+    [Fact]
     public async Task dpop_nonce_retry_should_use_fresh_client_assertion()
     {
         var callCount = 0;
@@ -791,5 +926,14 @@ public class ClientTokenManagementTests
 
             return Task.FromResult<ClientAssertion?>(null);
         }
+    }
+
+    private sealed class FixedTokenEndpoint(ClientCredentialsToken token) : IClientCredentialsTokenEndpoint
+    {
+        public Task<TokenResult<ClientCredentialsToken>> RequestAccessTokenAsync(
+            ClientCredentialsClientName clientName,
+            TokenRequestParameters? parameters = null,
+            CancellationToken ct = default) =>
+            Task.FromResult<TokenResult<ClientCredentialsToken>>(token);
     }
 }
