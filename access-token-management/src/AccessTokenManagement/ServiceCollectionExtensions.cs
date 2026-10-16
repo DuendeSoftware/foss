@@ -74,6 +74,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AccessTokenManagementMetrics>();
 
         services.TryAddSingleton<IValidateOptions<ClientCredentialsClient>, ClientCredentialsClient.Validator>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<ClientCredentialsTokenManagementOptions>, ClientCredentialsTokenManagementOptions.Validator>());
 
         return new ClientCredentialsTokenManagementBuilder(services);
     }

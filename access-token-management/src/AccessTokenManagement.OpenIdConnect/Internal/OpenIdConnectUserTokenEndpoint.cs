@@ -23,6 +23,15 @@ internal class OpenIdConnectUserTokenEndpoint(
     IDPoPProofService dPoPProofService,
     ILogger<OpenIdConnectUserTokenEndpoint> logger) : IOpenIdConnectUserTokenEndpoint
 {
+    private const string AccessTokenOptionName =
+        nameof(UserTokenManagementOptions) + "." + nameof(UserTokenManagementOptions.MaxAccessTokenLength);
+
+    private const string RefreshTokenOptionName =
+        nameof(UserTokenManagementOptions) + "." + nameof(UserTokenManagementOptions.MaxRefreshTokenLength);
+
+    private const string IdentityTokenOptionName =
+        nameof(UserTokenManagementOptions) + "." + nameof(UserTokenManagementOptions.MaxIdentityTokenLength);
+
     /// <inheritdoc/>
     public async Task<TokenResult<UserToken>> RefreshAccessTokenAsync(
         UserRefreshToken refreshToken,
@@ -153,11 +162,17 @@ internal class OpenIdConnectUserTokenEndpoint(
         }
 
         metrics.TokenRetrieved(request.ClientId, AccessTokenManagementMetrics.TokenRequestType.User);
+        var managementOptions = options.Value;
         var token = new UserToken()
         {
-            IdentityToken = IdentityToken.ParseOrDefault(response.IdentityToken),
-            AccessToken = AccessToken.Parse(response.AccessToken ??
-                                                  throw new InvalidOperationException("No access token present")),
+            IdentityToken = TokenParsing.ParseIdentityTokenOrDefault(
+                response.IdentityToken,
+                managementOptions.MaxIdentityTokenLength,
+                IdentityTokenOptionName),
+            AccessToken = TokenParsing.ParseAccessToken(
+                response.AccessToken ?? throw new InvalidOperationException("No access token present"),
+                managementOptions.MaxAccessTokenLength,
+                AccessTokenOptionName),
             AccessTokenType = AccessTokenType.ParseOrDefault(response.TokenType),
             DPoPJsonWebKey = dPoPJsonWebKey,
             Expiration = response.ExpiresIn == 0
@@ -165,7 +180,10 @@ internal class OpenIdConnectUserTokenEndpoint(
                 : DateTimeOffset.UtcNow.AddSeconds(response.ExpiresIn),
             RefreshToken = response.RefreshToken == null
                 ? refreshToken.RefreshToken // use input refresh token if none is returned
-                : RefreshToken.Parse(response.RefreshToken),
+                : TokenParsing.ParseRefreshToken(
+                    response.RefreshToken,
+                    managementOptions.MaxRefreshTokenLength,
+                    RefreshTokenOptionName),
             Scope = Scope.ParseOrDefault(response.Scope),
             ClientId = oidc.ClientId
         };

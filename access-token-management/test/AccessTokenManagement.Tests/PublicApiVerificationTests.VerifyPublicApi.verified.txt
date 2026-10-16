@@ -7,7 +7,9 @@
         public AccessToken() { }
         public override string ToString() { }
         public static Duende.AccessTokenManagement.AccessToken Parse(string value) { }
+        public static Duende.AccessTokenManagement.AccessToken Parse(string value, int maxLength) { }
         public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.AccessToken? parsed, out string[] errors) { }
+        public static bool TryParse(string value, int maxLength, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.AccessToken? parsed, out string[] errors) { }
         public static string op_Implicit(Duende.AccessTokenManagement.AccessToken value) { }
     }
     public sealed class AccessTokenRequestHandler : System.Net.Http.DelegatingHandler
@@ -101,6 +103,7 @@
         public int CacheLifetimeBuffer { get; set; }
         public System.TimeSpan DefaultCacheLifetime { get; set; }
         public System.TimeSpan? LocalCacheExpiration { get; set; }
+        public int MaxAccessTokenLength { get; set; }
         public string NonceStoreKeyPrefix { get; set; }
         public bool UseCacheAutoTuning { get; set; }
     }
@@ -173,8 +176,11 @@
         public IdentityToken() { }
         public override string ToString() { }
         public static Duende.AccessTokenManagement.IdentityToken Parse(string value) { }
+        public static Duende.AccessTokenManagement.IdentityToken Parse(string value, int maxLength) { }
         public static Duende.AccessTokenManagement.IdentityToken? ParseOrDefault(string? value) { }
+        public static Duende.AccessTokenManagement.IdentityToken? ParseOrDefault(string? value, int maxLength) { }
         public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.IdentityToken? parsed, out string[] errors) { }
+        public static bool TryParse(string value, int maxLength, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.IdentityToken? parsed, out string[] errors) { }
         public static string op_Implicit(Duende.AccessTokenManagement.IdentityToken value) { }
     }
     [System.Text.Json.Serialization.JsonConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueJsonConverter<Duende.AccessTokenManagement.RefreshToken>))]
@@ -184,7 +190,9 @@
         public RefreshToken() { }
         public override string ToString() { }
         public static Duende.AccessTokenManagement.RefreshToken Parse(string value) { }
+        public static Duende.AccessTokenManagement.RefreshToken Parse(string value, int maxLength) { }
         public static bool TryParse(string value, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.RefreshToken? parsed, out string[] errors) { }
+        public static bool TryParse(string value, int maxLength, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Duende.AccessTokenManagement.RefreshToken? parsed, out string[] errors) { }
         public static string op_Implicit(Duende.AccessTokenManagement.RefreshToken value) { }
     }
     [System.ComponentModel.TypeConverter(typeof(Duende.AccessTokenManagement.Internal.StringValueConverter<Duende.AccessTokenManagement.Resource>))]

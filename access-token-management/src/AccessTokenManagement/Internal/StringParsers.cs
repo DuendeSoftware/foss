@@ -5,6 +5,9 @@ namespace Duende.AccessTokenManagement.Internal;
 
 internal static class StringParsers<TSelf> where TSelf : struct, IStronglyTypedValue<TSelf>
 {
+    internal static InvalidOperationException InvalidValue(string[] errors) =>
+        new($"Received an invalid {typeof(TSelf).Name}. Errors: {string.Join("", errors.Select(x => $"{Environment.NewLine}\t - {x}"))}");
+
     internal static TSelf Parse(string value)
     {
         if (TSelf.TryParse(value, out var parseResult, out var errors))
