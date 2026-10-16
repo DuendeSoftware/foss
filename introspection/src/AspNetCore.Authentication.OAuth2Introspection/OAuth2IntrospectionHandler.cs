@@ -100,21 +100,44 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
         Log.TokenNotCached(_logger, null);
 
+        // The dictionary entry this request awaited. Removals are conditional on it, so this request
+        // never evicts an entry that another request added after this one completed or faulted.
+        Lazy<Task<TokenIntrospectionResponse>>? introspection = null;
+
         try
         {
-            Lazy<Task<TokenIntrospectionResponse>> GetTokenIntrospectionResponseLazy(string _)
-            {
-                return new Lazy<Task<TokenIntrospectionResponse>>(async () => await LoadClaimsForToken(token, Context, Scheme, Events, Options));
-            }
-
             // note: ideally we would rely on GetOrCreateAsync of the cache to prevent multiple calls, but that
             // does not provide a way to set the cache expiration based on the factory method and RFC 7662 states:
             // "If the response contains the "exp" parameter (expiration), the response MUST NOT be cached beyond the time indicated therein."
             // so we need to cache items ourselves here. There is discussion of adding this to hybrid cache:
             // https://github.com/dotnet/extensions/issues/6434, https://github.com/dotnet/aspnetcore/issues/56483
-            var response = await IntrospectionDictionary
-                .GetOrAdd(token, GetTokenIntrospectionResponseLazy)
-                .Value;
+            var ownIntrospection = new Lazy<Task<TokenIntrospectionResponse>>(
+                () => LoadClaimsForToken(token, Context, Scheme, Events, Options));
+            introspection = IntrospectionDictionary.GetOrAdd(token, ownIntrospection);
+            var startedByThisRequest = ReferenceEquals(introspection, ownIntrospection);
+
+            TokenIntrospectionResponse response;
+            try
+            {
+                // The call is cancelled when the client of the request that started it disconnects. A request
+                // waiting on someone else's call stops waiting when its own client disconnects; the call keeps
+                // running for the other requests.
+                response = startedByThisRequest
+                    ? await introspection.Value
+                    : await introspection.Value.WaitAsync(Context.RequestAborted);
+            }
+            catch when (!startedByThisRequest && !Context.RequestAborted.IsCancellationRequested)
+            {
+                // Another request's introspection call threw. IntrospectTokenAsync turns HTTP and network
+                // errors into an error response, so this only happens when that call was cancelled (by the
+                // backchannel HttpClient timeout, or because the client of the request that started it
+                // disconnected) or an event handler or client setup threw. That failure belongs to the request
+                // that started the call, which rethrows it. This request evicts the faulted entry so later
+                // requests start fresh, and retries once with its own call that bypasses the dictionary, so it
+                // gets a full attempt of its own.
+                IntrospectionDictionary.TryRemove(KeyValuePair.Create(token, introspection));
+                response = await LoadClaimsForToken(token, Context, Scheme, Events, Options);
+            }
 
             if (response.IsError)
             {
@@ -140,7 +163,13 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
         }
         finally
         {
-            IntrospectionDictionary.TryRemove(token, out _);
+            // A waiting request that stopped because its client disconnected leaves a still-running call in
+            // place, so later requests for the token keep joining it. The request that started the call always
+            // waits for it to finish, so it removes the entry.
+            if (introspection is { IsValueCreated: true, Value.IsCompleted: true })
+            {
+                IntrospectionDictionary.TryRemove(KeyValuePair.Create(token, introspection));
+            }
         }
     }
 
@@ -172,7 +201,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
         await events.SendingRequest(requestSendingContext);
 
-        return await introspectionClient.IntrospectTokenAsync(request).ConfigureAwait(false);
+        return await introspectionClient.IntrospectTokenAsync(request, context.RequestAborted).ConfigureAwait(false);
     }
 
     private static async ValueTask<TokenIntrospectionRequest> CreateTokenIntrospectionRequest(
