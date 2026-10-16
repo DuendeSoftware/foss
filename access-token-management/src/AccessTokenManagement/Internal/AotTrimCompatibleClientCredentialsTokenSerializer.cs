@@ -5,7 +5,6 @@ using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement.Internal;
 
@@ -16,15 +15,13 @@ internal sealed class AotTrimCompatibleClientCredentialsTokenSerializer : IHybri
 {
     private readonly JsonTypeInfo<ClientCredentialsToken> _typeInfo;
 
-    public AotTrimCompatibleClientCredentialsTokenSerializer(IOptions<ClientCredentialsTokenManagementOptions> options)
+    public AotTrimCompatibleClientCredentialsTokenSerializer()
     {
         var jsonOptions = new JsonSerializerOptions
         {
             Converters =
             {
-                new LengthLimitedAccessTokenJsonConverter(
-                    options.Value.MaxAccessTokenLength,
-                    nameof(ClientCredentialsTokenManagementOptions) + "." + nameof(ClientCredentialsTokenManagementOptions.MaxAccessTokenLength))
+                new TrustedAccessTokenJsonConverter()
             }
         };
 

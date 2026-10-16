@@ -5,7 +5,6 @@ using System.Buffers;
 using System.Text.Json;
 using Duende.AccessTokenManagement.Framework;
 using Duende.AccessTokenManagement.Internal;
-using Microsoft.Extensions.Options;
 
 namespace Duende.AccessTokenManagement;
 
@@ -14,28 +13,26 @@ public class AotTrimCompatibleClientCredentialsTokenSerializerTests
     private TestData The { get; } = new();
     private TestDataBuilder Some => new(The);
 
-    private static AotTrimCompatibleClientCredentialsTokenSerializer CreateSut(int maxAccessTokenLength) =>
-        new(Options.Create(new ClientCredentialsTokenManagementOptions { MaxAccessTokenLength = maxAccessTokenLength }));
+    private static AotTrimCompatibleClientCredentialsTokenSerializer CreateSut() => new();
 
     [Fact]
-    public void Deserialize_rejects_cached_access_token_longer_than_configured_limit()
+    public void Deserialize_reads_cached_access_token_longer_than_default_limit()
     {
-        var token = Some.ClientCredentialsToken() with { AccessToken = AccessToken.Parse(new string('a', 200), 1000) };
+        var longAccessToken = new string('a', AccessToken.MaxLength + 1);
+        var token = Some.ClientCredentialsToken() with { AccessToken = AccessToken.Parse(longAccessToken, AccessToken.MaxLength * 2) };
         var writer = new ArrayBufferWriter<byte>();
-        CreateSut(1000).Serialize(token, writer);
+        CreateSut().Serialize(token, writer);
 
-        var exception = Should.Throw<InvalidOperationException>(() =>
-            CreateSut(100).Deserialize(new ReadOnlySequence<byte>(writer.WrittenMemory)));
+        var cached = CreateSut().Deserialize(new ReadOnlySequence<byte>(writer.WrittenMemory));
 
-        exception.Message.ShouldContain(
-            $"{nameof(ClientCredentialsTokenManagementOptions)}.{nameof(ClientCredentialsTokenManagementOptions.MaxAccessTokenLength)}");
+        cached.AccessToken.ToString().ShouldBe(longAccessToken);
     }
 
     [Fact]
     public void Serialized_cache_format_is_unchanged()
     {
         var token = Some.ClientCredentialsToken();
-        var sut = CreateSut(AccessToken.MaxLength);
+        var sut = CreateSut();
 
         var writer = new ArrayBufferWriter<byte>();
         sut.Serialize(token, writer);

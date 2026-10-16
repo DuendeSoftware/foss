@@ -7,19 +7,19 @@ using System.Text.Json.Serialization;
 namespace Duende.AccessTokenManagement.Internal;
 
 /// <summary>
-/// Reads <see cref="AccessToken"/> values using a configured maximum length. The written format is the same plain
-/// string as the type-level converter.
+/// Reads <see cref="AccessToken"/> values from the cache without validation. ATM validated the token against the
+/// configured limit before it wrote the entry.
 /// </summary>
-internal sealed class LengthLimitedAccessTokenJsonConverter(int maxLength, string optionName) : JsonConverter<AccessToken>
+internal sealed class TrustedAccessTokenJsonConverter : JsonConverter<AccessToken>
 {
     public override AccessToken Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var value = reader.GetString();
-        return value == null
-            ? default
-            : TokenParsing.ParseAccessToken(value, maxLength, optionName);
+        return value == null ? default : CreateUnvalidated<AccessToken>(value);
     }
 
     public override void Write(Utf8JsonWriter writer, AccessToken value, JsonSerializerOptions options) =>
         writer.WriteStringValue(value.ToString());
+
+    private static T CreateUnvalidated<T>(string value) where T : struct, IStronglyTypedValue<T> => T.Create(value);
 }

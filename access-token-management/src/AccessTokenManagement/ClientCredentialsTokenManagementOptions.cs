@@ -53,7 +53,8 @@ public sealed class ClientCredentialsTokenManagementOptions
 
     /// <summary>
     /// The maximum accepted length of client credentials access tokens. The limit is applied to token endpoint
-    /// responses and to tokens read from the cache. The value must be greater than zero. The default is
+    /// responses, before a token is cached. Tokens read back from the cache are not checked again. The value must
+    /// be greater than zero. The default is
     /// <see cref="AccessToken.MaxLength"/>. Raising it is a deliberate choice that increases memory use and
     /// cache entry size.
     /// </summary>
