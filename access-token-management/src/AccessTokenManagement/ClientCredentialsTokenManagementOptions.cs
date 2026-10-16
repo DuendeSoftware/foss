@@ -1,6 +1,8 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Microsoft.Extensions.Options;
+
 namespace Duende.AccessTokenManagement;
 
 /// <summary>
@@ -48,4 +50,22 @@ public sealed class ClientCredentialsTokenManagementOptions
     /// Set this value to null to use the same expiration as the remote cache.
     /// </summary>
     public TimeSpan? LocalCacheExpiration { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// The maximum accepted length of client credentials access tokens. The limit is applied to token endpoint
+    /// responses, before a token is cached. Tokens read back from the cache are not checked again. The value must
+    /// be greater than zero. The default is
+    /// <see cref="AccessToken.MaxLength"/>. Raising it is a deliberate choice that increases memory use and
+    /// cache entry size.
+    /// </summary>
+    public int MaxAccessTokenLength { get; set; } = AccessToken.MaxLength;
+
+    internal sealed class Validator : IValidateOptions<ClientCredentialsTokenManagementOptions>
+    {
+        public ValidateOptionsResult Validate(string? name, ClientCredentialsTokenManagementOptions options) =>
+            options.MaxAccessTokenLength <= 0
+                ? ValidateOptionsResult.Fail(
+                    $"{nameof(ClientCredentialsTokenManagementOptions)}.{nameof(MaxAccessTokenLength)} must be greater than zero.")
+                : ValidateOptionsResult.Success;
+    }
 }

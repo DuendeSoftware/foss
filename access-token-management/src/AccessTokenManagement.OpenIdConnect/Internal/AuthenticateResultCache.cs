@@ -18,6 +18,13 @@ internal class AuthenticateResultCache
 {
     private readonly Dictionary<Scheme, AuthenticateResult> _dictionary = new();
 
+    /// <summary>
+    /// Serializes reading and updating the authentication session within one request. Token refreshes for
+    /// different parameters can run concurrently in one request, and the cache, the authentication properties
+    /// and the sign-in on the response aren't thread-safe.
+    /// </summary>
+    public SemaphoreSlim Lock { get; } = new(1, 1);
+
     public bool TryGetValue(Scheme? key, [MaybeNullWhen(false)] out AuthenticateResult value) =>
         _dictionary.TryGetValue(key ?? Scheme.Empty, out value);
 
