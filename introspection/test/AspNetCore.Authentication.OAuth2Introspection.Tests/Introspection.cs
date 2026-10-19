@@ -16,6 +16,8 @@ namespace Duende.AspNetCore.Authentication.OAuth2Introspection;
 
 public class Introspection
 {
+    private readonly CancellationToken _ct = TestContext.Current.CancellationToken;
+
     private static readonly HybridCacheEntryOptions GetOnlyEntryOptions = new()
     {
         Flags = HybridCacheEntryFlags.DisableLocalCacheWrite
