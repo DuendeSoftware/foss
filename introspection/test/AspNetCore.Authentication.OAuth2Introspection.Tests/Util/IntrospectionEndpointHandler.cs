@@ -83,6 +83,9 @@ public class IntrospectionEndpointHandler : DelegatingHandler
 
     protected Task<HttpResponseMessage> SendIntrospectionAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        // Like a real HTTP handler, don't answer a call that has already been cancelled.
+        cancellationToken.ThrowIfCancellationRequested();
+
         SentIntrospectionRequest = true;
         IntrospectionEndpoint = request.RequestUri!.AbsoluteUri;
 
