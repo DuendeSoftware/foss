@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "..\\foss.slnx",
+    "projects": [
+      "introspection\\src\\AspNetCore.Authentication.OAuth2Introspection\\AspNetCore.Authentication.OAuth2Introspection.csproj",
+      "introspection\\test\\AspNetCore.Authentication.OAuth2Introspection.Tests\\AspNetCore.Authentication.OAuth2Introspection.Tests.csproj"
+    ]
+  }
+}
