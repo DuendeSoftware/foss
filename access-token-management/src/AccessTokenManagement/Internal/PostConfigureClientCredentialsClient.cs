@@ -11,15 +11,20 @@ internal sealed class PostConfigureClientCredentialsClient(IHttpClientFactory ht
 {
     public void PostConfigure(string? name, ClientCredentialsClient options)
     {
-        if (options.TokenEndpoint is null && !string.IsNullOrWhiteSpace(options.Authority))
+        if (options.TokenEndpoint is null)
         {
-            options.DiscoveredTokenEndpoint = new AsyncLazy<Uri>(() => GetTokenEndpointFromDiscoveryDocumentAsync(options));
+            options.DiscoveredTokenEndpoint = new AsyncLazy<Uri>(() => GetTokenEndpointFromDiscoveryDocumentAsync(name, options));
         }
     }
 
-    private async Task<Uri> GetTokenEndpointFromDiscoveryDocumentAsync(ClientCredentialsClient options)
+    private async Task<Uri> GetTokenEndpointFromDiscoveryDocumentAsync(string? clientName, ClientCredentialsClient options)
     {
-        var client = ClientCredentialsTokenClient.GetHttpClient(options, httpClientFactory);
+        if (string.IsNullOrWhiteSpace(options.Authority))
+        {
+            throw new InvalidOperationException($"No {nameof(options.TokenEndpoint)} or {nameof(options.Authority)} configured for client {clientName}");
+        }
+
+        var client = options.GetHttpClient(httpClientFactory);
 
         using var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
@@ -42,7 +47,7 @@ internal sealed class PostConfigureClientCredentialsClient(IHttpClientFactory ht
 
         if (string.IsNullOrWhiteSpace(disco.TokenEndpoint))
         {
-            throw new InvalidOperationException($"No token endpoint found in discovery document for client {options.ClientId}");
+            throw new InvalidOperationException($"No token endpoint found in discovery document for client {clientName}");
         }
 
         return new Uri(disco.TokenEndpoint, UriKind.Absolute);

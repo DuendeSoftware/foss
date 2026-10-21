@@ -3,9 +3,13 @@
 
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Duende.AccessTokenManagement.Framework;
+using Duende.AccessTokenManagement.Internal;
+using Duende.IdentityModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using RichardSzalay.MockHttp;
 
 namespace Duende.AccessTokenManagement;
@@ -75,6 +79,53 @@ public class ClientCredentialsDiscoveryTests
         options.DiscoveredTokenEndpoint.ShouldNotBeNull();
         options.TokenEndpoint.ShouldBeNull();
         _mockHttp.GetMatchCount(discoveryRequest).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Authority_configured_in_later_post_configure_should_be_used()
+    {
+        // Arrange
+
+        var discoveryRequest = MockDiscovery();
+        MockKeys();
+        MockTokenRequests();
+        _services.PostConfigure<ClientCredentialsClient>("test", client => client.Authority = Authority);
+        using var provider = CreateProvider(client => client.Authority = null);
+        var sut = provider.GetRequiredService<IClientCredentialsTokenEndpoint>();
+
+        // Act
+
+        var result = await sut.RequestAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
+
+        // Assert
+
+        result.Succeeded.ShouldBeTrue();
+        _mockHttp.GetMatchCount(discoveryRequest).ShouldBe(1);
+        provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test").TokenEndpoint.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Lazy_discovery_should_report_missing_authority_using_client_name(string? authority)
+    {
+        // Arrange
+
+        using var provider = CreateProvider();
+        var options = new ClientCredentialsClient { Authority = authority, ClientId = The.ClientId };
+        var postConfigure = new PostConfigureClientCredentialsClient(provider.GetRequiredService<IHttpClientFactory>());
+        postConfigure.PostConfigure("test", options);
+        var discovery = options.DiscoveredTokenEndpoint.ShouldNotBeNull();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(() => discovery.Value.WaitAsync(_ct));
+
+        // Assert
+
+        exception.Message.ShouldBe("No TokenEndpoint or Authority configured for client test");
+        _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
     }
 
     [Theory]
@@ -259,6 +310,57 @@ public class ClientCredentialsDiscoveryTests
         result.Succeeded.ShouldBeTrue();
         customHandler.VerifyNoOutstandingExpectation();
         _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DPoP_proof_should_use_discovered_token_endpoint(bool retryWithNonce)
+    {
+        // Arrange
+
+        var discoveryRequest = MockDiscovery();
+        MockKeys();
+        var proofs = new List<JsonWebToken>();
+        var tokenRequest = _mockHttp.When(HttpMethod.Post, TokenEndpoint).Respond(request =>
+        {
+            var proof = new JsonWebTokenHandler().ReadJsonWebToken(
+                request.Headers.GetValues(OidcConstants.HttpHeaders.DPoP).Single());
+            proofs.Add(proof);
+
+            if (retryWithNonce && proofs.Count == 1)
+            {
+                return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Headers = { { OidcConstants.HttpHeaders.DPoPNonce, "some_nonce" } },
+                    Content = new StringContent("""{"error":"use_dpop_nonce"}""", Encoding.UTF8, "application/json")
+                };
+            }
+
+            return Some.TokenHttpResponse(Some.Token() with { token_type = "DPoP" });
+        });
+        using var provider = CreateProvider(client => client.DPoPJsonWebKey = The.JsonWebKey);
+        var sut = provider.GetRequiredService<IClientCredentialsTokenEndpoint>();
+
+        // Act
+
+        var token = await sut.RequestAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        var expectedRequestCount = retryWithNonce ? 2 : 1;
+        proofs.Count.ShouldBe(expectedRequestCount);
+        proofs.ShouldAllBe(proof => proof.Claims.Single(claim => claim.Type == JwtClaimTypes.DPoPHttpUrl).Value == TokenEndpoint);
+        proofs.ShouldAllBe(proof => proof.Claims.Single(claim => claim.Type == JwtClaimTypes.DPoPHttpMethod).Value == "POST");
+        proofs[0].Claims.ShouldNotContain(claim => claim.Type == JwtClaimTypes.Nonce);
+        if (retryWithNonce)
+        {
+            proofs[1].Claims.Single(claim => claim.Type == JwtClaimTypes.Nonce).Value.ShouldBe("some_nonce");
+        }
+        token.DPoPJsonWebKey.ShouldBe(The.JsonWebKey);
+        _mockHttp.GetMatchCount(discoveryRequest).ShouldBe(1);
+        _mockHttp.GetMatchCount(tokenRequest).ShouldBe(expectedRequestCount);
+        provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test").TokenEndpoint.ShouldBeNull();
     }
 
     [Fact]
@@ -474,6 +576,348 @@ public class ClientCredentialsDiscoveryTests
         _mockHttp.VerifyNoOutstandingExpectation();
     }
 
+    [Fact]
+    public async Task Missing_tokenEndpoint_with_authority_should_discover_token_endpoint()
+    {
+        // Arrange
+
+        MockDiscovery();
+        MockKeys();
+        MockTokenRequests();
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+    }
+
+    [Fact]
+    public async Task Metadata_without_token_endpoint_should_throw_exception()
+    {
+        // Arrange
+
+        MockDiscovery("""{"issuer":"https://as","jwks_uri":"https://as/jwks"}""");
+        MockKeys();
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldBe("No token endpoint found in discovery document for client test");
+    }
+
+    [Fact]
+    public async Task Metadata_request_failure_should_throw_exception()
+    {
+        // Arrange
+
+        _mockHttp.Expect(DiscoveryAddress).Respond(HttpStatusCode.InternalServerError);
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldStartWith($"Discovery endpoint {Authority} is unavailable:");
+        exception.Message.ShouldContain("Internal Server Error");
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Discovered_tokenEndpoint_should_be_reused()
+    {
+        // Arrange
+
+        var discoveryRequest = MockDiscovery();
+        var keysRequest = MockKeys();
+        var tokenRequest = MockTokenRequests();
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+        await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Act
+
+        await sut.GetAccessTokenAsync(
+            ClientCredentialsClientName.Parse("test"),
+            new TokenRequestParameters { ForceTokenRenewal = true },
+            _ct).GetToken();
+
+        // Assert
+
+        _mockHttp.GetMatchCount(discoveryRequest).ShouldBe(1);
+        _mockHttp.GetMatchCount(keysRequest).ShouldBe(1);
+        _mockHttp.GetMatchCount(tokenRequest).ShouldBe(2);
+        provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test").TokenEndpoint.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("https://as/.well-known/openid-configuration", null)]
+    [InlineData("https://as/.well-known/oauth-authorization-server", ".well-known/oauth-authorization-server")]
+    [InlineData("https://as/custom/metadata", "custom/metadata")]
+    [InlineData("https://as/custom/metadata?tenant=test", "custom/metadata?tenant=test")]
+    public async Task Full_discovery_document_url_should_be_supported(string address, string? discoveryPath)
+    {
+        // Arrange
+
+        _mockHttp.Expect(address).Respond("application/json", DiscoveryDocument);
+        MockKeys();
+        MockTokenRequests();
+        using var provider = CreateProvider(client =>
+        {
+            client.Authority = address;
+            client.DiscoveryPolicy.DiscoveryDocumentPath = discoveryPath;
+        });
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Advertised_jwks_endpoint_failure_should_throw_exception()
+    {
+        // Arrange
+
+        MockDiscovery();
+        var jwksRequest = _mockHttp.When(JwksAddress).Respond(HttpStatusCode.ServiceUnavailable);
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldStartWith($"Discovery endpoint {Authority} is unavailable:");
+        exception.Message.ShouldContain(JwksAddress);
+        _mockHttp.GetMatchCount(jwksRequest).ShouldBe(1);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("authorization_endpoint", "https://signin.example/authorize")]
+    [InlineData("userinfo_endpoint", "https://profiles.example/userinfo")]
+    [InlineData("jwks_uri", "https://keys.example/jwks")]
+    [InlineData("check_session_iframe", "https://sessions.example/check")]
+    [InlineData("revocation_endpoint", "https://revocation.example/revoke")]
+    [InlineData("introspection_endpoint", "https://introspection.example/introspect")]
+    [InlineData("custom_extension_endpoint", "https://extensions.example/custom")]
+    public async Task Discovery_policy_should_allow_additional_endpoint_hosts(string endpointName, string endpointAddress)
+    {
+        // Arrange
+
+        MockDiscovery(
+            $$"""{"issuer":"https://as","token_endpoint":"https://as/connect/token","{{endpointName}}":"{{endpointAddress}}"}""");
+        if (endpointName == "jwks_uri")
+        {
+            MockKeys(endpointAddress);
+        }
+        MockTokenRequests();
+        using var provider = CreateProvider(client =>
+        {
+            client.DiscoveryPolicy.RequireKeySet = false;
+            client.DiscoveryPolicy.AdditionalEndpointBaseAddresses.Add(
+                new Uri(endpointAddress).GetLeftPart(UriPartial.Authority));
+        });
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+        _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData("http://as/.well-known/openid-configuration")]
+    [InlineData("http://192.0.2.1/custom/metadata")]
+    public async Task Non_loopback_http_metadata_should_be_rejected(string address)
+    {
+        // Arrange
+
+        var metadataRequest = _mockHttp.When(address)
+            .Respond("application/json", """{"token_endpoint":"http://as/connect/token"}""");
+        using var provider = CreateProvider(client => client.Authority = address);
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldStartWith($"Error parsing discovery document from {address}:");
+        exception.Message.ShouldContain("HTTPS required");
+        _mockHttp.GetMatchCount(metadataRequest).ShouldBe(0);
+        _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData("http://localhost")]
+    [InlineData("http://127.0.0.1")]
+    [InlineData("http://localhost:5000")]
+    public async Task Loopback_http_metadata_and_token_endpoint_should_be_allowed(string authority)
+    {
+        // Arrange
+
+        var metadataAddress = $"{authority}/.well-known/openid-configuration";
+        var tokenEndpoint = $"{authority}/connect/token";
+        _mockHttp.Expect(metadataAddress)
+            .Respond("application/json",
+                $$"""{"issuer":"{{authority}}","token_endpoint":"{{tokenEndpoint}}","jwks_uri":"{{authority}}/jwks"}""");
+        MockKeys($"{authority}/jwks");
+        MockTokenRequests(tokenEndpoint);
+        using var provider = CreateProvider(client => client.Authority = metadataAddress);
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("http://as/connect/token", "Endpoint does not use HTTPS")]
+    [InlineData("https://other/connect/token", "Endpoint is on a different host than authority")]
+    [InlineData("https://as.other.example/connect/token", "Endpoint is on a different host than authority")]
+    [InlineData("https://as:8443/connect/token", "Endpoint is on a different host than authority")]
+    [InlineData("ftp://as/connect/token", "Malformed endpoint")]
+    [InlineData("not-a-uri", "Malformed endpoint")]
+    public async Task Invalid_discovered_token_endpoint_should_preserve_policy_error(string tokenEndpoint, string error)
+    {
+        // Arrange
+
+        MockDiscovery($$"""{"issuer":"https://as","token_endpoint":"{{tokenEndpoint}}"}""");
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldContain(error);
+        exception.Message.ShouldContain(tokenEndpoint);
+    }
+
+    [Fact]
+    public async Task Malformed_metadata_json_should_preserve_underlying_exception()
+    {
+        // Arrange
+
+        MockDiscovery("""{"token_endpoint":""");
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldContain(Authority);
+        exception.Message.ShouldNotContain("No token endpoint found");
+        exception.InnerException.ShouldBeAssignableTo<JsonException>();
+    }
+
+    [Fact]
+    public async Task Metadata_network_failure_should_preserve_original_exception()
+    {
+        // Arrange
+
+        var failure = new HttpRequestException("TLS handshake failed");
+        _mockHttp.Expect(DiscoveryAddress).Respond(_ => throw failure);
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldStartWith($"Error parsing discovery document from {Authority}:");
+        exception.InnerException.ShouldBeSameAs(failure);
+        _mockHttp.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("null")]
+    [InlineData("\"https://as/connect/token\"")]
+    public async Task Invalid_metadata_document_shape_should_throw_exception(string document)
+    {
+        // Arrange
+
+        MockDiscovery(document);
+        using var provider = CreateProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldStartWith($"Error parsing discovery document from {Authority}:");
+    }
+
+    [Theory]
+    [InlineData("metadata")]
+    [InlineData("ftp://as/metadata")]
+    public async Task Invalid_authority_should_throw_exception(string address)
+    {
+        // Arrange
+
+        using var provider = CreateProvider(client => client.Authority = address);
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct));
+
+        // Assert
+
+        exception.Message.ShouldBe("Malformed URL");
+        _mockHttp.GetMatchCount(_mockHttp.Fallback).ShouldBe(0);
+    }
+
     private void ConfigureClient(ClientCredentialsClient client)
     {
         client.Authority = Authority;
@@ -491,14 +935,14 @@ public class ClientCredentialsDiscoveryTests
         return _services.BuildServiceProvider();
     }
 
-    private MockedRequest MockDiscovery() =>
-        _mockHttp.When(DiscoveryAddress).Respond("application/json", DiscoveryDocument);
+    private MockedRequest MockDiscovery(string document = DiscoveryDocument) =>
+        _mockHttp.When(DiscoveryAddress).Respond("application/json", document);
 
-    private MockedRequest MockKeys() =>
-        _mockHttp.When(JwksAddress).Respond("application/json", """{"keys":[]}""");
+    private MockedRequest MockKeys(string address = JwksAddress) =>
+        _mockHttp.When(address).Respond("application/json", """{"keys":[]}""");
 
-    private MockedRequest MockTokenRequests() =>
-        _mockHttp.When(TokenEndpoint).Respond(_ => Some.TokenHttpResponse());
+    private MockedRequest MockTokenRequests(string address = TokenEndpoint) =>
+        _mockHttp.When(address).Respond(_ => Some.TokenHttpResponse());
 
     private static HttpResponseMessage CreateDiscoveryResponse() =>
         new(HttpStatusCode.OK)

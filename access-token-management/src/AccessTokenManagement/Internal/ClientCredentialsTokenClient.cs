@@ -112,7 +112,7 @@ internal class ClientCredentialsTokenClient(
             request.DPoPProofToken = await CreateDPoPProofToken(tokenEndpoint, dpopJsonWebKey.Value, ct: ct);
         }
 
-        var httpClient = GetHttpClient(client, httpClientFactory);
+        var httpClient = client.GetHttpClient(httpClientFactory);
 
         logger.RequestingClientCredentialsAccessToken(LogLevel.Debug, tokenEndpoint);
         var response = await httpClient.RequestClientCredentialsTokenAsync(request, ct).ConfigureAwait(false);
@@ -200,24 +200,5 @@ internal class ClientCredentialsTokenClient(
         }, ct);
 
         return proof?.ToString();
-    }
-
-    internal static HttpClient GetHttpClient(ClientCredentialsClient client, IHttpClientFactory httpClientFactory)
-    {
-        HttpClient httpClient;
-        if (client.HttpClient != null)
-        {
-            httpClient = client.HttpClient;
-        }
-        else if (!string.IsNullOrWhiteSpace(client.HttpClientName))
-        {
-            httpClient = httpClientFactory.CreateClient(client.HttpClientName);
-        }
-        else
-        {
-            httpClient = httpClientFactory.CreateClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
-        }
-
-        return httpClient;
     }
 }

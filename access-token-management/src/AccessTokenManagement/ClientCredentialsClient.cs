@@ -96,6 +96,12 @@ public sealed class ClientCredentialsClient
 
     internal AsyncLazy<Uri>? DiscoveredTokenEndpoint { get; set; }
 
+    internal HttpClient GetHttpClient(IHttpClientFactory httpClientFactory) =>
+        HttpClient ?? httpClientFactory.CreateClient(
+            string.IsNullOrWhiteSpace(HttpClientName)
+                ? ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName
+                : HttpClientName);
+
     internal sealed class Validator : IValidateOptions<ClientCredentialsClient>
     {
         public ValidateOptionsResult Validate(string? name, ClientCredentialsClient options)
