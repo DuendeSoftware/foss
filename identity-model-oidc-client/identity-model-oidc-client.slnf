@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "..\\foss.slnx",
+    "projects": [
+      "identity-model-oidc-client\\src\\IdentityModel.OidcClient\\IdentityModel.OidcClient.csproj",
+      "identity-model-oidc-client\\src\\IdentityModel.OidcClient.Extensions\\IdentityModel.OidcClient.Extensions.csproj",
+      "identity-model-oidc-client\\src\\TrimmableAnalysis\\TrimmableAnalysis.csproj",
+      "identity-model-oidc-client\\test\\IdentityModel.OidcClient.Tests\\IdentityModel.OidcClient.Tests.csproj"
+    ]
+  }
+}
