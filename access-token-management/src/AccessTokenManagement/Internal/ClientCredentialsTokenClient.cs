@@ -34,11 +34,17 @@ internal class ClientCredentialsTokenClient(
 
         if (client.ClientId == null)
         {
-            throw new InvalidOperationException($"No ClientId configured for client {clientName}");
+            throw new InvalidOperationException($"No {nameof(client.ClientId)} configured for client {clientName}");
         }
-        if (client.TokenEndpoint == null)
+        if (client.TokenEndpoint is not { } tokenEndpoint)
         {
-            throw new InvalidOperationException($"No TokenEndpoint configured for client {clientName}");
+            ct.ThrowIfCancellationRequested();
+
+            var discovery = client.DiscoveredTokenEndpoint
+                ?? throw new InvalidOperationException($"No {nameof(client.TokenEndpoint)} or {nameof(client.Authority)} configured for client {clientName}");
+
+            // Cancel only this caller's wait, not the discovery shared by the options.
+            tokenEndpoint = await discovery.Value.WaitAsync(ct).ConfigureAwait(false);
         }
 
         using var logScope = logger.BeginScope(
@@ -47,7 +53,7 @@ internal class ClientCredentialsTokenClient(
 
         var request = new ClientCredentialsTokenRequest
         {
-            Address = client.TokenEndpoint.ToString(),
+            Address = tokenEndpoint.ToString(),
             Scope = client.Scope?.ToString(),
             ClientId = client.ClientId.Value.ToString(),
             ClientSecret = client.ClientSecret?.ToString(),
@@ -103,12 +109,12 @@ internal class ClientCredentialsTokenClient(
 
         if (dpopJsonWebKey != null)
         {
-            request.DPoPProofToken = await CreateDPoPProofToken(client.TokenEndpoint, dpopJsonWebKey.Value, ct: ct);
+            request.DPoPProofToken = await CreateDPoPProofToken(tokenEndpoint, dpopJsonWebKey.Value, ct: ct);
         }
 
-        var httpClient = GetHttpClient(client);
+        var httpClient = client.GetHttpClient(httpClientFactory);
 
-        logger.RequestingClientCredentialsAccessToken(LogLevel.Debug, client.TokenEndpoint);
+        logger.RequestingClientCredentialsAccessToken(LogLevel.Debug, tokenEndpoint);
         var response = await httpClient.RequestClientCredentialsTokenAsync(request, ct).ConfigureAwait(false);
 
         // Retry policy: if we get a DPoP nonce error, retry with the server nonce
@@ -123,7 +129,7 @@ internal class ClientCredentialsTokenClient(
             metrics.DPoPNonceErrorRetry(ClientId.Parse(request.ClientId), response.Error);
 
             request.DPoPProofToken = await CreateDPoPProofToken(
-                tokenEndpoint: client.TokenEndpoint,
+                tokenEndpoint: tokenEndpoint,
                 dpopProofKey: dpopJsonWebKey.Value,
                 dPoPNonce: DPoPNonce.Parse(response.DPoPNonce),
                 ct: ct);
@@ -194,24 +200,5 @@ internal class ClientCredentialsTokenClient(
         }, ct);
 
         return proof?.ToString();
-    }
-
-    private HttpClient GetHttpClient(ClientCredentialsClient client)
-    {
-        HttpClient httpClient;
-        if (client.HttpClient != null)
-        {
-            httpClient = client.HttpClient;
-        }
-        else if (!string.IsNullOrWhiteSpace(client.HttpClientName))
-        {
-            httpClient = httpClientFactory.CreateClient(client.HttpClientName);
-        }
-        else
-        {
-            httpClient = httpClientFactory.CreateClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName);
-        }
-
-        return httpClient;
     }
 }
