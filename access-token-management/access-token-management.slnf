@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "..\\foss.slnx",
+    "projects": [
+      "access-token-management\\src\\AccessTokenManagement\\AccessTokenManagement.csproj",
+      "access-token-management\\src\\AccessTokenManagement.OpenIdConnect\\AccessTokenManagement.OpenIdConnect.csproj",
+      "access-token-management\\test\\AccessTokenManagement.Tests\\AccessTokenManagement.Tests.csproj"
+    ]
+  }
+}
