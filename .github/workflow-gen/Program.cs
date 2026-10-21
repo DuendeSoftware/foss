@@ -40,7 +40,6 @@ Component[] components = [
 foreach (var component in components)
 {
     GenerateCiWorkflow(component);
-    GenerateReleaseWorkflow(component);
 }
 
 GenerateUploadTestResultsWorkflow();
@@ -147,101 +146,6 @@ void GenerateCiWorkflow(Component component)
     WriteWorkflow(workflow, fileName);
 }
 
-void GenerateReleaseWorkflow(Component component)
-{
-    var workflow = new Workflow(component.ReleaseWorkflowName);
-
-    workflow.On
-        .WorkflowDispatch()
-        .Inputs(
-            new StringInput("version", "Version in format X.Y.Z, X.Y.Z-preview.N, or X.Y.Z-rc.N", true, "0.0.0"),
-            new StringInput("branch", "(Optional) the name of the branch to release from", false, "main"),
-            new BooleanInput("remove-tag-if-exists", "If set, will remove the existing tag. Use this if you have issues with the previous release action", false, false));
-
-    workflow.EnvDefaults();
-
-    var tagJob = workflow
-        .Job("tag")
-        .Name("Tag and Pack")
-        .RunsOn(GitHubHostedRunners.UbuntuLatest)
-        .Permissions(contents: Permission.Write, packages: Permission.Write)
-        .Defaults().Run("bash", component.Name).Job;
-
-    tagJob.Step()
-        .ActionsCheckout();
-
-    tagJob.Step()
-        .Name("Validate Version Input")
-        .Run($@"echo '{contexts.Event.Input.Version}' | grep -P '^\d+\.\d+\.\d+(-preview\.\d+|-rc\.\d+)?$' || (echo 'Invalid version format' && exit 1)");
-
-    tagJob.Step()
-        .Name("Checkout target branch")
-        .If("github.event.inputs.branch != 'main'")
-        .Run("git checkout ${{ github.event.inputs.branch }}");
-
-    tagJob.StepSetupDotNet();
-
-
-    tagJob.Step()
-        .Name("Git Config")
-        .Run(@"git config --global user.email ""github-bot@duendesoftware.com""
-git config --global user.name ""Duende Software GitHub Bot""");
-
-    tagJob.Step()
-        .Name("Remove previous git tag")
-        .If("github.event.inputs['remove-tag-if-exists'] == 'true'")
-        .Run($@"if git rev-parse {component.TagPrefix}-{contexts.Event.Input.Version} >/dev/null 2>&1; then
-  git tag -d {component.TagPrefix}-{contexts.Event.Input.Version}
-  git push --delete origin {component.TagPrefix}-{contexts.Event.Input.Version}
-else
-  echo 'Tag {component.TagPrefix}-{contexts.Event.Input.Version} does not exist.'
-fi");
-
-
-    tagJob.Step()
-        .Name("Git tag")
-        .Run($@"git tag -a {component.TagPrefix}-{contexts.Event.Input.Version} -m ""Release v{contexts.Event.Input.Version}""
-git push origin {component.TagPrefix}-{contexts.Event.Input.Version}");
-
-    foreach (var project in component.Projects)
-    {
-        tagJob.StepPack(project);
-    }
-
-    tagJob.StepToolRestore();
-
-    tagJob.StepSign(always: true);
-
-    tagJob.StepPush("GitHub", "https://nuget.pkg.github.com/DuendeSoftware/index.json", "GITHUB_TOKEN", pushAlways: true)
-        .Env(("GITHUB_TOKEN", contexts.Secrets.GitHubToken),
-            ("NUGET_AUTH_TOKEN", contexts.Secrets.GitHubToken));
-
-    tagJob.StepUploadArtifacts(component.Name, uploadAlways: true);
-
-    var publishJob = workflow.Job("publish")
-        .Name("Publish to nuget.org")
-        .RunsOn(GitHubHostedRunners.UbuntuLatest)
-        .Needs("tag")
-        .Environment("nuget.org", "");
-    ;
-
-    publishJob.Step()
-        .Uses("actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16") // 4.1.8
-        .With(("name", "artifacts"), ("path", "artifacts"));
-
-    publishJob.StepSetupDotNet();
-
-    publishJob.Step()
-        .Name("List files")
-        .Shell("bash")
-        .Run("tree");
-
-    publishJob.StepPush("nuget.org", "https://api.nuget.org/v3/index.json", "NUGET_ORG_API_KEY", pushAlways: true);
-
-    var fileName = $"{component.Name}-release";
-    WriteWorkflow(workflow, fileName);
-}
-
 void GenerateUploadTestResultsWorkflow()
 {
     var workflow = new Workflow("generate-test-reports");
@@ -288,7 +192,6 @@ void WriteWorkflow(Workflow workflow, string fileName)
 record Component(string Name, string[] Projects, string[] Tests, string TagPrefix, string[] RunsOn)
 {
     public string CiWorkflowName => $"{Name}/ci";
-    public string ReleaseWorkflowName => $"{Name}/release";
 }
 
 public static class StepExtensions

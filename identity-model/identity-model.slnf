@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "..\\foss.slnx",
+    "projects": [
+      "identity-model\\src\\IdentityModel\\IdentityModel.csproj",
+      "identity-model\\src\\TrimmableAnalysis\\TrimmableAnalysis.csproj",
+      "identity-model\\test\\IdentityModel.Tests\\IdentityModel.Tests.csproj"
+    ]
+  }
+}
