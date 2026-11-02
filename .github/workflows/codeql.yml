@@ -1,6 +1,10 @@
 name: codeql
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   schedule:
     - cron: '38 15 * * 0'
 
@@ -15,17 +19,42 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      with:
+        fetch-depth: 0
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+      with:
+        global-json-file: global.json
 
     - name: Initialize CodeQL
-      uses:  github/codeql-action/init@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # 3.27.4
+      uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
       with:
         languages: csharp
-        
-    - name: Auto build
-      uses: github/codeql-action/autobuild@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # 3.27.4
+        build-mode: manual
+
+    - name: Build production source
+      shell: pwsh
+      run: |
+        $projects = @(Get-ChildItem -Directory | ForEach-Object {
+          $source = Join-Path $_.FullName 'src'
+          if (Test-Path $source -PathType Container) {
+            Get-ChildItem $source -Filter '*.csproj' -Recurse -File
+          }
+        } | Sort-Object FullName)
+        if ($projects.Count -eq 0) {
+          throw 'No production projects found for CodeQL extraction.'
+        }
+        foreach ($project in $projects) {
+          Write-Host "Building $($project.FullName)"
+          dotnet build $project.FullName --configuration Release --no-incremental /p:UseSharedCompilation=false
+          if ($LASTEXITCODE -ne 0) {
+            throw "CodeQL build failed for $($project.FullName)"
+          }
+        }
 
     - name: Perform CodeQL analysis
-      uses: github/codeql-action/analyze@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # 3.27.4
+      uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
       with:
         category: "/language:csharp"
