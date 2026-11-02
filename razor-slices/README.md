@@ -14,6 +14,23 @@ Last synced to upstream commit [`c286ca0`](https://github.com/DamianEdwards/Razo
 - [`190e80a`](https://github.com/DamianEdwards/RazorSlices/commit/190e80a) (DamianEdwards/RazorSlices#150): emit qualified names for primitive model types in generated proxies.
 - [`0bdabc2`](https://github.com/DamianEdwards/RazorSlices/commit/0bdabc2) (DamianEdwards/RazorSlices#154): shareable Razor helpers (`RazorSliceHelpers`), minimal slices built on the new `RazorSliceBase` (the `RazorSlice` partials split into `RazorSliceBase.*`), generated slice/helper activation, and the helper analyzer. Samples and tests are ported too. The `BuildTasks` changes and the `BuildTasks`/`Samples.WebApp` test projects are not vendored, so they were left out.
 - [`44409f8`](https://github.com/DamianEdwards/RazorSlices/commit/44409f8) (DamianEdwards/RazorSlices#158), diagnostic-ID rename only: source generator and analyzer diagnostics renamed from `RSG####` to `RSLICE####`. The rest of that PR was not taken: the experimental TempData provider, the form/antiforgery helpers, the `RSLICE0200` experimental diagnostic, and their samples and tests.
+- [`a4eadb5`](https://github.com/DamianEdwards/RazorSlices/commit/a4eadb5) (DamianEdwards/RazorSlices#161), bug fixes only:
+  - templated Razor delegates (`HelperResult`) are rejected only when their `Task` is incomplete;
+  - a rejected writer is never returned to the pool;
+  - faults are observed;
+  - the source generator project reference is isolated from consumer publish properties (`PublishAot`, `RuntimeIdentifier`, ...);
+  - the dead `NET10_0_OR_GREATER` conditionals in `IResultExtensions` are dropped.
+
+  The .NET 11 / multi-targeting, CI, benchmark and sample changes were not taken.
+
+Other upstream changes after the sync point have not been taken. These are:
+- DamianEdwards/RazorSlices#147 (branding);
+- DamianEdwards/RazorSlices#151 (upstream README only);
+- DamianEdwards/RazorSlices#152 (version bump);
+- DamianEdwards/RazorSlices#156 (build-task MVC property optimizer, not vendored);
+- DamianEdwards/RazorSlices#159 (streaming Tag Helpers spike);
+- DamianEdwards/RazorSlices#35 (multi-TFM publish example);
+- DamianEdwards/RazorSlices#163 (HTMX todo sample).
 
 ## Differences from upstream
 
