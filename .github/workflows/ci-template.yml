@@ -1,5 +1,7 @@
 name: CI Template
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:

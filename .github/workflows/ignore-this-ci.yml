@@ -1,5 +1,7 @@
 name: ignore-this/ci
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:
@@ -32,6 +34,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
     uses: ./.github/workflows/ci-template.yml
     with:
       product: ignore-this
