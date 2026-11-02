@@ -10,6 +10,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="xunit.v3.assert" />
     <ProjectReference Include="..\..\src\SourceGenerator\SourceGenerator.csproj" />
+    <ProjectReference Include="..\..\src\RazorSlices\RazorSlices.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

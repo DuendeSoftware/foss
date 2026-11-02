@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace Duende.RazorSlices;
 
-public partial class RazorSlice
+public partial class RazorSliceBase
 {
     /// <summary>
     /// Writes a string value to the output without HTML encoding it.
@@ -20,7 +20,7 @@ public partial class RazorSlice
     /// all blocks of HTML in your .cshtml file.
     /// </remarks>
     /// <param name="value">The value to write to the output.</param>
-    protected void WriteLiteral(string? value)
+    protected internal void WriteLiteral(string? value)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -39,7 +39,7 @@ public partial class RazorSlice
     /// all blocks of HTML in your .cshtml file.
     /// </remarks>
     /// <param name="value">The value to write to the output.</param>
-    protected void WriteLiteral<T>(T? value)
+    protected internal void WriteLiteral<T>(T? value)
     {
         if (value is IUtf8SpanFormattable)
         {
@@ -66,12 +66,12 @@ public partial class RazorSlice
     /// all blocks of HTML in your .cshtml file.
     /// </para>
     /// <para>
-    /// NOTE: We'd need a tweak to the Razor compiler to to have it support emitting <see cref="WriteLiteral(ReadOnlySpan{byte})"/> calls with UTF8 string literals
-    ///       i.e. https://github.com/dotnet/razor/issues/8429
+    /// Recent Razor SDKs emit UTF8 string literals for this overload. Pipe output avoids transcoding;
+    /// TextWriter output decodes the bytes to characters.
     /// </para>
     /// </remarks>
     /// <param name="value">The value to write to the output.</param>
-    protected void WriteLiteral(ReadOnlySpan<byte> value)
+    protected internal void WriteLiteral(ReadOnlySpan<byte> value)
     {
         if (value.Length == 0)
         {
@@ -96,7 +96,7 @@ public partial class RazorSlice
     /// </para>
     /// </remarks>
     /// <param name="value"></param>
-    protected void Write(bool? value) => WriteBool(value);
+    protected internal void Write(bool? value) => WriteBool(value);
 
     /// <summary>
     /// Writes a buffer of UTF8 bytes to the output after HTML encoding it.
@@ -126,7 +126,7 @@ public partial class RazorSlice
     /// all matching Razor expressions in your .cshtml file.
     /// </remarks>
     /// <param name="value">The value to write to the output.</param>
-    protected void Write(ReadOnlySpan<byte> value)
+    protected internal void Write(ReadOnlySpan<byte> value)
     {
         if (value.Length == 0)
         {
@@ -151,7 +151,7 @@ public partial class RazorSlice
     /// </para>
     /// </remarks>
     /// <param name="htmlString">The <see cref="HtmlString"/> value to write to the output.</param>
-    protected void Write(HtmlString htmlString)
+    protected internal void Write(HtmlString htmlString)
     {
         if (htmlString is not null && htmlString != HtmlString.Empty)
         {
@@ -163,7 +163,7 @@ public partial class RazorSlice
     /// Writes the specified <see cref="IHtmlContent"/> value to the output without HTML encoding it again.
     /// </summary>
     /// <param name="htmlContent">The <see cref="IHtmlContent"/> value to write to the output.</param>
-    protected void Write(IHtmlContent? htmlContent)
+    protected internal void Write(IHtmlContent? htmlContent)
     {
         if (htmlContent is not null)
         {
@@ -175,7 +175,7 @@ public partial class RazorSlice
     /// Writes the specified value to the output after HTML encoding it.
     /// </summary>
     /// <param name="value">The value to write to the output.</param>
-    protected void Write(string? value)
+    protected internal void Write(string? value)
     {
         if (!string.IsNullOrEmpty(value))
         {
@@ -191,7 +191,7 @@ public partial class RazorSlice
     /// Writes the specified value to the output after HTML encoding it.
     /// </summary>
     /// <param name="value">The value to write to the output.</param>
-    protected void Write(ReadOnlySpan<char> value)
+    protected internal void Write(ReadOnlySpan<char> value)
     {
         if (value.Length > 0)
         {
@@ -208,14 +208,14 @@ public partial class RazorSlice
     /// the <c>Write</c> method for all Razor expressions in your .cshtml file, e.g. <c>@someVariable</c>.
     /// </remarks>
     /// <param name="value">The <typeparamref name="T"/> to write to the output.</param>
-    protected void Write<T>(T? value) => WriteValue(value);
+    protected internal void Write<T>(T? value) => WriteValue(value);
 
     /// <summary>
     /// Writes a <see cref="bool"/> value to the output.
     /// </summary>
     /// <param name="value">The value to write to the output.</param>
     /// <returns><see cref="HtmlString.Empty"/> to allow for easy calling via a Razor expression, e.g. <c>@WriteBool(todo.Completed)</c></returns>
-    protected HtmlString WriteBool(bool? value)
+    protected internal HtmlString WriteBool(bool? value)
     {
         if (value.HasValue)
         {
@@ -233,7 +233,7 @@ public partial class RazorSlice
     /// <param name="formatProvider">The <see cref="IFormatProvider" /> to use when writing the value to the output. Defaults to <see cref="CultureInfo.CurrentCulture"/> if <c>null</c>.</param>
     /// <param name="htmlEncode">Whether to HTML encode the value or not. Defaults to <c>true</c>.</param>
     /// <returns><see cref="HtmlString.Empty"/> to allow for easy calling via a Razor expression, e.g. <c>@WriteSpanFormattable(item.DueBy, "d")</c></returns>
-    protected HtmlString WriteSpanFormattable<T>(T? formattable, ReadOnlySpan<char> format = default, IFormatProvider? formatProvider = null, bool htmlEncode = true)
+    protected internal HtmlString WriteSpanFormattable<T>(T? formattable, ReadOnlySpan<char> format = default, IFormatProvider? formatProvider = null, bool htmlEncode = true)
         where T : ISpanFormattable
     {
         if (formattable is not null)
@@ -254,7 +254,7 @@ public partial class RazorSlice
     /// <param name="formatProvider">The <see cref="IFormatProvider" /> to use when writing the value to the output. Defaults to <see cref="CultureInfo.CurrentCulture"/> if <c>null</c>.</param>
     /// <param name="htmlEncode">Whether to HTML encode the value or not. Defaults to <c>true</c>.</param>
     /// <returns><see cref="HtmlString.Empty"/> to allow for easy calling via a Razor expression, e.g. <c>@WriteUtf8SpanFormattable(item.DueBy, "d")</c></returns>
-    protected HtmlString WriteUtf8SpanFormattable<T>(T? formattable, ReadOnlySpan<char> format = default, IFormatProvider? formatProvider = null, bool htmlEncode = true)
+    protected internal HtmlString WriteUtf8SpanFormattable<T>(T? formattable, ReadOnlySpan<char> format = default, IFormatProvider? formatProvider = null, bool htmlEncode = true)
         where T : IUtf8SpanFormattable
     {
         if (formattable is not null)
@@ -267,50 +267,42 @@ public partial class RazorSlice
         return HtmlString.Empty;
     }
 
-    private static bool IsTaskFromAsyncMethod(Task task) => task.GetType().FullName is { } fullName && fullName.StartsWith(nameof(System.Runtime.CompilerServices.AsyncTaskMethodBuilder), StringComparison.Ordinal);
-
     /// <summary>
     /// Writes the specified <see cref="IHtmlContent"/> value to the output.
     /// </summary>
     /// <param name="htmlContent">The <see cref="IHtmlContent"/> value to write to the output.</param>
     /// <returns><see cref="HtmlString.Empty"/> to allow for easy calling via a Razor expression, e.g. <c>@WriteHtmlContent(myCustomHtmlContent)</c></returns>
-    protected HtmlString WriteHtml<T>(T htmlContent)
+    protected internal HtmlString WriteHtml<T>(T htmlContent)
         where T : IHtmlContent
     {
 #pragma warning disable CA2000 // Dispose objects before losing scope: Utf8PipeTextWriter is returned to the pool in the finally block
         var textWriter = _textWriter ?? Utf8PipeTextWriter.Get(_pipeWriter!);
 #pragma warning restore CA2000
         var faulted = false;
+        var returnWriter = true;
 
         try
         {
             if (htmlContent is HelperResult helperResult)
             {
                 // A templated Razor delegate is being rendered: https://learn.microsoft.com/aspnet/core/mvc/views/razor#templated-razor-delegates
-                // HelperResult captures the generated async templated delegate and blocks synchronously when calling it!
-                // This is not ideal for performance and in our case breaks the optimization used by Utf8PipeTextWriter which
-                // is cached in a thread static, but it can't be helped without changing the Razor compiler (writes are synchronous).
-                // However we can access the captured delegate, invoke it to get the Task and detect the case where it hasn't
-                // completed (i.e. has gone async) and in that case throw an exception.
+                // WriteHtml is synchronous. Completion, not the runtime's private Task implementation,
+                // determines whether the delegate can be consumed without blocking.
                 var actionResult = helperResult.WriteAction(textWriter);
 
-#if DEBUG
-                // Force a small delay when debugging to make it easier to create scenario where method is async but has already completed
-                Thread.Sleep(20);
-#endif
-
-                // If the Task is not completed or it's from a generated async method (i.e. one with an 'await' in it) throw an exception
-                if (!actionResult.IsCompleted || IsTaskFromAsyncMethod(actionResult))
+                if (!actionResult.IsCompleted)
                 {
-                    // NOTE: There's still a chance here that the Task run asynchronously but is completed by the time we check it (albeit it's a small window)
-                    //       and in that case it's very likely the Utf8PipeTextWriter will fault as it can't handle cross-thread writes (pooled via thread static).
-                    //       I don't think this causes any issues as the exception will be thrown and the request will fail, but it's worth noting.
+                    // The rejected callback can still hold this writer. Never pool it for another render.
+                    returnWriter = false;
+                    _ = actionResult.ContinueWith(static task => { _ = task.Exception; },
+                        CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                        TaskScheduler.Default);
 
                     throw new InvalidOperationException("""
                         ----------------------------
                         !!! Razor Slices Error !!!
                         ----------------------------
-                        The WriteAction of a HelperResult instance returned a Task from an async templated Razor delegate.
+                        The WriteAction of a HelperResult instance returned an incomplete Task from a templated Razor delegate.
                         This causes performance and scale issues and is not supported in Razor Slices.
                         This happens when a templated Razor delegate does async work (i.e. has `@await SomethingAsync()` in it).
                         Use async templated methods instead of async templated Razor delegates. They have the advantage of supporting
@@ -375,7 +367,10 @@ public partial class RazorSlice
                 {
                     utf8PipeTextWriter.Flush();
                 }
-                Utf8PipeTextWriter.Return(utf8PipeTextWriter);
+                if (returnWriter)
+                {
+                    Utf8PipeTextWriter.Return(utf8PipeTextWriter);
+                }
             }
         }
 
@@ -387,7 +382,7 @@ public partial class RazorSlice
     /// </summary>
     /// <param name="htmlString">The <see cref="HtmlString"/> value to write to the output.</param>
     /// <returns><see cref="HtmlString.Empty"/> to allow for easy calling via a Razor expression, e.g. <c>@WriteHtml(myCustomHtmlContent)</c></returns>
-    protected HtmlString WriteHtml(HtmlString htmlString)
+    protected internal HtmlString WriteHtml(HtmlString htmlString)
     {
         if (htmlString is not null && htmlString != HtmlString.Empty)
         {
@@ -407,7 +402,7 @@ public partial class RazorSlice
     /// </remarks>
     /// <param name="htmlString">The HTML value to write to the output.</param>
     /// <returns><see cref="HtmlString.Empty"/> to allow for easy calling via a Razor expression, e.g. <c>@WriteHtml(Model.SomeHtml)</c></returns>
-    protected HtmlString WriteHtml(string? htmlString)
+    protected internal HtmlString WriteHtml(string? htmlString)
     {
         if (!string.IsNullOrEmpty(htmlString))
         {

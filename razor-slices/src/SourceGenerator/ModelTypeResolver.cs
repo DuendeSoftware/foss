@@ -54,8 +54,8 @@ internal static class ModelTypeResolver
 
     /// <summary>
     /// Resolves the model type by resolving an inherited slice base type and walking its base type hierarchy
-    /// until a <c>Duende.RazorSlices.RazorSlice&lt;TModel&gt;</c> base type is found.
-    /// Returns null when the inherited type cannot be resolved or does not derive from a generic RazorSlice.
+    /// until a <c>Duende.RazorSlices.RazorSlice&lt;TModel&gt;</c> or <c>Duende.RazorSlices.RazorSliceBase&lt;TModel&gt;</c> base type is found.
+    /// Returns null when the inherited type cannot be resolved or has no slice model.
     /// </summary>
     internal static string? ResolveModelTypeFromSliceBaseType(string baseTypeName, List<UsingDirective> usingDirectives, Compilation compilation, string? rootNamespace = null)
     {
@@ -73,7 +73,7 @@ internal static class ModelTypeResolver
 
         for (var currentType = baseTypeSymbol; currentType is not null; currentType = currentType.BaseType)
         {
-            if (!string.Equals(currentType.Name, "RazorSlice", StringComparison.Ordinal) ||
+            if ((currentType.Name != "RazorSlice" && currentType.Name != "RazorSliceBase") ||
                 !string.Equals(currentType.ContainingNamespace.ToDisplayString(), "Duende.RazorSlices", StringComparison.Ordinal))
             {
                 continue;
@@ -81,8 +81,8 @@ internal static class ModelTypeResolver
 
             if (currentType.IsGenericType && currentType.TypeArguments.Length == 1)
             {
-                return "global::" + currentType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
-                    .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining));
+                return currentType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
+                    .WithMiscellaneousOptions(SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions & ~SymbolDisplayMiscellaneousOptions.UseSpecialTypes));
             }
 
             // Reached non-generic RazorSlice, so there is no model.
@@ -126,8 +126,12 @@ internal static class ModelTypeResolver
         return ResolveSimpleType(typeName, usingDirectives, compilation, rootNamespace: rootNamespace);
     }
 
-    private static ITypeSymbol? ResolveTypeSymbolExpression(string typeName, List<UsingDirective> usingDirectives, Compilation compilation, string? rootNamespace)
+    internal static ITypeSymbol? ResolveTypeSymbolExpression(string typeName, List<UsingDirective> usingDirectives, Compilation compilation, string? rootNamespace)
     {
+        if (typeName.StartsWith("global::", StringComparison.Ordinal))
+        {
+            typeName = typeName.Substring("global::".Length);
+        }
         // Handle nullable value/reference types by resolving the underlying type symbol.
         if (typeName.EndsWith("?", StringComparison.Ordinal))
         {
@@ -205,12 +209,7 @@ internal static class ModelTypeResolver
         }
 
         var resolvedSimple = ResolveSimpleType(typeName, usingDirectives, compilation, rootNamespace: rootNamespace);
-        if (resolvedSimple is null)
-        {
-            return null;
-        }
-
-        return ResolveNamedTypeSymbol(resolvedSimple, compilation);
+        return resolvedSimple is null ? null : (ITypeSymbol?)ResolveNamedTypeSymbol(resolvedSimple, compilation);
     }
 
     private static string? ResolveGenericType(string typeName, int genericOpen, List<UsingDirective> usingDirectives, Compilation compilation, string? rootNamespace)
@@ -453,7 +452,8 @@ internal static class ModelTypeResolver
         if (symbol != null)
         {
             var result = "global::" + symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
-                .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining));
+                .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining)
+                .WithMiscellaneousOptions(SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions & ~SymbolDisplayMiscellaneousOptions.UseSpecialTypes));
 
             // For generic types being resolved as outer types, strip the generic type parameters
             // e.g. "global::System.Func<T, TResult>" → "global::System.Func"

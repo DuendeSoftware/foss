@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="PublishAot;PublishTrimmed;PublishSingleFile;PublishReadyToRun;SelfContained;RuntimeIdentifier">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -9,6 +9,12 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsPackable>false</IsPackable>
+    <PublishAot>false</PublishAot>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier></RuntimeIdentifier>
     <!-- IsTrimmable is not supported on netstandard2.0 (required for Roslyn analyzers); suppress NETSDK1212 -->
     <IsTrimmable>false</IsTrimmable>
     <!-- Strong-naming is disabled so InternalsVisibleTo does not require a public key -->
@@ -23,6 +29,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
 
     <InternalsVisibleTo Include="Duende.RazorSlices.SourceGenerator.Tests" />
+    <None Remove="AnalyzerReleases.Shipped.md;AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,7 @@ namespace Duende.RazorSlices;
 
 internal static class BufferSizes
 {
+    public const int MaxUtf8BytesPerScalar = 4;
     public const int SmallNumericWriteByteSize = 32;
     public const int SmallNumericWriteCharSize = SmallNumericWriteByteSize / 2;
     public const int SmallFormattableWriteByteSize = 64;
