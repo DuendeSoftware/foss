@@ -57,7 +57,7 @@ public class RazorSliceHelperGeneratorTests
     public void RejectsUnsupportedContracts(string contract)
     {
         var result = Generate(contract);
-        Assert.Contains(result.Diagnostics, static diagnostic => diagnostic.Id == "RSG0100");
+        Assert.Contains(result.Diagnostics, static diagnostic => diagnostic.Id == "RSLICE0100");
         Assert.DoesNotContain(result.Diagnostics, static diagnostic => diagnostic.Id == "CS8785");
     }
 
@@ -66,7 +66,7 @@ public class RazorSliceHelperGeneratorTests
     {
         Assert.Empty(Generate("public interface IHelpers { void Render(); }", "@inject object Service").Diagnostics);
         Assert.Contains(Generate("public interface IHelpers { void Render(); }", implements: "").Diagnostics,
-            static d => d.Id == "RSG0100");
+            static d => d.Id == "RSLICE0100");
     }
 
     [Theory]
@@ -89,7 +89,7 @@ public class RazorSliceHelperGeneratorTests
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var diagnostics = await input.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new RazorSliceHelperAnalyzer()))
             .GetAnalyzerDiagnosticsAsync();
-        var diagnostic = Assert.Single(diagnostics, static diagnostic => diagnostic.Id == "RSG0102");
+        var diagnostic = Assert.Single(diagnostics, static diagnostic => diagnostic.Id == "RSLICE0102");
         Assert.Contains("~/Helpers", diagnostic.GetMessage());
     }
     [Fact]
@@ -122,7 +122,7 @@ public class RazorSliceHelperGeneratorTests
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var diagnostics = await input.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new RazorSliceHelperAnalyzer()))
             .GetAnalyzerDiagnosticsAsync();
-        Assert.Equal(invalid, diagnostics.Any(static diagnostic => diagnostic.Id == "RSG0101"));
+        Assert.Equal(invalid, diagnostics.Any(static diagnostic => diagnostic.Id == "RSLICE0101"));
     }
 
     [Theory]
@@ -148,7 +148,7 @@ public class RazorSliceHelperGeneratorTests
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var diagnostics = await input.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new RazorSliceHelperAnalyzer()))
             .GetAnalyzerDiagnosticsAsync();
-        Assert.Contains(diagnostics, static d => d.Id == "RSG0101");
+        Assert.Contains(diagnostics, static d => d.Id == "RSLICE0101");
     }
 
     private static (Compilation Input, string[] Sources, ImmutableArray<Diagnostic> Diagnostics) Generate(

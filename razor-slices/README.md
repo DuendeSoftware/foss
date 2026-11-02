@@ -13,6 +13,7 @@ Last synced to upstream commit [`c286ca0`](https://github.com/DamianEdwards/Razo
 - [`552937e`](https://github.com/DamianEdwards/RazorSlices/commit/552937e) (DamianEdwards/RazorSlices#149): fix encoding loops at buffer boundaries in `PipeWriterHtmlExtensions` and `Utf8PipeTextWriter`. The `TextWriterHtmlExtensions` part is superseded by the local fix in `85672bfd`, which replaced the manual encoding loop with `HtmlEncoder.Encode(TextWriter, ...)`.
 - [`190e80a`](https://github.com/DamianEdwards/RazorSlices/commit/190e80a) (DamianEdwards/RazorSlices#150): emit qualified names for primitive model types in generated proxies.
 - [`0bdabc2`](https://github.com/DamianEdwards/RazorSlices/commit/0bdabc2) (DamianEdwards/RazorSlices#154): shareable Razor helpers (`RazorSliceHelpers`), minimal slices built on the new `RazorSliceBase` (the `RazorSlice` partials split into `RazorSliceBase.*`), generated slice/helper activation, and the helper analyzer. Samples and tests are ported too. The `BuildTasks` changes and the `BuildTasks`/`Samples.WebApp` test projects are not vendored, so they were left out.
+- [`44409f8`](https://github.com/DamianEdwards/RazorSlices/commit/44409f8) (DamianEdwards/RazorSlices#158), diagnostic-ID rename only: source generator and analyzer diagnostics renamed from `RSG####` to `RSLICE####`. The rest of that PR was not taken: the experimental TempData provider, the form/antiforgery helpers, the `RSLICE0200` experimental diagnostic, and their samples and tests.
 
 ## Differences from upstream
 
