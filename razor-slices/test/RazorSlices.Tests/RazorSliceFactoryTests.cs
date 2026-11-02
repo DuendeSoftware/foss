@@ -11,6 +11,21 @@ namespace Duende.RazorSlices.Tests;
 public class RazorSliceFactoryTests
 {
     [Fact]
+    public async Task InitializerCanClearItself()
+    {
+        var calls = 0;
+        using var slice = RazorSliceFactory.Create(static () => new ConstructorSlice("test"));
+        slice.Initialize = (instance, _, _) =>
+        {
+            calls++;
+            instance.Initialize = null;
+        };
+        await slice.RenderAsync(TextWriter.Null);
+        Assert.Equal(1, calls);
+        Assert.Null(slice.Initialize);
+    }
+
+    [Fact]
     public void Create_UsesDirectConstructorAndReturnsFreshInstances()
     {
         using var first = RazorSliceFactory.Create(static () => new ConstructorSlice("first"));
@@ -108,7 +123,7 @@ public class RazorSliceFactoryTests
     {
         using var slice = CreateInjectableSlice(reflection);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => slice.ExecuteAsyncImpl());
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(slice.ExecuteAsyncImpl);
 
         Assert.Contains("ServiceProvider property is null", exception.Message);
     }
@@ -122,7 +137,7 @@ public class RazorSliceFactoryTests
         using var slice = CreateInjectableSlice(reflection);
         slice.ServiceProvider = services;
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => slice.ExecuteAsyncImpl());
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(slice.ExecuteAsyncImpl);
 
         Assert.Contains(nameof(TestService), exception.Message);
     }

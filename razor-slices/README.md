@@ -12,6 +12,7 @@ Last synced to upstream commit [`c286ca0`](https://github.com/DamianEdwards/Razo
 
 - [`552937e`](https://github.com/DamianEdwards/RazorSlices/commit/552937e) (DamianEdwards/RazorSlices#149): fix encoding loops at buffer boundaries in `PipeWriterHtmlExtensions` and `Utf8PipeTextWriter`. The `TextWriterHtmlExtensions` part is superseded by the local fix in `85672bfd`, which replaced the manual encoding loop with `HtmlEncoder.Encode(TextWriter, ...)`.
 - [`190e80a`](https://github.com/DamianEdwards/RazorSlices/commit/190e80a) (DamianEdwards/RazorSlices#150): emit qualified names for primitive model types in generated proxies.
+- [`0bdabc2`](https://github.com/DamianEdwards/RazorSlices/commit/0bdabc2) (DamianEdwards/RazorSlices#154): shareable Razor helpers (`RazorSliceHelpers`), minimal slices built on the new `RazorSliceBase` (the `RazorSlice` partials split into `RazorSliceBase.*`), generated slice/helper activation, and the helper analyzer. Samples and tests are ported too. The `BuildTasks` changes and the `BuildTasks`/`Samples.WebApp` test projects are not vendored, so they were left out.
 
 ## Differences from upstream
 
@@ -20,5 +21,5 @@ Last synced to upstream commit [`c286ca0`](https://github.com/DamianEdwards/Razo
 - The source generator's model-type resolver matches the `Duende.RazorSlices` namespace when walking slice base types
 - Samples keep the upstream `RazorSlices.Samples.*` namespace and add explicit `using Duende.RazorSlices;` directives where needed
 - Duende license headers, LF line endings, and `dotnet format` applied
-- Target framework updated to `net10.0`
+- Target framework updated to `net10.0`; source that needs preview C# features (for example collection expression arguments, `[with(...), ...]`) is rewritten to C# 14 equivalents
 - Strong-naming disabled (not required for vendored use)

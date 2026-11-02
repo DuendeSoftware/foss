@@ -72,9 +72,13 @@ public class RazorSliceProxyGeneratorTests
                 public static class RazorSliceFactory
                 {
                     public static RazorSlice Create<TSlice>(System.Func<TSlice> create) where TSlice : RazorSlice => create();
+                    public static RazorSlice Create<TSlice>(System.Func<TSlice> create, RazorSliceActivation<TSlice> activation) where TSlice : RazorSlice => create();
                     public static RazorSlice<TModel> Create<TSlice, TModel>(TModel model, System.Func<TModel, TSlice> create)
                         where TSlice : RazorSlice<TModel> => create(model);
+                    public static RazorSlice<TModel> Create<TSlice, TModel>(TModel model, System.Func<TModel, TSlice> create, RazorSliceActivation<TSlice> activation)
+                        where TSlice : RazorSlice<TModel> => create(model);
                 }
+                public sealed class RazorSliceActivation<TSlice> where TSlice : RazorSlice { }
             }
             namespace TestApp
             {
