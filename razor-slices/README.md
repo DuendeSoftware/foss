@@ -11,6 +11,7 @@ Last synced to upstream commit [`c286ca0`](https://github.com/DamianEdwards/Razo
 ### Upstream changes applied on top of the sync point
 
 - [`552937e`](https://github.com/DamianEdwards/RazorSlices/commit/552937e) (DamianEdwards/RazorSlices#149): fix encoding loops at buffer boundaries in `PipeWriterHtmlExtensions` and `Utf8PipeTextWriter`. The `TextWriterHtmlExtensions` part is superseded by the local fix in `85672bfd`, which replaced the manual encoding loop with `HtmlEncoder.Encode(TextWriter, ...)`.
+- [`190e80a`](https://github.com/DamianEdwards/RazorSlices/commit/190e80a) (DamianEdwards/RazorSlices#150): emit qualified names for primitive model types in generated proxies.
 
 ## Differences from upstream
 
