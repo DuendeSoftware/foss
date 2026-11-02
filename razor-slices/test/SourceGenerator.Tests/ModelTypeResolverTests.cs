@@ -384,6 +384,8 @@ namespace Duende.RazorSlices
     [Theory]
     [InlineData("string", "global::System.String")]
     [InlineData("int", "global::System.Int32")]
+    [InlineData("System.Collections.Generic.List<string>", "global::System.Collections.Generic.List<global::System.String>")]
+    [InlineData("System.Collections.Generic.Dictionary<int, string[]>", "global::System.Collections.Generic.Dictionary<global::System.Int32, global::System.String[]>")]
     public void SliceBaseType_PrimitiveModel_UsesQualifiedTypeName(string modelType, string expected)
     {
         var usings = new List<UsingDirective> { new("TestNs", null) };

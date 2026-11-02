@@ -81,8 +81,7 @@ internal static class ModelTypeResolver
 
             if (currentType.IsGenericType && currentType.TypeArguments.Length == 1)
             {
-                return "global::" + currentType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
-                    .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.OmittedAsContaining)
+                return currentType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat
                     .WithMiscellaneousOptions(SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions & ~SymbolDisplayMiscellaneousOptions.UseSpecialTypes));
             }
 

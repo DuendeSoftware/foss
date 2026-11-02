@@ -37,6 +37,7 @@ Other upstream changes after the sync point have not been taken. These are:
 - Package ID, assembly name, and root namespace changed from `RazorSlices` to `Duende.RazorSlices`
 - Source generator package renamed from `RazorSlices.SourceGenerator` to `Duende.RazorSlices.SourceGenerator`
 - The source generator's model-type resolver matches the `Duende.RazorSlices` namespace when walking slice base types
+- Model types resolved from a slice base type are emitted with `global::` on every type argument (for example `global::System.Collections.Generic.List<global::System.String>`), so nested type arguments can't be shadowed by a user `System` namespace or type
 - Samples keep the upstream `RazorSlices.Samples.*` namespace and add explicit `using Duende.RazorSlices;` directives where needed
 - Duende license headers, LF line endings, and `dotnet format` applied
 - Target framework updated to `net10.0`; source that needs preview C# features (for example collection expression arguments, `[with(...), ...]`) is rewritten to C# 14 equivalents
