@@ -8,6 +8,10 @@ The upstream project is copyright Damian Edwards and licensed under the [Apache 
 
 Last synced to upstream commit [`c286ca0`](https://github.com/DamianEdwards/RazorSlices/commit/c286ca021b05345e74785364c4a14515b082c90b) (2026-09-19, `main` after DamianEdwards/RazorSlices#146). When re-syncing, copy upstream `src/`, `tests/`, and `samples/` source files, then apply the transformations listed below.
 
+### Upstream changes applied on top of the sync point
+
+- [`552937e`](https://github.com/DamianEdwards/RazorSlices/commit/552937e) (DamianEdwards/RazorSlices#149): fix encoding loops at buffer boundaries in `PipeWriterHtmlExtensions` and `Utf8PipeTextWriter`. The `TextWriterHtmlExtensions` part is superseded by the local fix in `85672bfd`, which replaced the manual encoding loop with `HtmlEncoder.Encode(TextWriter, ...)`.
+
 ## Differences from upstream
 
 - Package ID, assembly name, and root namespace changed from `RazorSlices` to `Duende.RazorSlices`

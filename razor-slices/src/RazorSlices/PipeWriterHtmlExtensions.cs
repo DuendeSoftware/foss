@@ -30,6 +30,7 @@ internal static class PipeWriterHtmlExtensions
         Span<byte> writerSpan = default;
         var encodeStatus = OperationStatus.Done;
         var waitingToAdvance = 0;
+        var minimumSpanSize = 0;
 
         while (utf8Text.Length > 0)
         {
@@ -41,7 +42,7 @@ internal static class PipeWriterHtmlExtensions
                     waitingToAdvance = 0;
                 }
                 // Allow space for HTML encoding the string
-                var spanSizeHint = BufferSizes.GetHtmlEncodedSizeHint(utf8Text.Length);
+                var spanSizeHint = Math.Max(BufferSizes.GetHtmlEncodedSizeHint(utf8Text.Length), minimumSpanSize);
                 writerSpan = pipeWriter.GetSpan(spanSizeHint);
             }
 
@@ -50,7 +51,8 @@ internal static class PipeWriterHtmlExtensions
 
             if (bytesConsumed == 0 && encodeStatus == OperationStatus.DestinationTooSmall)
             {
-                // The buffer is too small to encode the current text, so reset the buffer span to 0 and continue the loop
+                // A repeated hint can return the same unusable tail. Require more space for the next escape.
+                minimumSpanSize = checked(writerSpan.Length + 1);
                 writerSpan = default;
                 continue;
             }
@@ -267,7 +269,8 @@ internal static class PipeWriterHtmlExtensions
                     pipeWriter.Advance(waitingToAdvance);
                     waitingToAdvance = 0;
                 }
-                var spanLengthHint = Math.Min(html.Length, BufferSizes.MaxBufferSize);
+                // UTF-16 length can underestimate the bytes needed for even a single UTF-8 scalar.
+                var spanLengthHint = Math.Clamp(html.Length, BufferSizes.MaxUtf8BytesPerScalar, BufferSizes.MaxBufferSize);
                 writerSpan = pipeWriter.GetSpan(spanLengthHint);
             }
 
