@@ -146,6 +146,12 @@ public class ConventionTests(ITestOutputHelper output)
 
         foreach (var type in AllTypes.Where(t => t.IsClass && !t.IsAbstract && !typeof(Delegate).IsAssignableFrom(t)))
         {
+            // AsyncLazy keeps the repository's Value pattern; callers cancel their own waits with WaitAsync.
+            if (type == typeof(AsyncLazy<>))
+            {
+                continue;
+            }
+
             // Get all public instance and static methods
             var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public)
                 .Where(m => typeof(System.Threading.Tasks.Task).IsAssignableFrom(m.ReturnType));

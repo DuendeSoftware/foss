@@ -53,11 +53,13 @@
     public sealed class ClientCredentialsClient
     {
         public ClientCredentialsClient() { }
+        public string? Authority { get; set; }
         public Duende.IdentityModel.Client.BasicAuthenticationHeaderStyle AuthorizationHeaderStyle { get; set; }
         public Duende.IdentityModel.Client.ClientCredentialStyle ClientCredentialStyle { get; set; }
         public Duende.AccessTokenManagement.ClientId? ClientId { get; set; }
         public Duende.AccessTokenManagement.ClientSecret? ClientSecret { get; set; }
         public Duende.AccessTokenManagement.DPoP.DPoPProofKey? DPoPJsonWebKey { get; set; }
+        public Duende.IdentityModel.Client.DiscoveryPolicy DiscoveryPolicy { get; set; }
         public System.Net.Http.HttpClient? HttpClient { get; set; }
         public string? HttpClientName { get; set; }
         public Duende.IdentityModel.Client.Parameters Parameters { get; set; }

@@ -94,13 +94,17 @@ public class ClientTokenManagementTests
 
     }
 
-    [Fact]
-    public async Task Missing_tokenEndpoint_throw_exception()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Missing_tokenEndpoint_and_authority_throw_exception(string? authority)
     {
         _services.AddClientCredentialsTokenManagement()
             .AddClient("test", client =>
             {
                 client.TokenEndpoint = null;
+                client.Authority = authority;
                 client.ClientId = ClientId.Parse("test");
                 client.ClientSecret = ClientSecret.Parse("notnull");
             });
@@ -110,8 +114,50 @@ public class ClientTokenManagementTests
 
         var action = async () => await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
 
-        (await Should.ThrowAsync<OptionsValidationException>(action))
-            .Message.ShouldContain("TokenEndpoint");
+        var exception = await Should.ThrowAsync<OptionsValidationException>(action);
+        exception.Message.ShouldContain("TokenEndpoint");
+        exception.Message.ShouldContain("Authority");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TokenEndpoint_should_take_precedence_over_authority(bool configureInPostConfigure)
+    {
+        // Arrange
+
+        _mockHttp.Expect(The.TokenEndpoint.ToString())
+            .Respond(_ => Some.TokenHttpResponse());
+
+        _services.AddHttpClient(ClientCredentialsTokenManagementDefaults.BackChannelHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => _mockHttp);
+
+        _services.AddClientCredentialsTokenManagement()
+            .AddClient("test", client =>
+            {
+                client.TokenEndpoint = configureInPostConfigure ? null : The.TokenEndpoint;
+                client.Authority = "http://metadata.example";
+                client.ClientId = The.ClientId;
+                client.ClientSecret = The.ClientSecret;
+            });
+
+        if (configureInPostConfigure)
+        {
+            _services.PostConfigure<ClientCredentialsClient>("test", client => client.TokenEndpoint = The.TokenEndpoint);
+        }
+
+        var provider = _services.BuildServiceProvider();
+        var sut = provider.GetRequiredService<IClientCredentialsTokenManager>();
+
+        // Act
+
+        var token = await sut.GetAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct).GetToken();
+
+        // Assert
+
+        _mockHttp.VerifyNoOutstandingExpectation();
+
+        token.ShouldBeEquivalentTo(Some.ClientCredentialsToken());
     }
 
     [Theory]
