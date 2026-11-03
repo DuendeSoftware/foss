@@ -23,19 +23,13 @@ internal static class CacheExtensions
     ///
     /// https://github.com/dotnet/extensions/issues/5688#issuecomment-2692247434
     /// </summary>
-    public static async Task<IEnumerable<Claim>?> GetClaimsAsync(
-        this HybridCache cache,
-        OAuth2IntrospectionOptions options,
-        string token)
-    {
-        var cacheKey = options.CacheKeyGenerator(options, token);
-        return await cache.GetOrCreateAsync<IEnumerable<Claim>?>(cacheKey, null!, GetOnlyEntryOptions).ConfigureAwait(false);
-    }
+    public static async Task<IEnumerable<Claim>?> GetClaimsAsync(this HybridCache cache, string cacheKey) =>
+        await cache.GetOrCreateAsync<IEnumerable<Claim>?>(cacheKey, null!, GetOnlyEntryOptions).ConfigureAwait(false);
 
     public static async Task SetClaimsAsync(
         this HybridCache cache,
         OAuth2IntrospectionOptions options,
-        string token,
+        string cacheKey,
         IEnumerable<Claim> claims,
         TimeSpan duration,
         ILogger logger)
@@ -64,7 +58,6 @@ internal static class CacheExtensions
         }
 
         Log.SettingToCache(logger, absoluteLifetime, null);
-        var cacheKey = options.CacheKeyGenerator(options, token);
         var cacheDuration = absoluteLifetime - now;
         var cacheEntryOptions = new HybridCacheEntryOptions
         {
