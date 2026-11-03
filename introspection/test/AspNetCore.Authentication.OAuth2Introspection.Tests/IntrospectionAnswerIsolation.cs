@@ -100,6 +100,24 @@ public class IntrospectionAnswerIsolation
         secondServer.SentIntrospectionRequest.ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task When_a_scheme_name_and_cache_key_prefix_spell_another_scheme_name_then_the_schemes_do_not_share_cached_answers()
+    {
+        var firstServer = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Active);
+        var secondServer = new IntrospectionEndpointHandler(IntrospectionEndpointHandler.Behavior.Inactive);
+        var server = await CreateServer(
+            authentication => authentication
+                .AddOAuth2Introspection("a:b", IntrospectAt("first.example"))
+                .AddOAuth2Introspection("a", IntrospectAt("second.example", cacheKeyPrefix: "b:")),
+            new() { ["first.example"] = firstServer, ["second.example"] = secondServer });
+
+        (await Send(server, "a:b")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var secondSchemeResponse = await Send(server, "a");
+        secondSchemeResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        secondServer.SentIntrospectionRequest.ShouldBeTrue();
+    }
+
     private static Action<OAuth2IntrospectionOptions> IntrospectAt(string authorizationServer, string cacheKeyPrefix = "") => options =>
     {
         options.IntrospectionEndpoint = $"https://{authorizationServer}/introspect";

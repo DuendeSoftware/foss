@@ -724,7 +724,7 @@ public class Introspection
         result.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var cache = server.Services.GetRequiredService<HybridCache>();
-        var cacheItem = await cache.GetOrCreateAsync<IEnumerable<Claim>?>(token.ToSha256(), null!, GetOnlyEntryOptions);
+        var cacheItem = await cache.GetOrCreateAsync<IEnumerable<Claim>?>($"{OAuth2IntrospectionDefaults.AuthenticationScheme.Length}:{OAuth2IntrospectionDefaults.AuthenticationScheme}:{token.ToSha256()}", null!, GetOnlyEntryOptions);
         cacheItem.ShouldBeNull();
     }
 
@@ -732,7 +732,7 @@ public class Introspection
     {
         var cache = testServer.Services.GetRequiredService<HybridCache>();
 
-        var cacheItem = await cache.GetOrCreateAsync<IEnumerable<Claim>?>($"{cacheKeyPrefix}{token.ToSha256()}", null!, GetOnlyEntryOptions);
+        var cacheItem = await cache.GetOrCreateAsync<IEnumerable<Claim>?>($"{OAuth2IntrospectionDefaults.AuthenticationScheme.Length}:{OAuth2IntrospectionDefaults.AuthenticationScheme}:{cacheKeyPrefix}{token.ToSha256()}", null!, GetOnlyEntryOptions);
 
         cacheItem.ShouldNotBeNull();
         cacheItem!.ShouldNotBeEmpty();
