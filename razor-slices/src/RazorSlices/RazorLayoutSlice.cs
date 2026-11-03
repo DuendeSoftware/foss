@@ -19,15 +19,7 @@ public abstract class RazorLayoutSlice : RazorSlice, IRazorLayoutSlice
     /// Renders the content of the <see cref="RazorSlice"/> using this slice for layout.
     /// </summary>
     /// <returns><see cref="HtmlString.Empty"/> just to allow for easy calling within <c>.cshtml</c> files, e.g. <c>@await RenderBodyAsync()</c>.</returns>
-    protected ValueTask<HtmlString> RenderBodyAsync()
-    {
-        if (ContentSlice is not null)
-        {
-            return RenderChildSliceAsync(ContentSlice);
-        }
-
-        return ValueTask.FromResult(HtmlString.Empty);
-    }
+    protected ValueTask<HtmlString> RenderBodyAsync() => ContentSlice is not null ? RenderChildSliceAsync(ContentSlice, disposeSlice: false) : ValueTask.FromResult(HtmlString.Empty);
 
     /// <summary>
     /// Renders the content of the section with the specified name.
@@ -43,12 +35,7 @@ public abstract class RazorLayoutSlice : RazorSlice, IRazorLayoutSlice
         {
             Debug.WriteLine($"Rendering section '{sectionName}' on child slice of type '{ContentSlice.GetType().Name}' from layout slice of type '{GetType().Name}'");
 
-            var renderTask = ContentSlice.ExecuteSectionAsync(sectionName);
-
-            if (!renderTask.HandleSynchronousCompletion())
-            {
-                return AwaitRenderTask(renderTask);
-            }
+            return ContentSlice.RenderSectionAsyncImpl(sectionName);
         }
 
         return ValueTask.FromResult(HtmlString.Empty);

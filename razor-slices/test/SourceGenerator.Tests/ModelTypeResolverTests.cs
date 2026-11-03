@@ -376,6 +376,22 @@ namespace Duende.RazorSlices
         Assert.Equal("global::System.Collections.Generic.List<global::System.String>", result);
     }
 
+    [Theory]
+    [InlineData("System.String", "global::System.String")]
+    [InlineData("System.Int32", "global::System.Int32")]
+    public void NonNestedType_FullyQualifiedPrimitive(string typeName, string expected) => Assert.Equal(expected, Resolve(typeName));
+
+    [Theory]
+    [InlineData("string", "global::System.String")]
+    [InlineData("int", "global::System.Int32")]
+    [InlineData("System.Collections.Generic.List<string>", "global::System.Collections.Generic.List<global::System.String>")]
+    [InlineData("System.Collections.Generic.Dictionary<int, string[]>", "global::System.Collections.Generic.Dictionary<global::System.Int32, global::System.String[]>")]
+    public void SliceBaseType_PrimitiveModel_UsesQualifiedTypeName(string modelType, string expected)
+    {
+        var usings = new List<UsingDirective> { new("TestNs", null) };
+        Assert.Equal(expected, ResolveFromSliceBaseType($"GenericTodoSliceBase<{modelType}>", usings));
+    }
+
     [Fact]
     public void SliceBaseType_DirectlyInheritsGenericRazorSlice_ResolvesModelType()
     {

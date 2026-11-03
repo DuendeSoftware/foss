@@ -1,6 +1,7 @@
 // Copyright (c) Duende Software. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -29,7 +30,6 @@ public static class RazorSliceFactory
         ?? throw new InvalidOperationException("Could not find ServiceProviderServiceExtensions.GetRequirdService. Likely a bug in Razor Slices itself.");
 
     private static readonly ConstructorInfo _ioeCtor = typeof(InvalidOperationException).GetConstructor([typeof(string)])!;
-    private static readonly NullabilityInfoContext _nullabilityContext = new();
 
     /// <summary>
     /// Creates a slice using its generated constructor callback and configures deferred property injection.
@@ -43,8 +43,24 @@ public static class RazorSliceFactory
     {
         ArgumentNullException.ThrowIfNull(createSlice);
         var activation = SliceCache<TSlice>.Current;
+        return CreateCore(createSlice, activation);
+    }
+
+    /// <summary>Creates a slice using compiler-generated activation callbacks.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static RazorSlice Create<TSlice>(Func<TSlice> createSlice, RazorSliceActivation<TSlice> activation)
+        where TSlice : RazorSlice
+    {
+        ArgumentNullException.ThrowIfNull(createSlice);
+        ArgumentNullException.ThrowIfNull(activation);
+        return CreateCore(createSlice, activation.Current);
+    }
+
+    private static RazorSlice CreateCore<TSlice>(Func<TSlice> createSlice, SliceActivation activation)
+        where TSlice : RazorSlice
+    {
         var slice = activation.CreateReplacement is { } createReplacement ? createReplacement() : createSlice();
-        slice.Initialize = activation.Initialize;
+        slice.Activation = activation.Initialize is not null ? activation : null;
         return slice;
     }
 
@@ -63,6 +79,24 @@ public static class RazorSliceFactory
     {
         ArgumentNullException.ThrowIfNull(createSlice);
         var activation = SliceCache<TSlice>.Current;
+        return CreateCore(model, createSlice, activation);
+    }
+
+    /// <summary>Creates a model slice using compiler-generated activation callbacks.</summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static RazorSlice<TModel> Create<TSlice, TModel>(
+        TModel model, Func<TModel, TSlice> createSlice, RazorSliceActivation<TSlice> activation)
+        where TSlice : RazorSlice<TModel>
+    {
+        ArgumentNullException.ThrowIfNull(createSlice);
+        ArgumentNullException.ThrowIfNull(activation);
+        return CreateCore(model, createSlice, activation.Current);
+    }
+
+    private static RazorSlice<TModel> CreateCore<TSlice, TModel>(
+        TModel model, Func<TModel, TSlice> createSlice, SliceActivation activation)
+        where TSlice : RazorSlice<TModel>
+    {
         RazorSlice<TModel> slice;
         if (activation.CreateReplacement is { } createReplacement)
         {
@@ -73,19 +107,15 @@ public static class RazorSliceFactory
         {
             slice = createSlice(model);
         }
-        slice.Initialize = activation.Initialize;
+        slice.Activation = activation.Initialize is not null ? activation : null;
         return slice;
     }
-
-    internal sealed record SliceActivation(
-        Action<RazorSlice, IServiceProvider?, HttpContext?>? Initialize,
-        Func<RazorSlice>? CreateReplacement = null);
 
     internal static class SliceCache<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TSlice>
         where TSlice : RazorSlice
     {
-        internal static volatile SliceActivation Current = new(GetInitializer(typeof(TSlice)));
+        internal static volatile SliceActivation Current = GetActivation(typeof(TSlice));
 
         static SliceCache()
         {
@@ -102,7 +132,7 @@ public static class RazorSliceFactory
             if (HotReloadService.TryGetUpdatedType(changedTypes, typeof(TSlice), out var updatedType))
             {
                 // Publish construction and injection together so a render cannot mix two generations of the template.
-                Current = new(GetInitializer(updatedType), () => (RazorSlice)Activator.CreateInstance(updatedType)!);
+                Current = GetActivation(updatedType) with { CreateReplacement = () => (RazorSlice)Activator.CreateInstance(updatedType)! };
             }
         }
     }
@@ -110,40 +140,53 @@ public static class RazorSliceFactory
     [UnconditionalSuppressMessage("AOT", "IL3050",
         Justification = "Guarded by RuntimeFeature.IsDynamicCodeCompiled.")]
     internal static Action<RazorSlice, IServiceProvider?, HttpContext?>? GetInitializer(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type sliceType)
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type sliceType) => GetActivation(sliceType).Initialize;
+
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Guarded by RuntimeFeature.IsDynamicCodeCompiled.")]
+    internal static SliceActivation GetActivation(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type sliceType,
+        bool forceReflection = false)
     {
         var properties = GetInjectableProperties(sliceType);
         if (!properties.Any)
         {
-            return null;
+            return new(null);
         }
 
-        return RuntimeFeature.IsDynamicCodeCompiled
+        var reflection = forceReflection || !RuntimeFeature.IsDynamicCodeCompiled;
+        var initialize = !reflection
             ? GetExpressionInitAction(sliceType, properties).Compile()
             : GetReflectionInitAction(sliceType, properties);
+        return new(initialize);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "PublicProperties preserves inherited public properties and their accessors; obtain the declaring property to retain private setters.")]
     internal static (bool Any, PropertyInfo[] Nullable, PropertyInfo[] NonNullable) GetInjectableProperties(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
         Type sliceType)
     {
         List<PropertyInfo>? nullable = null;
         List<PropertyInfo>? nonNullable = null;
+        NullabilityInfoContext? nullability = null;
 
         foreach (var pi in sliceType.GetProperties())
         {
             if (pi.GetCustomAttribute<RazorInjectAttribute>() is not null
                 && !ExcludedServiceNames.Contains(pi.PropertyType.Name))
             {
-                if (IsNullable(pi))
+                var property = pi.SetMethod is null && pi.DeclaringType is { } declaring
+                    ? declaring.GetProperty(pi.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly) ?? pi
+                    : pi;
+                if (IsNullable(property, nullability ??= new()))
                 {
                     nullable ??= [];
-                    nullable.Add(pi);
+                    nullable.Add(property);
                 }
                 else
                 {
                     nonNullable ??= [];
-                    nonNullable.Add(pi);
+                    nonNullable.Add(property);
                 }
             }
         }
@@ -240,7 +283,6 @@ public static class RazorSliceFactory
             parameters: [sliceParam, spParam, httpContextParam]);
     }
 
-    private static bool IsNullable(PropertyInfo info) =>
-        Nullable.GetUnderlyingType(info.PropertyType) is not null
-            || _nullabilityContext.Create(info).WriteState is not NullabilityState.NotNull;
+    private static bool IsNullable(PropertyInfo info, NullabilityInfoContext nullability) => Nullable.GetUnderlyingType(info.PropertyType) is not null
+            || nullability.Create(info).WriteState is not NullabilityState.NotNull;
 }

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Duende.RazorSlices;
 
-public abstract partial class RazorSlice : IResult, IStatusCodeHttpResult, IContentTypeHttpResult
+public abstract partial class RazorSliceBase : IResult, IStatusCodeHttpResult, IContentTypeHttpResult
 {
     /// <summary>
     /// Gets or sets the HTTP status code. Defaults to <see cref="StatusCodes.Status200OK"/>
@@ -23,8 +23,8 @@ public abstract partial class RazorSlice : IResult, IStatusCodeHttpResult, ICont
     public string ContentType { get; set; } = "text/html; charset=utf-8";
 
     /// <summary>
-    /// Gets or sets the <see cref="System.Text.Encodings.Web.HtmlEncoder" /> instance to use when rendering the template. If
-    /// <c>null</c> the template will use <see cref="HtmlEncoder.Default" />.
+    /// Gets or sets the encoder used when executing this slice as an HTTP result. If <c>null</c>, the encoder is
+    /// resolved from request services, falling back to <see cref="HtmlEncoder.Default"/>.
     /// </summary>
     public HtmlEncoder? HtmlEncoder { get; set; }
 
@@ -33,16 +33,28 @@ public abstract partial class RazorSlice : IResult, IStatusCodeHttpResult, ICont
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
-        HttpContext = httpContext;
+        HtmlEncoder? effectiveHtmlEncoder;
+        Task startTask;
+        try
+        {
+            if (this is RazorSlice fullSlice)
+            {
+                fullSlice.HttpContext = httpContext;
+            }
 
-        // The HtmlEncoder property can be set on the instance to avoid the overhead of RequestServices if desired
-        var effectiveHtmlEncoder = HtmlEncoder ?? httpContext.RequestServices.GetService<HtmlEncoder>();
+            // Setting HtmlEncoder explicitly avoids resolving request services.
+            effectiveHtmlEncoder = HtmlEncoder ?? httpContext.RequestServices.GetService<HtmlEncoder>();
+            httpContext.Response.StatusCode = StatusCode;
+            httpContext.Response.ContentType = ContentType;
 
-        httpContext.Response.StatusCode = StatusCode;
-        httpContext.Response.ContentType = ContentType;
-
-        // Force the response to start before rendering the slice
-        var startTask = httpContext.Response.StartAsync();
+            // Start the response before rendering the template.
+            startTask = httpContext.Response.StartAsync(httpContext.RequestAborted);
+        }
+        catch (Exception error)
+        {
+            DisposeAfterFailure(error);
+            throw;
+        }
 
         if (!startTask.IsCompletedSuccessfully)
         {
@@ -63,9 +75,17 @@ public abstract partial class RazorSlice : IResult, IStatusCodeHttpResult, ICont
         return httpContext.Response.BodyWriter.FlushAsync(httpContext.RequestAborted).GetAsTask();
     }
 
-    private static async Task AwaitStartTaskAndRender(Task startTask, RazorSlice slice, HttpContext httpContext, HtmlEncoder? htmlEncoder)
+    private static async Task AwaitStartTaskAndRender(Task startTask, RazorSliceBase slice, HttpContext httpContext, HtmlEncoder? htmlEncoder)
     {
-        await startTask.ConfigureAwait(false);
+        try
+        {
+            await startTask.ConfigureAwait(false);
+        }
+        catch (Exception error)
+        {
+            slice.DisposeAfterFailure(error);
+            throw;
+        }
         await slice.RenderAsync(httpContext.Response.BodyWriter, htmlEncoder, httpContext.RequestAborted).ConfigureAwait(false);
         await httpContext.Response.BodyWriter.FlushAsync(httpContext.RequestAborted).ConfigureAwait(false);
     }
