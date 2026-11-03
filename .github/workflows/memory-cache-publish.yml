@@ -1,5 +1,7 @@
 name: memory-cache/publish
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:
@@ -20,6 +22,10 @@ on:
 
 jobs:
   publish:
+    permissions:
+      actions: read
+      contents: read
+      packages: write
     uses: ./.github/workflows/publish-template.yml
     with:
       product: memory-cache

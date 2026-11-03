@@ -1,5 +1,7 @@
 name: release
 
+permissions: {}
+
 on:
   workflow_dispatch:
     inputs:
