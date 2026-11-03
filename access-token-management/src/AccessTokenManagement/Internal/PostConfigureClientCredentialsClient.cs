@@ -9,13 +9,10 @@ namespace Duende.AccessTokenManagement.Internal;
 internal sealed class PostConfigureClientCredentialsClient(IHttpClientFactory httpClientFactory)
     : IPostConfigureOptions<ClientCredentialsClient>
 {
-    public void PostConfigure(string? name, ClientCredentialsClient options)
-    {
-        if (options.TokenEndpoint is null)
-        {
-            options.DiscoveredTokenEndpoint = new AsyncLazy<Uri>(() => GetTokenEndpointFromDiscoveryDocumentAsync(name, options));
-        }
-    }
+    public void PostConfigure(string? name, ClientCredentialsClient options) =>
+        // Created unconditionally: post-configures registered later can still clear TokenEndpoint.
+        // The lazy only runs when the final options have no TokenEndpoint.
+        options.DiscoveredTokenEndpoint = new AsyncLazy<Uri>(() => GetTokenEndpointFromDiscoveryDocumentAsync(name, options));
 
     private async Task<Uri> GetTokenEndpointFromDiscoveryDocumentAsync(string? clientName, ClientCredentialsClient options)
     {

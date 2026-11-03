@@ -104,6 +104,29 @@ public class ClientCredentialsDiscoveryTests
         provider.GetRequiredService<IOptionsMonitor<ClientCredentialsClient>>().Get("test").TokenEndpoint.ShouldBeNull();
     }
 
+    [Fact]
+    public async Task TokenEndpoint_cleared_in_later_post_configure_should_use_discovery()
+    {
+        // Arrange
+
+        var discoveryRequest = MockDiscovery();
+        MockKeys();
+        var tokenRequest = MockTokenRequests();
+        _services.PostConfigure<ClientCredentialsClient>("test", client => client.TokenEndpoint = null);
+        using var provider = CreateProvider(client => client.TokenEndpoint = new Uri("https://other/connect/token"));
+        var sut = provider.GetRequiredService<IClientCredentialsTokenEndpoint>();
+
+        // Act
+
+        var result = await sut.RequestAccessTokenAsync(ClientCredentialsClientName.Parse("test"), ct: _ct);
+
+        // Assert
+
+        result.Succeeded.ShouldBeTrue();
+        _mockHttp.GetMatchCount(discoveryRequest).ShouldBe(1);
+        _mockHttp.GetMatchCount(tokenRequest).ShouldBe(1);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
