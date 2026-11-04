@@ -23,12 +23,15 @@ Sign in to nuget.org as the publishing user, open **Trusted Publishing**, and cr
 
 | Setting | Value |
 | --- | --- |
+| Package owner | Select the nuget.org user for user-owned packages, or the organization that owns the packages for organization-owned packages |
 | Repository owner | `DuendeSoftware` |
 | Repository | `foss` |
 | Workflow file | `release.yml` |
 | Environment | `nuget.org` |
 
 Enter only the workflow filename, not `.github/workflows/release.yml`. Grant the publishing scopes needed for new versions and, if releases introduce new package IDs, new packages. Restrict package patterns to the intended package families while ensuring they cover every package produced by all products in the release workflow.
+
+The policy covers only packages owned by the selected nuget.org user or organization. Publishing rights do not extend a user's policy to organization-owned packages; if the workflow publishes packages owned by multiple organizations, configure a policy for each relevant organization.
 
 ## Verify trusted publishing
 
