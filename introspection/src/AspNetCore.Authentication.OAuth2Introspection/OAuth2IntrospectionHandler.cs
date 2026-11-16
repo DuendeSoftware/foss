@@ -25,8 +25,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
     private readonly HybridCache _cache;
     private readonly ILogger<OAuth2IntrospectionHandler> _logger;
 
-    private static readonly ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary =
-        new ConcurrentDictionary<string, Lazy<Task<TokenIntrospectionResponse>>>();
+    private static readonly ConcurrentDictionary<(OAuth2IntrospectionOptions Options, string Token), Lazy<Task<TokenIntrospectionResponse>>> IntrospectionDictionary = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuth2IntrospectionHandler"/> class.
@@ -84,7 +83,8 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             return AuthenticateResult.NoResult();
         }
 
-        var claims = await _cache.GetClaimsAsync(Options, token).ConfigureAwait(false);
+        var cacheKey = $"{Scheme.Name.Length}:{Scheme.Name}:{Options.CacheKeyGenerator(Options, token)}";
+        var claims = await _cache.GetClaimsAsync(cacheKey).ConfigureAwait(false);
 
         if (claims != null)
         {
@@ -113,7 +113,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             // https://github.com/dotnet/extensions/issues/6434, https://github.com/dotnet/aspnetcore/issues/56483
             var ownIntrospection = new Lazy<Task<TokenIntrospectionResponse>>(
                 () => LoadClaimsForToken(token, Context, Scheme, Events, Options));
-            introspection = IntrospectionDictionary.GetOrAdd(token, ownIntrospection);
+            introspection = IntrospectionDictionary.GetOrAdd((Options, token), ownIntrospection);
             var startedByThisRequest = ReferenceEquals(introspection, ownIntrospection);
 
             TokenIntrospectionResponse response;
@@ -135,7 +135,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
                 // that started the call, which rethrows it. This request evicts the faulted entry so later
                 // requests start fresh, and retries once with its own call that bypasses the dictionary, so it
                 // gets a full attempt of its own.
-                IntrospectionDictionary.TryRemove(KeyValuePair.Create(token, introspection));
+                IntrospectionDictionary.TryRemove(KeyValuePair.Create((Options, token), introspection));
                 response = await LoadClaimsForToken(token, Context, Scheme, Events, Options);
             }
 
@@ -147,7 +147,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
 
             if (response.IsActive)
             {
-                await _cache.SetClaimsAsync(Options, token, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
+                await _cache.SetClaimsAsync(Options, cacheKey, response.Claims, Options.CacheDuration, _logger).ConfigureAwait(false);
 
                 return await CreateTicket(response.Claims, token, Context, Scheme, Events, Options);
             }
@@ -156,7 +156,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
                 // add an exp claim - otherwise caching will not work
                 var claimsWithExp = response.Claims.ToList();
                 claimsWithExp.Add(new Claim("exp", DateTimeOffset.UtcNow.Add(Options.CacheDuration).ToUnixTimeSeconds().ToString()));
-                await _cache.SetClaimsAsync(Options, token, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
+                await _cache.SetClaimsAsync(Options, cacheKey, claimsWithExp, Options.CacheDuration, _logger).ConfigureAwait(false);
 
                 return await ReportNonSuccessAndReturn("Token is not active.", Context, Scheme, Events, Options);
             }
@@ -168,7 +168,7 @@ public class OAuth2IntrospectionHandler : AuthenticationHandler<OAuth2Introspect
             // waits for it to finish, so it removes the entry.
             if (introspection is { IsValueCreated: true, Value.IsCompleted: true })
             {
-                IntrospectionDictionary.TryRemove(KeyValuePair.Create(token, introspection));
+                IntrospectionDictionary.TryRemove(KeyValuePair.Create((Options, token), introspection));
             }
         }
     }
