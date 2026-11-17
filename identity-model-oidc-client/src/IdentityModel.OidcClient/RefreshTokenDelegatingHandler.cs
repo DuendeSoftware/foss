@@ -20,6 +20,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
     private string _accessToken;
     private string _accessTokenType;
     private string _refreshToken;
+    private DateTime? _validUntil;
 
     private bool _disposed;
 
@@ -120,7 +121,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var accessToken = await GetAccessTokenAsync(cancellationToken);
-        if (accessToken.IsMissing())
+        if (accessToken.IsMissing() || (_validUntil.HasValue && _validUntil.Value < DateTime.Now))
         {
             if (await RefreshTokensAsync(cancellationToken) == false)
             {
@@ -182,6 +183,7 @@ public class RefreshTokenDelegatingHandler : DelegatingHandler
                 if (!response.IsError)
                 {
                     _accessToken = response.AccessToken;
+                    _validUntil = DateTime.Now.AddSeconds(response.ExpiresIn);
                     if (!response.RefreshToken.IsMissing())
                     {
                         _refreshToken = response.RefreshToken;
